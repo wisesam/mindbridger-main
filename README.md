@@ -1,13 +1,12 @@
 # Welcome to MindBridger Open Source AI Library System Main Repo (Laravel)
 
 ## Environment
-  - Apache Web Server (2.4.*+)
+  - Apache Web Server 2.4.* +
   - MariaDB(MySQL) 10.4.* +
-  - PHP 8.0+
+  - PHP 8.0.2 +
 
 ##  First thing to do is installing web/admin program:
 ### https://github.com/wisesam/mindbridger.git
-
 
 ## Now you can install MindBridger Main Laravel program
 1. Main Larabel repo (backend + frontend) 
@@ -19,10 +18,11 @@
 7. cp config/database (default).php config/database .php (update needed)
 8. DB Migration
   php artisan migrate
-
+9. Make a Symbolic link:
+ - go to the mindbriger (not mindbridger-main)'s root directory
+ - ln -s c:\xampp\mindbridger\storage\app\public\
 ## Demo
 <a href="https://wise4edu.net/wlibrary/inst/ina" target="_blank">Habibi Library (Sudanese Community School in Cairo)</a>
-
 
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400"></a></p>
 
