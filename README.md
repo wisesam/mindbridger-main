@@ -1,4 +1,4 @@
-# Welcome to MindBridger Open Source AI Library System Main Repo (Laravel)
+# Welcome to MindBridger Open Source AI Library System (Main Repo of Laravel)
 
 ## Environment
   - Apache Web Server 2.4.* +
