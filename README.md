@@ -18,9 +18,11 @@
 7. cp config/database (default).php config/database .php (update needed)
 8. DB Migration
   php artisan migrate
-9. Make a Symbolic link:
+9. Create a symbolic link (for cover images): 
  - go to the mindbriger (not mindbridger-main)'s root directory
- - ln -s c:\xampp\mindbridger\storage\app\public\
+ - (Windows CMD example)  mklink /D storage "c:\xampp\mindbridger\storage\app\public"
+ - (Linux, MacOS example) ln -s /var/www/mindbridger/storage/app/public storage
+
 ## Demo
 <a href="https://wise4edu.net/wlibrary/inst/ina" target="_blank">Habibi Library (Sudanese Community School in Cairo)</a>
 
