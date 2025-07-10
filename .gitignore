@@ -1,0 +1,28 @@
+/node_modules
+/public/hot
+/storage/*.key
+
+# Ignore everything inside
+/storage/app/ebook/*
+/storage/app/batch/*
+/storage/app/public/cover_images/*
+# But keep the folder itself
+!storage/app/ebook/.gitkeep
+!storage/app/batch/.gitkeep
+!storage/app/public/cover_images/.gitkeep
+/config/app.php
+/config/database.php
+/vendor
+/lang(noUse)
+/backup
+/tests/
+.env
+.env.backup
+.phpunit.result.cache
+docker-compose.override.yml
+Homestead.json
+Homestead.yaml
+npm-debug.log
+yarn-error.log
+/.idea
+/.vscode
