@@ -19,8 +19,8 @@
 8. DB Migration (Library related table installation)
 - php artisan migrate
 9. Create a symbolic link (for cover images)
-- (Windows CMD example)  mklink /D storage "c:\xampp\mindbridger\storage\app\public"
-- (Linux, MacOS example) ln -s /var/www/mindbridger/storage/app/public storage
+- (Windows CMD example)  mklink /D storage "c:\xampp\mindbridger-main\storage\app\public"
+- (Linux, MacOS example) ln -s /var/www/mindbridger-main/storage/app/public storage
 10. Click Update button from http://localhost/mindbridger/vwmldbm
 
 ## Demo
