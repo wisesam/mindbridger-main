@@ -17,10 +17,10 @@
 6. cp config/database (default).php config/database .php (update needed)
 7. php artisan key:generate (update .env)
 8. DB Migration (Library related table installation)
- - php artisan migrate
+- php artisan migrate
 9. Create a symbolic link (for cover images)
- - (Windows CMD example)  mklink /D storage "c:\xampp\mindbridger\storage\app\public"
- - (Linux, MacOS example) ln -s /var/www/mindbridger/storage/app/public storage
+- (Windows CMD example)  mklink /D storage "c:\xampp\mindbridger\storage\app\public"
+- (Linux, MacOS example) ln -s /var/www/mindbridger/storage/app/public storage
 10. Click Update button from http://localhost/mindbridger/vwmldbm
 
 ## Demo
