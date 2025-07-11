@@ -12,16 +12,16 @@
 1. Main Larabel repo (backend + frontend) 
 2. https://github.com/wisesam/mindbridger-main.git
 3. composer install
-4. php artisan key:generate
-5. cp .env.example .env  (update needed)
-6. cp config/app(default).php config/app.php (update needed)
-7. cp config/database (default).php config/database .php (update needed)
-8. DB Migration
-  php artisan migrate
-9. Create a symbolic link (for cover images): 
- - go to the mindbriger (not mindbridger-main)'s root directory
+4. cp .env.example .env  (update needed)
+5. cp config/app(default).php config/app.php (update needed)
+6. cp config/database (default).php config/database .php (update needed)
+7. php artisan key:generate (update .env)
+8. DB Migration (Library related table installation)
+ - php artisan migrate
+9. Create a symbolic link (for cover images)
  - (Windows CMD example)  mklink /D storage "c:\xampp\mindbridger\storage\app\public"
  - (Linux, MacOS example) ln -s /var/www/mindbridger/storage/app/public storage
+10. Click Update button from http://localhost/mindbridger/vwmldbm
 
 ## Demo
 <a href="https://wise4edu.net/wlibrary/inst/ina" target="_blank">Habibi Library (Sudanese Community School in Cairo)</a>
