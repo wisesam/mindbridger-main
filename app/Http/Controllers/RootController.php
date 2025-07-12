@@ -18,12 +18,13 @@ require_once(config('app.root2')."/vwmldbm/lib/code.php");
 class RootController extends Controller {
     public function index() {
         // [SJH] If there is no Super Admin user (just installed), add one
+        $_SESSION['lib_inst'] = $_SESSION['lib_inst'] ?? 1; // default TBM
         if(! Auth::check()) {
             if(User::count_super_admin() < 1) {
                 if(!config('app.multi_inst','')) {
                     $theInst= new \vwmldbm\code\Inst_var(null,config('app.inst_uname','')); // [TBM] Where $inst_uname?
                     $inst=$theInst->no;
-                    $_SESSION['lib_inst']=$inst;
+                    $_SESSION['lib_inst']=$inst; 
                 }
                 else $inst=$_SESSION['lib_inst'];                              
                 if(!$inst) return redirect('/inst');                
