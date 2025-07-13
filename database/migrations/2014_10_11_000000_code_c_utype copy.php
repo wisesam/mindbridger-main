@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CodeCUtype extends Migration
+return new class extends Migration
 {
     /**
      * Run the migrations.
@@ -13,7 +13,7 @@ class CodeCUtype extends Migration
      */
     public function up()
     {
-        Schema::create('code_c_rtype', function (Blueprint $table){
+        Schema::create('code_c_utype', function (Blueprint $table){
             $table->integer('inst'); 
             $table->integer('code'); 
             $table->integer('c_lang'); 
@@ -30,6 +30,6 @@ class CodeCUtype extends Migration
      */
     public function down()
     {
-        Schema::drop('code_c_rtype');
+        Schema::drop('code_c_utype');
     }
-}
+};
