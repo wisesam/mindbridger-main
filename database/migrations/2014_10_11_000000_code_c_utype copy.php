@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
+class CodeCUtype extends Migration
 {
     /**
      * Run the migrations.
@@ -13,13 +13,19 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('code_c_utype', function (Blueprint $table){
-            $table->integer('inst'); 
-            $table->integer('code'); 
-            $table->integer('c_lang'); 
-            $table->primary(['inst','code','c_lang']); 
-            $table->string('name')->nullable();
-            $table->char('use_yn',1)->nullable()->default('Y');
+        Schema::create('code_c_utype', function (Blueprint $table) {
+            $table->integer('inst');
+            $table->integer('code');
+            $table->integer('c_lang');
+            $table->primary(['inst', 'code', 'c_lang']);
+
+            $table->string('name', 255)->nullable();
+            $table->integer('max_book')->nullable();
+            $table->integer('max_book_rent_days')->nullable();
+            $table->integer('max_extend_times')->nullable();
+            $table->char('use_yn', 1)->nullable()->default('Y');
+            $table->char('w2_utype', 1)->nullable();
+            $table->char('default_utype_yn', 1)->nullable();
         });
     }
 
@@ -30,6 +36,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::drop('code_c_utype');
+        Schema::dropIfExists('code_c_utype');
     }
-};
+}
