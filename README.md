@@ -18,6 +18,7 @@
 7. php artisan key:generate (update .env)
 8. DB Migration (Library related table installation)
 - php artisan migrate
+- php artisan db:seed --class=CodeSeeder
 9. Create a symbolic link (for cover images)
 - (Windows CMD example)  mklink /D storage "c:\xampp\mindbridger-main\storage\app\public"
 - (Linux, MacOS example) ln -s /var/www/mindbridger-main/storage/app/public storage
