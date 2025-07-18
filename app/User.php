@@ -50,7 +50,7 @@ class User extends Authenticatable
     
     // protected function setKeysForSaveQuery(Builder $query) // [SJH] Should be added because of composite primary key
     // {
-    //     return $query->where('inst', $_SESSION['lib_inst'])
+    //     return $query->where('inst', session('lib_inst'))
     //                  ->where('id', $this->getAttribute('id'));
     // }
 
@@ -61,8 +61,8 @@ class User extends Authenticatable
      */
     static protected function num($opt=null){      
         if($opt=='EXCEPT_ADMIN') 
-            $cnt=User::where('inst',$_SESSION['lib_inst'])->where('utype','<>','SA')->where('utype','<>','A')->count();
-        else $cnt=User::where('inst',$_SESSION['lib_inst'])->count();
+            $cnt=User::where('inst',session('lib_inst'))->where('utype','<>','SA')->where('utype','<>','A')->count();
+        else $cnt=User::where('inst',session('lib_inst'))->count();
 
         return $cnt;
     }
@@ -73,7 +73,7 @@ class User extends Authenticatable
      * @var integer
      */
     static protected function count_super_admin(){
-        $res = DB::select("select count(id) as cnt from ".config('database.connections.mysql.prefix')."users where inst='{$_SESSION['lib_inst']}' and utype='SA'");
+        $res = DB::select("select count(id) as cnt from ".config('database.connections.mysql.prefix')."users where inst='".session('lib_inst')."' and utype='SA'");
         
         // $res = User::select('id')
         //     ->where('utype','10')->take(1)->get();
@@ -89,7 +89,7 @@ class User extends Authenticatable
     public function isAdmin($which=null,$uid=null) { // [SJH]
 
         if($uid) { // user is given
-            $u=new \App\User(['inst'=>$_SESSION['lib_inst'],'id'=>$uid]);
+            $u=new \App\User(['inst'=>session('lib_inst'),'id'=>$uid]);
             if(!$which && ($u->utype=='SA'||$u->utype=='A')) return true;
             else if($which=='SA' && $u->utype=='SA') return true;
             else if($which=='A' && $u->utype=='A') return true;
@@ -158,26 +158,26 @@ class User extends Authenticatable
     }
 
     public function get_wv2utype() {
-        $inst=$_SESSION['lib_inst']; 
+        $inst=session('lib_inst'); 
         $res = DB::select("select w2_utype from ".config('database.connections.mysql.prefix')."code_c_utype where inst='$inst' and c_lang='10' and code='{$this->code_c_utype}'");
         if(isset($res[0]->w2_utype))
 			return $res[0]->w2_utype;
     }
 
     public static function get_w2utype_code($c) {
-        $inst=$_SESSION['lib_inst']; 
+        $inst=session('lib_inst'); 
         $res = DB::select("select code from ".config('database.connections.mysql.prefix')."code_c_utype where inst='$inst' and c_lang='10' and w2_utype='$c' order by default_utype_yn desc");
         if(isset($res[0]->code))
 			return $res[0]->code;
     }
 
     public static function is_wv2_lib_Admin($c) {
-        if($_SESSION['lib_inst']==1) { // super institution, so read from config
+        if(session('lib_inst')==1) { // super institution, so read from config
             $sa=config('app.wv2_lib_super_admin');
             $a=config('app.wv2_lib_admin');
         }
         else {
-            $theInst=new \vwmldbm\code\Inst_var($_SESSION['lib_inst']);
+            $theInst=new \vwmldbm\code\Inst_var(session('lib_inst'));
             $sa=explode(',',$theInst->other_prg_sadm);
             $a=explode(',',$theInst->other_prg_adm);
         }
@@ -225,7 +225,7 @@ class User extends Authenticatable
     }
 
     public static function is_dup_email($email) {
-        $inst=$_SESSION['lib_inst']; 
+        $inst=session('lib_inst'); 
         $res = DB::select("select id from ".config('database.connections.mysql.prefix')."users where email='$email'");
         if(isset($res[0]->id)) return $res[0]->id;
 		else return null;

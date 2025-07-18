@@ -18,15 +18,14 @@ require_once(config('app.root2')."/vwmldbm/lib/code.php");
 class RootController extends Controller {
     public function index() {
         // [SJH] If there is no Super Admin user (just installed), add one
-        $_SESSION['lib_inst'] = $_SESSION['lib_inst'] ?? 1; // default TBM
         if(! Auth::check()) {
             if(User::count_super_admin() < 1) {
                 if(!config('app.multi_inst','')) {
                     $theInst= new \vwmldbm\code\Inst_var(null,config('app.inst_uname','')); // [TBM] Where $inst_uname?
                     $inst=$theInst->no;
-                    $_SESSION['lib_inst']=$inst; 
+                    session(['lib_inst' => $inst]);
                 }
-                else $inst=$_SESSION['lib_inst'];                              
+                else $inst=session('lib_inst');                              
                 if(!$inst) return redirect('/inst');                
 
                 if($inst==config('app.inst',1)) { // Super Institution: during system set up
@@ -62,7 +61,7 @@ class RootController extends Controller {
         } 
         
         if(Auth::check()) {
-            if(isset($_SESSION) && !$_SESSION['lib_inst']){ // session expired by WISE or other activity
+            if(session()->has('lib_inst')){ // session expired by WISE or other activity
                 Auth::logout();
                 return redirect('/inst');
             }
@@ -70,12 +69,12 @@ class RootController extends Controller {
                 $this::register_extra_session(); // register extra session variables for ebook access by url
                 
                // This may not comply with Laravel's philosophy but can't find other solution. Set from BookController.php
-                if(isset($_SESSION['specialRedirect'])) {                     
-                    $book=Book::where('inst',$_SESSION['lib_inst'])
-                    ->where('id',$_SESSION['specialBookId'])->first();
+                if((session()->has('specialRedirect'))) {                     
+                    $book=Book::where('inst',session('lib_inst'))
+                    ->where('id',session('specialBookId'))->first();
                     
-                    unset($_SESSION['specialRedirect']);
-                    unset($_SESSION['specialBookId']);
+                    session()->forget('specialRedirect');
+                    session()->forget('specialBookId');
 
                     if(isset($book->id))  return redirect('/book/'.$book->id);
                     else return redirect('/book/')->with('warning',__("The resource does not exist!"));
@@ -83,7 +82,7 @@ class RootController extends Controller {
                 
                 // Show books on Carousel
                 //$books_raw=Book::where('inst',$_SESSION['lib_inst'])->whereNotNull('cover_image')->orderBy('id','desc')->take(100)->get();      
-                $books_raw=Book::where('inst',$_SESSION['lib_inst'])->orderBy('id','desc')->take(100)->get();      
+                $books_raw=Book::where('inst',session('lib_inst'))->orderBy('id','desc')->take(100)->get();      
                 
                 // Randomize the order
                 $books=array();
@@ -93,11 +92,11 @@ class RootController extends Controller {
                 ksort($books); // sort
 
                 if(Auth::user()->isAdmin()) {  // Admin user                
-                    $_SESSION['wlibrary_admin']='A'; // for VWMLDBM Admin
+                    session(['wlibrary_admin' => 'A']); // for VWMLDBM Admin (mindbridger)
                     return view('admin.AdminDashboard')->with('frontHome',true)->with('books',$books);
                 }
                 else { // normal user logged in
-                    $fav = BookUserFavorite::where('user_id', $_SESSION['uid'])
+                    $fav = BookUserFavorite::where('user_id', session('uid'))
                     ->where('inst', Auth::user()->inst)
                     ->get();
                    $numFavorites=$fav->count();
@@ -105,14 +104,14 @@ class RootController extends Controller {
                 }
             }
         }
-        else if(!isset($_SESSION['lib_inst']) || !$_SESSION['lib_inst']){ // if session expired, redirect to /
+        else if(!session()->has('lib_inst')){ // if session expired, redirect to /
             return redirect('/');
         }
         else {
             $this::register_extra_session();
 
             // Show books on Carousel
-            $books_raw=Book::where('inst',$_SESSION['lib_inst'])->whereNotNull('cover_image')->orderBy('id','desc')->take(100)->get();      
+            $books_raw=Book::where('inst',session('lib_inst'))->whereNotNull('cover_image')->orderBy('id','desc')->take(100)->get();      
             
             // Randomize the order
             $books=array();
@@ -132,7 +131,7 @@ class RootController extends Controller {
             return redirect('/')->with('error',__("Auth failed!"));
         }
 
-        $u = User::where('inst',$_SESSION['lib_inst'])
+        $u = User::where('inst',session('lib_inst'))
                 ->where('id',$data['wv2uid'])->first();
 
         if(isset($u->id)) { // User exists            
@@ -244,19 +243,19 @@ class RootController extends Controller {
             return redirect('/inst')->with('error',__("Institution, \"".$inst_uname." \" doesn't exist."));
         }
 
-        if($_SESSION['lib_inst'] && $_SESSION['lib_inst']!=$theInst->no) { // Trying inst is different from already in inst
+        if(session()->has('lib_inst') && session('lib_inst')!=$theInst->no) { // Trying inst is different from already in inst
             session_unset();
             session_destroy();
             Auth::logout();
             session_start();
-            $_SESSION['lib_inst']=$theInst->no;
-            $_SESSION['inst_uname']=$theInst->inst_uname;
+            session(['lib_inst' => $theInst->no]);
+            session(['inst_uname' => $theInst->inst_uname]);
             $this::register_extra_session();
             return redirect('/');
         }
         else { 
-            $_SESSION['lib_inst']=$theInst->no;
-            $_SESSION['inst_uname']=$theInst->inst_uname;
+            session(['lib_inst' => $theInst->no]);
+            session(['inst_uname' => $theInst->inst_uname]);
             $this::register_extra_session();
             return redirect('/');
         }
@@ -268,19 +267,19 @@ class RootController extends Controller {
             return redirect('/inst')->with('error',__("Institution, \"".$inst_uname." \" doesn't exist."));
         }
 
-        if($_SESSION['lib_inst'] && $_SESSION['lib_inst']!=$theInst->no) { // Trying inst is different from already in inst
+        if(session()->has('lib_inst') && session('lib_inst')!=$theInst->no) { // Trying inst is different from already in inst
             session_unset();
             session_destroy();
             Auth::logout();
             session_start();
-            $_SESSION['lib_inst']=$theInst->no;
-            $_SESSION['inst_uname']=$theInst->inst_uname;
+            session(['lib_inst' => $theInst->no]);
+            session(['inst_uname' => $theInst->inst_uname]);
             $this::register_extra_session();
             return redirect('/book/'.$book_id);
         }
         else { 
-            $_SESSION['lib_inst']=$theInst->no;
-            $_SESSION['inst_uname']=$theInst->inst_uname;
+            session(['lib_inst' => $theInst->no]);
+            session(['inst_uname' => $theInst->inst_uname]);
             $this::register_extra_session();
             return redirect('/book/'.$book_id);
         }
@@ -293,33 +292,34 @@ class RootController extends Controller {
         if(!isset($theInst->no)) { // not exist
             return redirect('/inst')->with('error',__("Institution, \"".$request->input('institution')." \" doesn't exist."));
         }
-        $_SESSION['lib_inst']=$theInst->no;
-        $_SESSION['inst_uname']=$theInst->inst_uname;
+        session(['lib_inst' => $theInst->no]);
+        session(['inst_uname' => $theInst->inst_uname]);
         $this::register_extra_session();
         return redirect('/');
     }
 
-    static private function register_extra_session() {
-        $_SESSION['app.root']=config('app.root',''); // to pass it to progress_up.php for e-resource upload
-        $_SESSION['app.root2']=config('app.root2',''); // to pass it to progress_up.php for e-resource upload
-        $_SESSION['app.url']=config('app.url',''); // to pass it to progress_up.php for e-resource upload     
+    static private function register_extra_session() { 
+        session(['app.root' => config('app.root','')]); // to pass it to progress_up.php for e-resource upload
+        session(['app.root2' => config('app.root2','')]); // to pass it to progress_up.php for e-resource upload
+        session(['app.url' => config('app.url','')]); // to pass it to progress_up.php for e-resource upload
+
     }
 }
 
 function wv2_decode($ciphertext,$iv_hex,$inst_uname=null) {
     $cipher = "aes-256-cbc";
-    if(!isset($_SESSION['lib_inst']) || !$_SESSION['lib_inst']){ // login request from WISE/Acad system (not from wlibrary)
+    if(!session()->has('lib_inst')){ // login request from WISE/Acad system (not from wlibrary)
         if(!$inst_uname) redirect('/')->with('error',"Illegal Access"); // illegal access
         $theInst=new \vwmldbm\code\Inst_var(null,$inst_uname);
-        $_SESSION['lib_inst']=$theInst->no;
+        session(['lib_inst' => $theInst->no]);
     }
 
-    if(!isset($theInst)) $theInst=new \vwmldbm\code\Inst_var($_SESSION['lib_inst']);
-    if($_SESSION['lib_inst']==config('app.inst')) { // super inst
+    if(!isset($theInst)) $theInst=new \vwmldbm\code\Inst_var(session('lib_inst'));
+    if(session('lib_inst')==config('app.inst')) { // super inst
         $key=config('app.inst_secret').config('app.host');
     }
     else {
-		if($_SESSION['lib_inst']=='2')  print_r($theInst);
+		if(session('lib_inst')=='2')  print_r($theInst);
         $key=trim($theInst->secret).trim($theInst->host);
     }
     $iv=hex2bin($iv_hex);

@@ -15,8 +15,19 @@ class LibSession
     public function handle(Request $request, Closure $next)
     {
         if (!session()->has('lib_inst')) {
-            session(['lib_inst' => null]);
+            session(['lib_inst' => 1]);
         }
+       
+        if (!session()->has('specialRedirect')) {
+            session(['specialRedirect' =>null]);
+        }
+
+        if (!session()->has('specialBookId')) {
+            session(['specialBookId' => null]);
+        }
+
+        
+        
 
         return $next($request);
     }
