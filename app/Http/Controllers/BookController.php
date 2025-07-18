@@ -27,24 +27,22 @@ class BookController extends Controller
      */
     public function index(Request $request)
     {
+        session()->forget('specialRedirect');  // to prevented unexpected redirection
+        session()->forget('specialBookId');  // to prevented unexpected redirection
 
-        unset($_SESSION['specialRedirect']); // to prevented unexpected redirection
-        unset($_SESSION['specialBookId']); // to prevented unexpected redirection
-
-        if(isset($_SESSION['inst_uname'])){
-            $inst_uname=$_SESSION['inst_uname'];
+        if(session()->has('inst_uname')){
+            $inst_uname=session('inst_uname');
             $theInst= new \vwmldbm\code\Inst_var(null,$inst_uname);
-            $_SESSION['lib_inst']=$theInst->no;
-            //$_SESSION['inst_uname']=$theInst->inst_uname;
+            session(['lib_inst' => $theInst->no]);
         }
         else if(! Auth::check()) { // single-inst mode  
             if(config('app.multi_inst','')) { // multi-inst mode
-                if(!isset($_SESSION['lib_inst']) || !$_SESSION['lib_inst']) {                    
+                if(!session()->has('lib_inst')) {                    
                     return view('auth.inst'); // multi-inst mode should start from institution
                 }
             }
             else { // if multi-institution is not enabled, use the default institution
-                $_SESSION['lib_inst']=config('app.inst',config('app.inst',1));
+                session(['lib_inst' => config('app.inst',config('app.inst',1))]);
             }
         }    
 
@@ -57,7 +55,7 @@ class BookController extends Controller
             $pageSize=$request->input('page_size');
         else $pageSize=10;
 
-        $warr[]=['inst',$_SESSION['lib_inst']];
+        $warr[]=['inst',session('lib_inst')];
         if(!Auth::check()){
             $warr[]=['hide_from_guest_yn','<>','Y'];
             // $warr[]=['hide_from_guest_yn','=',null, 'or'];
@@ -86,17 +84,17 @@ class BookController extends Controller
             else {
                 $warr[]=['title','LIKE',"%{$search_word}%"];
                 $books=Book::where($warr)
-                ->orWhere([['inst',$_SESSION['lib_inst']],['author','LIKE',"%{$search_word}%"]])
-                ->orWhere([['inst',$_SESSION['lib_inst']],['publisher','LIKE',"%{$search_word}%"]])
-                ->orWhere([['inst',$_SESSION['lib_inst']],['keywords','LIKE',"%{$search_word}%"]])
-                ->orWhere([['inst',$_SESSION['lib_inst']],['isbn','LIKE',"%{$search_word}%"]])
-                ->orWhere([['inst',$_SESSION['lib_inst']],['eisbn','LIKE',"%{$search_word}%"]])
+                ->orWhere([['inst',session('lib_inst')],['author','LIKE',"%{$search_word}%"]])
+                ->orWhere([['inst',session('lib_inst')],['publisher','LIKE',"%{$search_word}%"]])
+                ->orWhere([['inst',session('lib_inst')],['keywords','LIKE',"%{$search_word}%"]])
+                ->orWhere([['inst',session('lib_inst')],['isbn','LIKE',"%{$search_word}%"]])
+                ->orWhere([['inst',session('lib_inst')],['eisbn','LIKE',"%{$search_word}%"]])
                 ->orderBy('id','desc')->paginate($pageSize);
             }
         }
         else {
             if(! Auth::check()) { // exclude hide_yn, hide_from_guest books => well allow the listing only
-                $books = Book::where('inst', $_SESSION['lib_inst'])
+                $books = Book::where('inst', session('lib_inst'))
                 ->where(function ($q) {
                     $q->where(function ($sub) {
                         $sub->where('hide_from_guest_yn', '<>', 'Y')
@@ -112,7 +110,7 @@ class BookController extends Controller
             }               
             else { // logged in, then exclude hide_yn for non admins
                 if(!Auth::user()->isAdmin()) {
-                    $books = Book::where('inst', $_SESSION['lib_inst'])
+                    $books = Book::where('inst', session('lib_inst'))
                         ->where(function ($q) {
                             $q->where('hide_yn', '<>', 'Y')
                             ->orWhereNull('hide_yn');
@@ -121,14 +119,14 @@ class BookController extends Controller
                         ->paginate($pageSize);
                 }
                 else {
-                    $books=Book::where('inst',$_SESSION['lib_inst'])
+                    $books=Book::where('inst',session('lib_inst'))
                     ->orderBy('id','desc')->paginate($pageSize);
                 }
             }
         }
 
         // $books=Book::orderBy('id','desc')->get();
-        return view('book.list')->with('books',$books)->with('inst',$_SESSION['lib_inst'])
+        return view('book.list')->with('books',$books)->with('inst',session('lib_inst'))
             ->with('search_word',$search_word)
             ->with('search_target',$search_target)->with('request',$request);
     }
@@ -173,8 +171,8 @@ class BookController extends Controller
             
 			
 			// check if the cover image directory by the inst no was created (especially in case of multi-inst mode)
-			if(!Storage::exists('public/cover_images/'.$_SESSION['lib_inst'])) {
-				Storage::makeDirectory('public/cover_images/'.$_SESSION['lib_inst']);
+			if(!Storage::exists('public/cover_images/'.session('lib_inst'))) {
+				Storage::makeDirectory('public/cover_images/'.session('lib_inst'));
 			}
 		
             // Get filename
@@ -184,7 +182,7 @@ class BookController extends Controller
             $fileNameToStore=$filename.'_'.time().'.'.$fext;
         
             // Upload Image
-            $path=config('filesystems.disks.public')['root'].'/cover_images/'.$_SESSION['lib_inst'].'/'.$fileNameToStore;
+            $path=config('filesystems.disks.public')['root'].'/cover_images/'.session('lib_inst').'/'.$fileNameToStore;
             $based64Image=substr($request->input('wise_photo_data'), strpos($request->input('wise_photo_data'), ',')+1);
             
             $base64_decoded_string = base64_decode($based64Image);
@@ -203,7 +201,7 @@ class BookController extends Controller
 
 
         if($request->input('isbn')) {
-            $search_book = Book::where('inst',$_SESSION['lib_inst'])
+            $search_book = Book::where('inst',session('lib_inst'))
                 ->where('isbn',$request->input('isbn'))
                 ->first();
             if(isset($search_book->id) && $search_book->id!='') {
@@ -212,7 +210,7 @@ class BookController extends Controller
         }
 
         if($request->input('eisbn')) {
-            $search_book = Book::where('inst',$_SESSION['lib_inst'])
+            $search_book = Book::where('inst',session('lib_inst'))
                 ->where('eisbn',$request->input('eisbn'))
                 ->first();
             if(isset($search_book->id) && $search_book->id!='') {
@@ -223,7 +221,7 @@ class BookController extends Controller
      // Create Book
         $book = new Book;
         $book->title=$request->input('title');
-        $book->inst=$_SESSION['lib_inst'];
+        $book->inst=session('lib_inst');
         $book->id=Book::max('id')+1;
         $book->rid=$this::get_new_rid();
         $book->author=$request->input('author');
@@ -277,37 +275,37 @@ class BookController extends Controller
      */
     public function show($id)
     {
-        if(isset($_SESSION['inst_uname'])){
-            $theInst= new \vwmldbm\code\Inst_var(null,$_SESSION['inst_uname']);
-            $_SESSION['lib_inst']=$theInst->no;
-            //$_SESSION['inst_uname']=$theInst->inst_uname;
+        if(session()->has('lib_inst')){
+            $theInst= new \vwmldbm\code\Inst_var(null,session('lib_inst'));
+            // session(['lib_inst' => $theInst->no]);
+            //session('lib_inst')=$theInst->inst_uname;
         }
         else if(! Auth::check()) {
             if(config('app.multi_inst','')) { // multi-inst mode
-                if(!isset($_SESSION['lib_inst']) || !$_SESSION['lib_inst']) {                    
+                if(!session()->has('lib_inst')) {                    
                     return view('auth.inst'); // multi-inst mode should start from institution
                 }
             }
             else { // if multi-institution is not enabled, use the default institution
-                $_SESSION['lib_inst']=config('app.inst',config('app.inst',1));
+                session(['lib_inst' => config('app.inst',config('app.inst',1))]);
             }
         } 
-        else if(isset($_SESSION['list_inst'])){
-            $theInst= new \vwmldbm\code\Inst_var($_SESSION['list_inst']);            
-            $_SESSION['inst_uname']=$theInst->inst_uname;
+        else if(session()->has('lib_inst')){
+            $theInst= new \vwmldbm\code\Inst_var(null,session('lib_inst'));            
+            session(['inst_uname' => $theInst->inst_uname]);
         } 
 
-        $book=Book::where('inst',$_SESSION['lib_inst'])
+        $book=Book::where('inst',session('lib_inst'))
             ->where('id',$id)->first();
 
-        if($book->files) {  // remove slashes
+        if(isset($book->files) && $book->files!='') {  // remove slashes
             $book->files=stripslashes($book->files);
         }
 
         if(!isset($book->id))  return redirect('/book/')->with('warning',__("The resource does not exist!"));
 
         if($book->hide_from_guest_yn=='Y' && !Auth::check()){                      
-            $books=Book::where('inst',$_SESSION['lib_inst'])
+            $books=Book::where('inst',session('lib_inst'))
                 ->where('hide_from_guest_yn','<>','Y')
                 ->orderBy('id','desc')->paginate(10);
             
@@ -322,14 +320,14 @@ class BookController extends Controller
 
         if($book->hide_yn=='Y'){
             if((Auth::check() && !Auth::user()->isAdmin()) || !Auth::check()) {
-                $books=Book::where('inst',$_SESSION['lib_inst'])
+                $books=Book::where('inst',session('lib_inst'))
                     ->orderBy('id','desc')->paginate(10);    
                 
                 return redirect('/book/')->with('books',$books)->with('inst',$inst)->with('warning',__("This resource is not available!"));
             }
         }
 
-        $book_copy=Book_copy::where('inst',$_SESSION['lib_inst'])
+        $book_copy=Book_copy::where('inst',session('lib_inst'))
             ->where('bid',$book->id)->get()->toArray();        
 
         return view('book.show')->with('book',$book)->with('book_copy',$book_copy);
@@ -350,17 +348,17 @@ class BookController extends Controller
             return redirect('/')->with('warning',__("No Authority"));
         }
 
-        $book=Book::where('inst',$_SESSION['lib_inst'])
+        $book=Book::where('inst',session('lib_inst'))
                 ->where('id',$id)->first();
 
         $this->man_files($book);
         if(!isset($book->id)) {
-            $books=Book::where('inst',$_SESSION['lib_inst'])
+            $books=Book::where('inst',session('lib_inst'))
                     ->orderBy('id','desc')->paginate(10);    
             return redirect('/book/')->with('books',$books)->with('warning',__("The resource does not exist!"));
         }
 
-        $book_copy=Book_copy::where('inst',$_SESSION['lib_inst'])
+        $book_copy=Book_copy::where('inst',session('lib_inst'))
                         ->where('bid',$book->id)->get()->toArray();        
         
         return view('book.edit')->with('book',$book)->with('book_copy',$book_copy);
@@ -376,13 +374,13 @@ class BookController extends Controller
     public function update(Request $request, $id)
     {
         // check if the cover image directory by the inst no was created (especially in case of multi-inst mode)
-        if(!Storage::exists('public/cover_images/'.$_SESSION['lib_inst'])) {
-            Storage::makeDirectory('public/cover_images/'.$_SESSION['lib_inst']);
+        if(!Storage::exists('public/cover_images/'.session('lib_inst'))) {
+            Storage::makeDirectory('public/cover_images/'.session('lib_inst'));
         }
 
         // check if the e-resource directory by the inst no was created (especially in case of multi-inst mode)
-         if(!Storage::exists('ebook/'.$_SESSION['lib_inst'])) {
-            Storage::makeDirectory('ebook/'.$_SESSION['lib_inst']);
+         if(!Storage::exists('ebook/'.session('lib_inst'))) {
+            Storage::makeDirectory('ebook/'.session('lib_inst'));
         }
 
         $isbn_error=false;
@@ -392,16 +390,16 @@ class BookController extends Controller
             ]); 
         
       // Find Book
-       $book = Book::where('inst',$_SESSION['lib_inst'])
+       $book = Book::where('inst',session('lib_inst'))
        ->where('id',$id)->first();
  
     // Case 1: Delete cover image submitted but the fileds should be saved.
         if($request->input('del_cover_image')=="DEL") {
-            Storage::delete('public/cover_images/'.$_SESSION['lib_inst'].'/'.$book->cover_image);
+            Storage::delete('public/cover_images/'.session('lib_inst').'/'.$book->cover_image);
             
           // Check if ISBN, e-ISBN is duplate
             if($request->input('isbn')) {
-                $search_book = Book::where('inst',$_SESSION['lib_inst'])
+                $search_book = Book::where('inst',session('lib_inst'))
                     ->where('isbn',$request->input('isbn'))
                     ->where('id','<>',$id)
                     ->first();
@@ -413,7 +411,7 @@ class BookController extends Controller
             else $book->isbn=$request->input('isbn');
 /*
             if($request->input('eisbn')) {
-                $search_book = Book::where('inst',$_SESSION['lib_inst'])
+                $search_book = Book::where('inst',session('lib_inst'))
                     ->where('eisbn',$request
                     ->where('id','<>',$id)
                     ->input('eisbn'))->first();
@@ -480,7 +478,7 @@ class BookController extends Controller
             $fileNameToStore=$filename.'_'.time().'.'.$fext;
 
             // Upload Image
-            $path=config('filesystems.disks.public')['root'].'/cover_images/'.$_SESSION['lib_inst'].'/'.$fileNameToStore;
+            $path=config('filesystems.disks.public')['root'].'/cover_images/'.session('lib_inst').'/'.$fileNameToStore;
             $based64Image=substr($request->input('wise_photo_data'), strpos($request->input('wise_photo_data'), ',')+1);    
 
             $base64_decoded_string = base64_decode($based64Image);
@@ -507,7 +505,7 @@ class BookController extends Controller
             $new_files=$wlibrary_book->get_new_files($request->input('del_file'));
             $new_rfiles=$wlibrary_book->get_new_rfiles($rfile);
 
-            Storage::delete('ebook/'.$_SESSION['lib_inst'].'/'.$book->rid."/".$rfile);
+            Storage::delete('ebook/'.session('lib_inst').'/'.$book->rid."/".$rfile);
 
             $wlibrary_book->update('files',$new_files); 
             $wlibrary_book->update('rfiles',$new_rfiles);
@@ -516,7 +514,7 @@ class BookController extends Controller
         }
 
         if($request->input('isbn')) {
-            $search_book = Book::where('inst',$_SESSION['lib_inst'])
+            $search_book = Book::where('inst',session('lib_inst'))
                 ->where('isbn',$request->input('isbn'))
                 ->where('id','<>',$id)
                 ->first();
@@ -529,7 +527,7 @@ class BookController extends Controller
 
         if($request->input('eisbn')) {
        
-            $search_book = Book::where('inst',$_SESSION['lib_inst'])
+            $search_book = Book::where('inst',session('lib_inst'))
                 ->where('eisbn',$request->input('eisbn'))
                 ->where('id','<>',$id)
                 ->first();
@@ -594,10 +592,10 @@ class BookController extends Controller
         if(!Auth::check() || !Auth::user()->isAdmin()) // illegal access
             return redirect('/')->with('warning',__("No Authority"));
 
-        $inst=$_SESSION['lib_inst'];
+        $inst=session('lib_inst');
         $book = Book::where("inst",$inst)->where("id",$id)->get()[0];
         // $book = Book::find($id); return;
-        // $book = new \App\Book(["inst"=>$_SESSION['lib_inst'],"id"=>$id]); // doesn't work
+        // $book = new \App\Book(["inst"=>session('lib_inst'),"id"=>$id]); // doesn't work
         // Check for correct user       
         
         // echo "<pre>";
@@ -630,11 +628,11 @@ class BookController extends Controller
     {
         if(! Auth::check()) { // single-inst mode       
             if(config('app.multi_inst','')) { // multi-inst mode
-                if($_SESSION['lib_inst']==null)
+                if(session('lib_inst')==null)
                     return view('auth.inst'); // multi-inst mode should start from institution
             }
             else { // if multi-institution is not enabled, use the default institution
-                $_SESSION['lib_inst']=config('app.inst',config('app.inst',1));
+                session(['lib_inst' => config('app.inst',config('app.inst',1))]);
             }
         }  
 
@@ -670,7 +668,7 @@ class BookController extends Controller
 
         if($c_rtype!==null || $c_genre!==null) { 
             $search_condition=array();
-            $search_condition[]=['inst',$_SESSION['lib_inst']];
+            $search_condition[]=['inst',session('lib_inst')];
             if($title) $search_condition[]=['title','LIKE',"%$title%"];
             if($author) $search_condition[]=['author','LIKE',"%$author%"];
             if($publisher) $search_condition[]=['publisher','LIKE',"%$publisher%"];
@@ -742,10 +740,10 @@ class BookController extends Controller
     }
 
     static function get_new_rid() { // random id for security (eg,for e-resource storage's folder name)
-        if(!isset($_SESSION['lib_inst'])) return; 
+        if(!session()->has('lib_inst')) return; 
         while(true){
             $rid=rand(10000,1000000000); 
-            $book = Book::where('inst',$_SESSION['lib_inst'])
+            $book = Book::where('inst',session('lib_inst'))
                 ->where('rid',$rid)->first();
             if(!isset($book->id)) break;
         }
@@ -766,8 +764,8 @@ class BookController extends Controller
             echo "<font color=gray>File mismatch resolving($f_diff)..</font>";
 
             for($i=0;$i<$f_diff;$i++){                
-                if(Storage::exists('ebook/'.$_SESSION['lib_inst'].'/'.$book->rid.'/'.$rfiles[$i])) {                    
-                    Storage::delete('ebook/'.$_SESSION['lib_inst'].'/'.$book->rid.'/'.$rfiles[$i]);
+                if(Storage::exists('ebook/'.session('lib_inst').'/'.$book->rid.'/'.$rfiles[$i])) {                    
+                    Storage::delete('ebook/'.session('lib_inst').'/'.$book->rid.'/'.$rfiles[$i]);
                 }
                 unset($rfiles[$i]);
             }

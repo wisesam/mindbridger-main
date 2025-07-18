@@ -66,7 +66,9 @@ class LoginController extends Controller
             // Login the user manually (optional if not using Laravel auth)
             Auth::login($u); 
             session(['wlibrary_admin' => $u->isAdmin()]); // being used?
+            session(['lib_inst' => $u->inst]); // being used?   
             $_SESSION['lib_inst'] = $u->inst; // $_SESSION used for mindbridger code
+            
             if($u->isAdmin()) {
                 $_SESSION['wlibrary_admin'] = $u->utype; //SA(Super Admin) or A, $_SESSION used for mindbridger code
             }

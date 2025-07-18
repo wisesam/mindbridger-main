@@ -27,8 +27,9 @@ class RootController extends Controller {
                     session(['lib_inst' => $inst]);
                 }
                 else $inst=session('lib_inst');                              
-                if(!$inst) return redirect('/inst');                
-
+                if(!$inst) {
+                    return redirect('/');                
+                }
                 if($inst==config('app.inst',1)) { // Super Institution: during system set up
                     $email=(config('app.wv2_sadmin_email')?config('app.wv2_sadmin_email'):'libadmin'.\wlibrary\code\genRandStr(4).'@wise4edu.com');
                 }
@@ -69,7 +70,6 @@ class RootController extends Controller {
             }
             else {
                 $this::register_extra_session(); // register extra session variables for ebook access by url
-                
                // This may not comply with Laravel's philosophy but can't find other solution. Set from BookController.php
                 if((session()->has('specialRedirect'))) {                     
                     $book=Book::where('inst',session('lib_inst'))
@@ -107,7 +107,7 @@ class RootController extends Controller {
             }
         }
         else if(!session()->has('lib_inst')){ // if session expired, redirect to /
-            return redirect('/');
+            return redirect('/login');
         }
         else {
             $this::register_extra_session();

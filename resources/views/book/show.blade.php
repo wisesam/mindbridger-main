@@ -13,7 +13,7 @@
 	$isAdmin = (Auth::check() && Auth::user()->isAdmin()) ? true : false;
 
     // fix (may not be valid way) 2025.1.23
-    session(['lib_inst' => (session('inst_uname')??(session('inst_id')??null))]);  
+    // session(['lib_inst' => (session('inst_id')??null)]);  
     $isEresource = ($book->files ? true : false);
 ?>
 
