@@ -74,6 +74,7 @@ class User extends Authenticatable
      */
     static protected function count_super_admin(){
         try {
+            $lib_inst=session('lib_inst')?? config('app.lib_inst'); // [SJH] default inst is 1
             $res = DB::select("select count(id) as cnt from ".config('database.connections.mysql.prefix')."users where inst='".session('lib_inst')."' and utype='SA'");
                     
         // $res = User::select('id')
