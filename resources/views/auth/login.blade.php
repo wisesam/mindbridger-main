@@ -1,10 +1,10 @@
 @extends('layouts.root')
 
 <?PHP
-if(!isset($_SESSION['lib_inst'])) $_SESSION['lib_inst']=null;
-$inst=$_SESSION['lib_inst'];
+if(!session()->has('lib_inst')) session()->forget('lib_inst'); 
+$inst=session('lib_inst');
 
-if(isset($_SESSION['inst_uname']))  $theInst=new vwmldbm\code\Inst_var(null,$_SESSION['inst_uname']);
+if(session()->has('inst_uname'))  $theInst=new vwmldbm\code\Inst_var(null,session('inst_uname'));
 else $theInst=new vwmldbm\code\Inst_var($inst,null);
 
 if($inst==config('app.inst')) $inst_mode=config('app.mode',''); // Default Institution

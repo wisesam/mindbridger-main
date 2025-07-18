@@ -1,15 +1,15 @@
 <?PHP
 // [SJH] Multi-lang change if there is any
 
-    if(!isset($_SESSION['refreshed'])) $_SESSION['refreshed']=false; // to prevent infinite refreshing
-    if(\vwmldbm\code\manage_lang(app()->getLocale(),'ccode')&& !$_SESSION['refreshed']) { // if changed, apply
-        $_SESSION['refreshed']=true;
+    if(!session()->has('refreshed'))  session(['refreshed' => false]);  // to prevent infinite refreshing
+    if(\vwmldbm\code\manage_lang(app()->getLocale(),'ccode') && ! session('refreshed')) { // if changed, apply
+        session(['refreshed' => true]);
         die("<script>location.reload();</script>"); // to reload the vwmldbm/config.php
     }
-    else $_SESSION['refreshed']=false;
+    else session(['refreshed' => false]);
 
     if(session()->has('lib_inst')) {
-        $about_hf=App\About::where('inst',$_SESSION['lib_inst'])->first();
+        $about_hf=App\About::where('inst',session('lib_inst'))->first();
     }
 ?>
 

@@ -22,7 +22,8 @@ class RootController extends Controller {
             if(User::count_super_admin() < 1) {
                 if(!config('app.multi_inst','')) {
                     $theInst= new \vwmldbm\code\Inst_var(null,config('app.inst_uname','')); // [TBM] Where $inst_uname?
-                    $inst=$theInst->no;
+                    $inst=$theInst->no ?? 1;
+                    
                     session(['lib_inst' => $inst]);
                 }
                 else $inst=session('lib_inst');                              
@@ -61,9 +62,10 @@ class RootController extends Controller {
         } 
         
         if(Auth::check()) {
-            if(session()->has('lib_inst')){ // session expired by WISE or other activity
+            if(!session()->has('lib_inst')){ // session expired by WISE or other activity
                 Auth::logout();
-                return redirect('/inst');
+                if(config('app.multi_inst')) return redirect('/inst');
+                else  return redirect('/');
             }
             else {
                 $this::register_extra_session(); // register extra session variables for ebook access by url

@@ -73,12 +73,17 @@ class User extends Authenticatable
      * @var integer
      */
     static protected function count_super_admin(){
-        $res = DB::select("select count(id) as cnt from ".config('database.connections.mysql.prefix')."users where inst='".session('lib_inst')."' and utype='SA'");
-        
+        try {
+            $res = DB::select("select count(id) as cnt from ".config('database.connections.mysql.prefix')."users where inst='".session('lib_inst')."' and utype='SA'");
+                    
         // $res = User::select('id')
         //     ->where('utype','10')->take(1)->get();
 
-        return $res[0]->cnt;
+            return $res[0]->cnt;
+
+        } catch (\Exception $e) {
+           if($e->getCode() == '42S02') die("Please Contact the webmaster"); // [SJH] default inst is 1
+        }
     }
 
      /** 

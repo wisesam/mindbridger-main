@@ -69,7 +69,7 @@ return [
     'inst_id' => '', // Should be same as collaborating App
     'inst_secret' => '', // Should be same as collaborating App
     'inst_uname' => 'mindbridger', // super institution user name (Used in multi-institution mode) 
-    'multi_inst' => true, // true: multi institution mode, false: Single institution mode
+    'multi_inst' => false, // true: multi institution mode, false: Single institution mode
     'host' => '', // eg, www.wise4edu.net
     'wv2_login_uri' => '', // To use Collab App login. eg, 'https://www.wise4edu.net/wise/'
     'wv2_lib_super_admin' => ['100','1210','1220'], // For WISE School ERP comatibility

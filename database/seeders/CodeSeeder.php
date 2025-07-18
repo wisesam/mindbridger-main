@@ -159,5 +159,55 @@ class CodeSeeder extends Seeder
             ['inst' => 1, 'code' => 40, 'c_lang' => 10, 'name' => 'Lost',   'use_yn' => 'Y'],
             ['inst' => 1, 'code' => 40, 'c_lang' => 30, 'name' => '분실',   'use_yn' => 'Y'],
         ]);
+
+
+        DB::table('code_c_rstatus')->delete();
+
+        DB::table('code_c_rstatus')->insert([
+            ['inst' => 1, 'code' => 10, 'c_lang' => 10, 'name' => 'Available',   'use_yn' => 'Y'],
+            ['inst' => 1, 'code' => 10, 'c_lang' => 30, 'name' => '대여가능',   'use_yn' => 'Y'],
+            ['inst' => 1, 'code' => 20, 'c_lang' => 10, 'name' => 'Reserved',   'use_yn' => 'Y'],
+            ['inst' => 1, 'code' => 20, 'c_lang' => 30, 'name' => '예약됨',   'use_yn' => 'Y'],
+            ['inst' => 1, 'code' => 30, 'c_lang' => 10, 'name' => 'Available (Damaged)',   'use_yn' => 'Y'],
+            ['inst' => 1, 'code' => 30, 'c_lang' => 30, 'name' => '대여가능 (손상)',   'use_yn' => 'Y'],
+            ['inst' => 1, 'code' => 40, 'c_lang' => 10, 'name' => 'Damaged',   'use_yn' => 'Y'],
+            ['inst' => 1, 'code' => 40, 'c_lang' => 30, 'name' => '손상',   'use_yn' => 'Y'],
+            ['inst' => 1, 'code' => 50, 'c_lang' => 10, 'name' => 'Lost',   'use_yn' => 'Y'],
+            ['inst' => 1, 'code' => 50, 'c_lang' => 30, 'name' => '분실',   'use_yn' => 'Y'],
+            ['inst' => 1, 'code' => 60, 'c_lang' => 10, 'name' => 'Missing',   'use_yn' => 'Y'],
+            ['inst' => 1, 'code' => 60, 'c_lang' => 30, 'name' => '소재불문명',   'use_yn' => 'Y'],
+        ]);
+
+        DB::table('code_c_grade')->delete();
+
+        DB::table('code_c_grade')->insert([
+            ['inst' => 1, 'code' => 10, 'c_lang' => 10, 'name' => 'Pre-Kinder',   'use_yn' => 'Y'],
+            ['inst' => 1, 'code' => 10, 'c_lang' => 30, 'name' => '유아',   'use_yn' => 'Y'],
+            ['inst' => 1, 'code' => 20, 'c_lang' => 10, 'name' => 'Kinder',   'use_yn' => 'Y'],
+            ['inst' => 1, 'code' => 20, 'c_lang' => 30, 'name' => '유치원',   'use_yn' => 'Y'],
+            ['inst' => 1, 'code' => 30, 'c_lang' => 10, 'name' => 'Elementary School',   'use_yn' => 'Y'],
+            ['inst' => 1, 'code' => 30, 'c_lang' => 30, 'name' => '초등학교',   'use_yn' => 'Y'],
+            ['inst' => 1, 'code' => 40, 'c_lang' => 10, 'name' => 'Middle School',   'use_yn' => 'Y'],
+            ['inst' => 1, 'code' => 40, 'c_lang' => 30, 'name' => '중등학교',   'use_yn' => 'Y'],
+            ['inst' => 1, 'code' => 50, 'c_lang' => 10, 'name' => 'High SChool',   'use_yn' => 'Y'],
+            ['inst' => 1, 'code' => 50, 'c_lang' => 30, 'name' => '고등학교',   'use_yn' => 'Y'],
+            ['inst' => 1, 'code' => 60, 'c_lang' => 10, 'name' => 'College',   'use_yn' => 'Y'],
+            ['inst' => 1, 'code' => 60, 'c_lang' => 30, 'name' => '대학',   'use_yn' => 'Y'],
+            ['inst' => 1, 'code' => 70, 'c_lang' => 10, 'name' => 'Graduate School',   'use_yn' => 'Y'],
+            ['inst' => 1, 'code' => 70, 'c_lang' => 30, 'name' => '대학원',   'use_yn' => 'Y'],
+        ]);
+
+        DB::table('code_c_code_set')->delete();
+
+        DB::table('code_c_code_set')->insert([
+            ['inst' => 1, 'code' => 10, 'c_lang' => 10, 'code_name' => 'code_c_genre',   'name' => 'Genre',   'use_yn' => 'Y'],
+            ['inst' => 1, 'code' => 10, 'c_lang' => 30, 'code_name' => 'code_c_genre',   'name' => '장르',   'use_yn' => 'Y'],
+            ['inst' => 1, 'code' => 20, 'c_lang' => 10, 'code_name' => 'code_c_grade',   'name' => 'Grade',   'use_yn' => 'Y'],
+            ['inst' => 1, 'code' => 20, 'c_lang' => 30, 'code_name' => 'code_c_grade',   'name' => '학년',   'use_yn' => 'Y'],
+            ['inst' => 1, 'code' => 30, 'c_lang' => 10, 'code_name' => 'code_c_category',   'name' => 'Category',   'use_yn' => 'Y'],
+            ['inst' => 1, 'code' => 30, 'c_lang' => 30, 'code_name' => 'code_c_category',   'name' => '카테고리',   'use_yn' => 'Y'],
+            ['inst' => 1, 'code' => 40, 'c_lang' => 10, 'code_name' => 'code_c_category2',   'name' => 'Category2',   'use_yn' => 'Y'],
+            ['inst' => 1, 'code' => 40, 'c_lang' => 30, 'code_name' => 'code_c_category2',   'name' => '카테고리2',   'use_yn' => 'Y'],
+        ]);
     }
 }

@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\User;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Support\Facades\Auth; // SJH
 use Illuminate\Support\Facades\Redirect; // SJH
+use Illuminate\Support\Facades\Hash; // SJH 
 use Illuminate\Http\Request;
+
 
 require_once(config('app.root')."/app/Libraries/code.php");
 require_once(config('app.root2')."/vwmldbm/config.php");
@@ -52,21 +55,37 @@ class LoginController extends Controller
         return $this->redirectTo;
     }
 
+    function login(Request $request) {
+      
+        $u = User::where('inst', session('lib_inst'))
+         ->where('email', $request->get('email'))
+         ->first();
+
+         if ($u && Hash::check($request->get('password'), $u->password)) {
+            // Password is correct
+            // Login the user manually (optional if not using Laravel auth)
+            Auth::login($u); 
+            return redirect('/');
+        } else { // login fail
+            return back()->withErrors(['email' => 'Invalid email or password.']);
+        }
+    }
+
     function logout() { // Added by Sam
         Auth::logout();
-        unset($_SESSION['wlibrary_admin']); // Disable unauthorized admin access
-        unset($_SESSION['app.root']);  // used in progress_up.php for e-resource upload. Disable unauthorized access
-        unset($_SESSION['app.root2']); // used in progress_up.php for e-resource upload. Disable unauthorized access
-        unset($_SESSION['app.url']); // used in progress_up.php for e-resource upload. Disable unauthorized access
-        unset($_SESSION['lib_inst']); // used for differentiating institutions
-        unset($_SESSION['inst_uname']); // used for differentiating institutions
-		
-        return redirect('/inst');
+        session()->forget('kwlibrary_adminey'); // Disable unauthorized admin access
+        session()->forget('app.root');  // used in progress_up.php for e-resource upload. Disable unauthorized access
+        session()->forget('app.root2');  // used in progress_up.php for e-resource upload. Disable unauthorized access
+        session()->forget('app.url');  // used in progress_up.php for e-resource upload. Disable unauthorized access
+        session()->forget('lib_inst');  // used in progress_up.php for e-resource upload. Disable unauthorized access
+        session()->forget('inst_uname');  // used in progress_up.php for e-resource upload. Disable unauthorized access
+        if(config('app.multi_inst')) return redirect('/inst');
+        else return redirect('/');
     }
 
     function showLoginForm(){            
        // if(config('app.multi_inst')  && !isset($_SESSION['inst_uname'])) {
-       if(config('app.multi_inst')  && !isset($_SESSION['lib_inst'])) {
+       if(config('app.multi_inst')  && !session()->has('lib_inst')) {
             return redirect('/inst');
         }
         else return view('auth.login');
