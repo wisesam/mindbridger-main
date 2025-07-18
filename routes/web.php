@@ -11,6 +11,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\RentalController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\BookUserFavoriteController;
+use App\Http\Controllers\BookAIAdvisorController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -25,7 +26,6 @@ use App\Http\Controllers\BookUserFavoriteController;
 // Route::get('/', function () {
 //     return view('welcome');
 // });
-
 
 Route::get('locale/{locale}', function ($locale) {
     Session::put('locale', $locale);
@@ -98,3 +98,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('book/{book}/favorite_count', [BookUserFavoriteController::class, 'count'])->name('book.favorite.count');
     Route::delete('book/{book}/favorite', [BookUserFavoriteController::class, 'destroy'])->name('book.favorite.remove');
 });
+
+
+// AI Book Recommendation Routes
+Route::get('/recommend', [BookAIAdvisorController::class, 'form'])->name('recommend.form');
+Route::post('/recommend', [BookAIAdvisorController::class, 'recommend'])->name('recommend');
