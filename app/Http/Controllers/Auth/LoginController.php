@@ -65,6 +65,12 @@ class LoginController extends Controller
             // Password is correct
             // Login the user manually (optional if not using Laravel auth)
             Auth::login($u); 
+            session(['wlibrary_admin' => $u->isAdmin()]); // being used?
+            $_SESSION['lib_inst'] = $u->inst; // $_SESSION used for mindbridger code
+            if($u->isAdmin()) {
+                $_SESSION['wlibrary_admin'] = $u->utype; //SA(Super Admin) or A, $_SESSION used for mindbridger code
+            }
+
             return redirect('/');
         } else { // login fail
             return back()->withErrors(['email' => 'Invalid email or password.']);
@@ -73,7 +79,7 @@ class LoginController extends Controller
 
     function logout() { // Added by Sam
         Auth::logout();
-        session()->forget('kwlibrary_adminey'); // Disable unauthorized admin access
+        session()->forget('wlibrary_admin'); // Disable unauthorized admin access
         session()->forget('app.root');  // used in progress_up.php for e-resource upload. Disable unauthorized access
         session()->forget('app.root2');  // used in progress_up.php for e-resource upload. Disable unauthorized access
         session()->forget('app.url');  // used in progress_up.php for e-resource upload. Disable unauthorized access

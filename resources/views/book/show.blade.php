@@ -13,8 +13,7 @@
 	$isAdmin = (Auth::check() && Auth::user()->isAdmin()) ? true : false;
 
     // fix (may not be valid way) 2025.1.23
-	$_SESSION['inst_uname']= isset($_SESSION['inst_uname'])? $_SESSION['inst_uname'] : $_SESSION['inst_id'] ;
-    
+    session(['lib_inst' => (session('inst_uname')??(session('inst_id')??null))]);  
     $isEresource = ($book->files ? true : false);
 ?>
 
@@ -38,7 +37,7 @@
                 </span>
             @endif
                 <span style='margin-left: 12px; display:inline'>
-                    <img src="{{config('app.url','/wlibrary')}}/image/button/share.png" class="zoom img-icon-pointer" onClick="textToClipboard('<?=config('app.url','/wlibrary')."/inst/".$_SESSION['inst_uname']."/book/".$book->id?>')">
+                    <img src="{{config('app.url','/wlibrary')}}/image/button/share.png" class="zoom img-icon-pointer" onClick="textToClipboard('<?=config('app.url','/wlibrary')."/inst/".session('inst_uname')."/book/".$book->id?>')">
                 </span>
                 <script>
                      function textToClipboard (text) {                        

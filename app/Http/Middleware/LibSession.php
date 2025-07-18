@@ -24,11 +24,7 @@ class LibSession
 
         if (!session()->has('specialBookId')) {
             session(['specialBookId' => null]);
-        }
-
-        
-        
-
+        } 
         return $next($request);
     }
 }
