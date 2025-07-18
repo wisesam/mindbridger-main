@@ -14,7 +14,6 @@ class CodeSeeder extends Seeder
      */
     public function run()
     {
-
         DB::table('code_c_utype')->delete();
 
         DB::table('code_c_utype')->insert([

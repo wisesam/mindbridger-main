@@ -1,6 +1,5 @@
 <?PHP
 // [SJH] Multi-lang change if there is any
-
     if(!session()->has('refreshed'))  session(['refreshed' => false]);  // to prevent infinite refreshing
     if(\vwmldbm\code\manage_lang(app()->getLocale(),'ccode') && ! session('refreshed')) { // if changed, apply
         session(['refreshed' => true]);
@@ -12,7 +11,6 @@
         $about_hf=App\About::where('inst',session('lib_inst'))->first();
     }
 ?>
-
 <!doctype html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>

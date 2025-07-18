@@ -30,13 +30,15 @@ if(!isset($numRentals)) {
                 <div class="dashboardbox">
                     <div class="dashb">
                         <div class="d-inline-flex">
-                            <span class="dashb_num">0</span>
+                            <span class="dashb_num"></span>
                         </div >
-                        <div>
-                            <img class="d-block w-100" src="image/reserve1.png?nocache=1"  width='100%' height='100%'>
+                        <div class="text-center">
+                            <a href="{{config('app.url','/wlibrary')}}/recommend">
+                                <img class="d-block w-100 mx-auto" src="image/ai-assistant.png?nocache=4"  width='100%' height='100%'>
+                            </a>
                         </div>
                     </div>
-                    <div class="dashb">{{__('Reserves')}}</div>
+                    <div class="dashb">{{__('AI Adviser')}}</div>
                 </div>
             </div>
             <!-- Reserves end -->
