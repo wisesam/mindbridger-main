@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Support\Facades\Auth; // [SJH]
 use App\Libraries\Code; // [SJH]
+use Illuminate\Http\Request;
+use Illuminate\Auth\Events\Registered;
 
 require_once(config('app.root')."/app/Libraries/code.php");
 require_once(config('app.root2')."/vwmldbm/config.php");
@@ -73,7 +75,7 @@ class RegisterController extends Controller
     protected function create(array $data)
     {
         return User::create([
-            'inst' =>$_SESSION['lib_inst'],
+            'inst' =>session('lib_inst'),
             'id' => $data['id'],
             'name' => $data['name'],
             'email' => $data['email'],
@@ -83,6 +85,20 @@ class RegisterController extends Controller
             'ustatus' => $data['ustatus'],
         ]);
     }
+
+    public function register(Request $request)
+    {
+        $this->validator($request->all())->validate();
+
+        event(new Registered($user = $this->create($request->all())));
+
+        // Don't log in the new user
+        // $this->guard()->login($user);
+
+        return $this->registered($request, $user)
+                        ?: redirect('/users/list')->with('success', 'User registered successfully!');
+    }
+
 
     public function showRegistrationForm() { // [SJH]
         if(Auth::check() && Auth::user()->isAdmin()) {

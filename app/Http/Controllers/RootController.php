@@ -23,7 +23,6 @@ class RootController extends Controller {
                 if(!config('app.multi_inst','')) {
                     $theInst= new \vwmldbm\code\Inst_var(null,config('app.inst_uname','')); // [TBM] Where $inst_uname?
                     $inst=$theInst->no ?? 1;
-                    
                     session(['lib_inst' => $inst]);
                 }
                 else $inst=session('lib_inst');                              
