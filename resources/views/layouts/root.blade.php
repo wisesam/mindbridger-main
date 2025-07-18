@@ -7,7 +7,10 @@
         die("<script>location.reload();</script>"); // to reload the vwmldbm/config.php
     }
     else $_SESSION['refreshed']=false;
-    $about_hf=App\About::where('inst',$_SESSION['lib_inst'])->first();
+
+    if(session()->has('lib_inst')) {
+        $about_hf=App\About::where('inst',$_SESSION['lib_inst'])->first();
+    }
 ?>
 
 <!doctype html>
