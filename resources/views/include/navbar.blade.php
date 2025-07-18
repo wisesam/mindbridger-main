@@ -101,7 +101,7 @@
             <ul class="navbar-nav ml-auto">
                 @guest                   
                     @if(config('app.multi_inst',''))
-                        @if($_SESSION['lib_inst'])
+                        @if(session()->has('lib_inst'))
                             <li class="nav-item">
                                 <a class="nav-link text-nowrap font-weight-bold text-warning" href="{{route('login')}}">{{__('Login')}}</a>
                             </li>
