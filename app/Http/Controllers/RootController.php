@@ -101,7 +101,7 @@ class RootController extends Controller {
                     $fav = BookUserFavorite::where('user_id', session('uid'))
                     ->where('inst', Auth::user()->inst)
                     ->get();
-                   $numFavorites=$fav->count();
+                    $numFavorites=$fav->count();
                     return view('root.home')->with('frontHome',true)->with('books',$books)->with('numFavorites',$numFavorites);
                 }
             }

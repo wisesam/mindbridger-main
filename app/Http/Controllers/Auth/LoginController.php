@@ -67,6 +67,8 @@ class LoginController extends Controller
             Auth::login($u); 
             session(['wlibrary_admin' => $u->isAdmin()]); // being used?
             session(['lib_inst' => $u->inst]); // being used?   
+            session(['uid' => $u->id]);   
+
             $_SESSION['lib_inst'] = $u->inst; // $_SESSION used for mindbridger code
             
             if($u->isAdmin()) {
