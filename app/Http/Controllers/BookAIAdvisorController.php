@@ -64,7 +64,7 @@ class BookAIAdvisorController extends Controller
             return back()->withErrors(['error' => 'Failed to parse AI response.'])->with('response', $response);
         }
 
-        return view('recommendations.result', compact('recommendedBooks'))->with('response', $response);
+        return view('recommendations.result', compact('recommendedBooks'))->with('response', $result);
     }
 
     public function form()
