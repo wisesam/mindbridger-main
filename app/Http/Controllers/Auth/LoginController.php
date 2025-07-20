@@ -76,6 +76,7 @@ class LoginController extends Controller
             $_SESSION['app.root2'] = config('app.root2'); // $_SESSION used for mindbridger code
             $_SESSION['app.url'] = config('app.url'); // $_SESSION used for mindbridger code
             $_SESSION['lib_inst'] = $u->inst; // $_SESSION used for mindbridger code
+            $_SESSION['uid'] = $u->id; // $_SESSION used for mindbridger code
             
             if($u->isAdmin()) {
                 $_SESSION['wlibrary_admin'] = $u->utype; //SA(Super Admin) or A, $_SESSION used for mindbridger code
