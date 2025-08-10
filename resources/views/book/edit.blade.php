@@ -456,14 +456,16 @@
 
                         <!-- Table of Contents (TOC) -->
                         <div class="form-group row">
-                            <label for="toc" class="col-md-3 col-form-label text-md-right">{{ $field_arr['toc'] }}</label>
+                            <label for="toc" class="col-md-3 col-form-label text-md-right">
+                                {{__("Table of Contents")}}
+                            </label>
                             <div class="col-md-7">
                                 <textarea id="toc"
                                     class="form-control @error('toc') is-invalid @enderror"
                                     name="toc"
                                     rows="10"
                                     autocomplete="off"
-                                    autofocus>{{ old('toc', $book->toc ?? "Go into all the world and preach the gospel to all creation. — Mark 16:15") }}
+                                    autofocus>{{ old('toc', $book->toc ?? "") }}
                                 </textarea>
 
                                 @error('toc')
@@ -480,7 +482,10 @@
                         <div class="form-group row">
                             <label for="auto_toc" class="col-md-3 col-form-label text-md-right">
                                 <div style="margin-bottom: 10px;">{{ __("Auto ToC") }}</div>
-                                <div style="margin-bottom: 10px;">
+                            </label>
+
+                            <div class="col-md-7">
+                                <span style="margin-right: 10px;">
                                     <button
                                         type="button"
                                         id="btn-auto-toc"
@@ -488,124 +493,117 @@
                                         data-url="{{ route('book.auto_toc', ['book' => $book->id]) }}">
                                         {{ __('Get ToC by AI') }}
                                     </button>
-                                </div>
 
-                        <!-- PDF Viewer URL -->
-                            <?php
-                            // Ensure the PDF URL is correctly formed
-                                $rfiles=explode(';',$book->rfiles);        
-                                $pdfUrl = $_SESSION['app.url']."/lib/get_book_file.php?rf={$rfiles[0]}&rid={$book->rid}";
-                            ?>
-                            <div class="mb-2">
-                                <button id="btn-auto_toc_js" class="btn btn-secondary"
-                                    data-pdf-url="{{ $pdfUrl }}">Extract ToC
-                                </button>
+                                    <script>
+                                        document.getElementById('btn-auto-toc').addEventListener('click', async function () {
+                                            const btn = this;
+                                            const url = btn.dataset.url;
 
-                                <script>
-                                    (async function () {
-                                        const btn = document.getElementById('btn-auto_toc_js');
-                                        if (!btn) return;
+                                            const orig = btn.innerHTML;
+                                            btn.disabled = true;
+                                            btn.innerHTML = "{{__('Generating…')}}";
 
-                                        async function resolveDestToPageNum(pdf, dest) {
-                                            let explicit = dest;
-                                            if (typeof dest === 'string') {
-                                            explicit = await pdf.getDestination(dest); // named -> explicit
-                                            }
-                                            if (Array.isArray(explicit) && explicit[0]) {
-                                            const pageIndex = await pdf.getPageIndex(explicit[0]); // 0-based
-                                            return pageIndex + 1;
-                                            }
-                                            return null;
-                                        }
-
-                                        async function flattenOutline(pdf, items, level = 1, acc = []) {
-                                            for (const it of items) {
-                                            const page = it.dest ? await resolveDestToPageNum(pdf, it.dest) : null;
-                                            acc.push({ title: (it.title || '').trim(), page, level });
-                                            if (it.items && it.items.length) await flattenOutline(pdf, it.items, level + 1, acc);
-                                            }
-                                            return acc;
-                                        }
-
-                                        btn.addEventListener('click', async () => {
-                                            const url = btn.dataset.pdfUrl;
-                                            if (!url) return alert('Missing PDF URL');
-
-                                            btn.disabled = true; const label = btn.innerHTML; btn.innerHTML = 'Reading…';
                                             try {
-                                                // Old-phone friendly options
-                                                const loadingTask = pdfjsLib.getDocument({
-                                                    url,
-                                                    disableAutoFetch: true,  // reduce memory/network
-                                                    disableStream: true      // simpler path for old browsers
+                                                const res = await fetch(url, {
+                                                    method: 'GET',
+                                                    headers: { 'Accept': 'application/json' }
                                                 });
-                                                const pdf = await loadingTask.promise;
+                                                if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-                                                let outline = await pdf.getOutline();
-                                                if (!outline) outline = [];
-
-                                                const flat = await flattenOutline(pdf, outline);
-                                                const tocText = flat.map((x, i) =>
-                                                    `${'  '.repeat(Math.max(0, x.level-1))}${i+1}. ${x.title}${x.page ? ' (p.'+x.page+')' : ''}`
-                                                ).join('\n');
-
-                                                document.getElementById('toc').value = tocText;
-                                                document.getElementById('auto_toc').innerHTML = JSON.stringify(flat);
-                                        
+                                                const data = await res.json();
+                                                if(!isEmpty(data.auto_toc)) {
+                                                    document.getElementById('auto_toc').value = JSON.stringify(data.auto_toc ?? {});
+                                                    document.getElementById('toc').value = JSON.stringify(data.auto_toc ?? {});
+                                                } else {
+                                                    alert("{{__('No ToC found!')}}");
+                                                }
+                                                
                                             } catch (e) {
-                                                console.error(e); alert('ToC read failed: ' + e.message);
+                                                alert('Failed to generate Auto ToC: ' + e.message);
                                             } finally {
-                                                btn.disabled = false; btn.innerHTML = label;
+                                                btn.disabled = false;
+                                                btn.innerHTML = orig;
                                             }
                                         });
-                                    })();
-                                </script>
+                                    </script>
+
+                                </span>
+
+                                <?php
+                                // url for PDFviewer. Ensure the PDF URL is correctly formed
+                                    $rfiles=explode(';',$book->rfiles);        
+                                    $pdfUrl = $_SESSION['app.url']."/lib/get_book_file.php?rf={$rfiles[0]}&rid={$book->rid}";
+                                ?>
+                                <span class="mb-2">
+                                    <button id="btn-auto_toc_js" class="btn btn-secondary"
+                                        data-pdf-url="{{ $pdfUrl }}">Extract ToC
+                                    </button>
+
+                                    <script>
+                                        (async function () {
+                                            const btn = document.getElementById('btn-auto_toc_js');
+                                            if (!btn) return;
+
+                                            async function resolveDestToPageNum(pdf, dest) {
+                                                let explicit = dest;
+                                                if (typeof dest === 'string') {
+                                                explicit = await pdf.getDestination(dest); // named -> explicit
+                                                }
+                                                if (Array.isArray(explicit) && explicit[0]) {
+                                                const pageIndex = await pdf.getPageIndex(explicit[0]); // 0-based
+                                                return pageIndex + 1;
+                                                }
+                                                return null;
+                                            }
+
+                                            async function flattenOutline(pdf, items, level = 1, acc = []) {
+                                                for (const it of items) {
+                                                const page = it.dest ? await resolveDestToPageNum(pdf, it.dest) : null;
+                                                acc.push({ title: (it.title || '').trim(), page, level });
+                                                if (it.items && it.items.length) await flattenOutline(pdf, it.items, level + 1, acc);
+                                                }
+                                                return acc;
+                                            }
+
+                                            btn.addEventListener('click', async () => {
+                                                const url = btn.dataset.pdfUrl;
+                                                if (!url) return alert('Missing PDF URL');
+
+                                                btn.disabled = true; const label = btn.innerHTML; btn.innerHTML = 'Reading…';
+                                                try {
+                                                    // Old-phone friendly options
+                                                    const loadingTask = pdfjsLib.getDocument({
+                                                        url,
+                                                        disableAutoFetch: true,  // reduce memory/network
+                                                        disableStream: true      // simpler path for old browsers
+                                                    });
+                                                    const pdf = await loadingTask.promise;
+
+                                                    let outline = await pdf.getOutline();
+                                                    if (!outline) outline = [];
+
+                                                    const flat = await flattenOutline(pdf, outline);
+                                                    const tocText = flat.map((x, i) =>
+                                                        `${'  '.repeat(Math.max(0, x.level-1))}${i+1}. ${x.title}${x.page ? ' (p.'+x.page+')' : ''}`
+                                                    ).join('\n');
+                                                    if(!isEmpty(flat)) {
+                                                        document.getElementById('toc').value = tocText;
+                                                        document.getElementById('auto_toc').value = JSON.stringify(flat);
+                                                    } else alert("{{__('No ToC found!')}}");
+                                            
+                                                } catch (e) {
+                                                    console.error(e); alert('ToC read failed: ' + e.message);
+                                                } finally {
+                                                    btn.disabled = false; btn.innerHTML = label;
+                                                }
+                                            });
+                                        })();
+                                    </script>
+                                </span>
+                            <!-- End PDF Viewer URL -->
+                               <input type='hidden' id='auto_toc' vlue="{{old('auto_toc', json_encode($book->auto_toc ?? []))}}">
+            
                             </div>
-                        <!-- End PDF Viewer URL -->
-
-                            </label>
-
-                            <div class="col-md-7">
-                               <span id='auto_toc'>
-                                {{old('auto_toc', json_encode($book->auto_toc ?? []))}}
-                               </span>
-
-                                @error('auto_toc')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-
-                               
-                            </div>
-
-                            <script>
-                            document.getElementById('btn-auto-toc').addEventListener('click', async function () {
-                                const btn = this;
-                                const url = btn.dataset.url;
-
-                                const orig = btn.innerHTML;
-                                btn.disabled = true;
-                                btn.innerHTML = 'Generating…';
-
-                                try {
-                                    const res = await fetch(url, {
-                                        method: 'GET',
-                                        headers: { 'Accept': 'application/json' }
-                                    });
-                                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-                                    const data = await res.json();
-                                    document.getElementById('auto_toc').innerHTML = JSON.stringify(data.auto_toc ?? {});
-                                } catch (e) {
-                                    alert('Failed to generate Auto ToC: ' + e.message);
-                                } finally {
-                                    btn.disabled = false;
-                                    btn.innerHTML = orig;
-                                }
-                            });
-                            </script>
-
                         </div>
                     @endif
                         <div class="form-group row">
