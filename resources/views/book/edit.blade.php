@@ -32,6 +32,15 @@
 
 @extends('layouts.root')
 @section('content')
+
+<!-- to be refactored-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.5.136/pdf.min.js"></script>
+<script>
+  // Point the worker at the same CDN
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.5.136/pdf.worker.min.js";
+</script>
+
+
 <script src="{{ auto_asset('/lib/jquery/jquery.form.min.js') }}"></script>
 <script src="{{ auto_asset('/lib/ckeditor_4c/ckeditor.js') }}"></script>
 <script>
@@ -467,8 +476,8 @@
                             </label>
 
                             <div class="col-md-7">
-                               <span>
-                                {{$book->auto_toc}}
+                               <span id='auto_toc'>
+                                {{old('auto_toc', json_encode($book->auto_toc ?? []))}}
                                </span>
 
                                 @error('auto_toc')
@@ -476,6 +485,8 @@
                                         <strong>{{ $message }}</strong>
                                     </span>
                                 @enderror
+
+                               
                             </div>
 
                             <script>
@@ -496,8 +507,7 @@
                                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
                                     const data = await res.json();
-                                    document.getElementById('toc').value = data.toc ?? '';
-                                    document.getElementById('auto_toc').value = JSON.stringify(data.auto_toc ?? {});
+                                    document.getElementById('auto_toc').innerHTML = JSON.stringify(data.auto_toc ?? {});
                                 } catch (e) {
                                     alert('Failed to generate Auto ToC: ' + e.message);
                                 } finally {

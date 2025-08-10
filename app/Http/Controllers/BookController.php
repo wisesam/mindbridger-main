@@ -786,19 +786,26 @@ class BookController extends Controller
      */
     public function auto_toc($book_id, Request $request)
     {
-        $book = Book::findOrFail($book_id);
+        $inst=session('lib_inst');
+        $book = Book::where("inst",$inst)->where("id",$book_id)->get()[0];
 
         // Generate or retrieve ToC
-        $generatedToc = $book->toc ?: "Chapter 1...\nChapter 2...\nChapter 3...";
-        $outline = $book->auto_toc ?: [
-            ['title' => 'Chapter 1', 'page' => 1],
-            ['title' => 'Chapter 2', 'page' => 15],
-            ['title' => 'Chapter 3', 'page' => 31],
-        ];
+        // $outline = $book->auto_toc ?: [
+        //     ['title' => 'Chapter 1', 'page' => 1],
+        //     ['title' => 'Chapter 2', 'page' => 15],
+        //     ['title' => 'Chapter 3', 'page' => 31],
+        // ];
+
+        // return response()->json([
+        //     'auto_toc' => $outline,
+        // ]);
 
         return response()->json([
-            'toc' => $generatedToc,
-            'auto_toc' => $outline,
+            'auto_toc' => [
+                ['title' => 'Chapter 1', 'page' => 1],
+                ['title' => 'Chapter 2', 'page' => 15],
+                ['title' => 'Chapter 3', 'page' => 31],
+            ],
         ]);
     }
 }
