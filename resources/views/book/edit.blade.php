@@ -34,11 +34,28 @@
 @section('content')
 
 <!-- to be refactored-->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.5.136/pdf.min.js"></script>
+<!-- i18n (optional, used by the viewer UI) -->
+<link rel="resource" type="application/l10n"
+      href="<?= $_SESSION['app.url'] ?>/lib/pdf.js/web/locale/locale.properties">
+
+<!-- Core library (v2.x UMD build) -->
+<script src="<?= $_SESSION['app.url'] ?>/lib/pdf.js/build/pdf.js"></script>
+
 <script>
-  // Point the worker at the same CDN
-  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.5.136/pdf.worker.min.js";
+  // pdf.js v2.x exposes itself here; create the familiar alias:
+  window.pdfjsLib = window['pdfjs-dist/build/pdf'] || window.pdfjsLib || window.PDFJS;
+
+  if (!window.pdfjsLib) {
+    console.error('pdf.js failed to load: check the path to build/pdf.js');
+  } else {
+    // Point the worker to your local copy (must be same-origin)
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "<?= $_SESSION['app.url'] ?>/lib/pdf.js/build/pdf.worker.js";
+  }
 </script>
+
+<!-- Your code that uses pdfjsLib (or the stock viewer) -->
+<script src="<?= $_SESSION['app.url'] ?>/lib/pdf.js/web/viewer.js"></script>
 
 
 <script src="{{ auto_asset('/lib/jquery/jquery.form.min.js') }}"></script>
@@ -440,7 +457,6 @@
                         <!-- Table of Contents (TOC) -->
                         <div class="form-group row">
                             <label for="toc" class="col-md-3 col-form-label text-md-right">{{ $field_arr['toc'] }}</label>
-
                             <div class="col-md-7">
                                 <textarea id="toc"
                                     class="form-control @error('toc') is-invalid @enderror"
@@ -473,6 +489,79 @@
                                     {{ __('Auto ToC') }}
                                 </button>
                             </div>
+
+                        <!-- PDF Viewer URL -->
+                            <?php
+                            // Ensure the PDF URL is correctly formed
+                                $rfiles=explode(';',$book->rfiles);        
+                                $pdfUrl = $_SESSION['app.url']."/lib/get_book_file.php?rf={$rfiles[0]}&rid={$book->rid}";
+                            ?>
+                            <div class="mb-2">
+                                <button id="btn-auto_toc_js" class="btn btn-secondary"
+                                    data-pdf-url="{{ $pdfUrl }}">Extract ToC
+                                </button>
+
+                                <script>
+                                    (async function () {
+                                        const btn = document.getElementById('btn-auto_toc_js');
+                                        if (!btn) return;
+
+                                        async function resolveDestToPageNum(pdf, dest) {
+                                            let explicit = dest;
+                                            if (typeof dest === 'string') {
+                                            explicit = await pdf.getDestination(dest); // named -> explicit
+                                            }
+                                            if (Array.isArray(explicit) && explicit[0]) {
+                                            const pageIndex = await pdf.getPageIndex(explicit[0]); // 0-based
+                                            return pageIndex + 1;
+                                            }
+                                            return null;
+                                        }
+
+                                        async function flattenOutline(pdf, items, level = 1, acc = []) {
+                                            for (const it of items) {
+                                            const page = it.dest ? await resolveDestToPageNum(pdf, it.dest) : null;
+                                            acc.push({ title: (it.title || '').trim(), page, level });
+                                            if (it.items && it.items.length) await flattenOutline(pdf, it.items, level + 1, acc);
+                                            }
+                                            return acc;
+                                        }
+
+                                        btn.addEventListener('click', async () => {
+                                            const url = btn.dataset.pdfUrl;
+                                            if (!url) return alert('Missing PDF URL');
+
+                                            btn.disabled = true; const label = btn.innerHTML; btn.innerHTML = 'Reading…';
+                                            try {
+                                                // Old-phone friendly options
+                                                const loadingTask = pdfjsLib.getDocument({
+                                                    url,
+                                                    disableAutoFetch: true,  // reduce memory/network
+                                                    disableStream: true      // simpler path for old browsers
+                                                });
+                                                const pdf = await loadingTask.promise;
+
+                                                let outline = await pdf.getOutline();
+                                                if (!outline) outline = [];
+
+                                                const flat = await flattenOutline(pdf, outline);
+                                                const tocText = flat.map((x, i) =>
+                                                    `${'  '.repeat(Math.max(0, x.level-1))}${i+1}. ${x.title}${x.page ? ' (p.'+x.page+')' : ''}`
+                                                ).join('\n');
+
+                                                document.getElementById('auto_toc').innerHTML = tocText;
+                                        
+                                            } catch (e) {
+                                                console.error(e); alert('ToC read failed: ' + e.message);
+                                            } finally {
+                                                btn.disabled = false; btn.innerHTML = label;
+                                            }
+                                        });
+                                    })();
+                                </script>
+                            </div>
+                        <!-- End PDF Viewer URL -->
+
                             </label>
 
                             <div class="col-md-7">
@@ -491,7 +580,6 @@
 
                             <script>
                             document.getElementById('btn-auto-toc').addEventListener('click', async function () {
-                                alert('hi');
                                 const btn = this;
                                 const url = btn.dataset.url;
 
@@ -519,7 +607,6 @@
 
                         </div>
                     @endif
-
                         <div class="form-group row">
                             <label for="rdonly_pdf_yn" class="col-md-3 col-form-label text-md-right">{{ $field_arr['rdonly_pdf_yn'] }}</label>
 
