@@ -21,7 +21,7 @@ class Book extends Model
      * @var array
      */
     protected $fillable = [
-        'inst','id','title', 'author', 'c_rtype','c_genre','publisher','pub_date','isbn','eisbn','c_lang','keywords','e_book_yn','cover_image','desc','url','price','c_grade','c_category','c_category2','hide_yn','hide_from_guest_yn'
+        'inst','id','title', 'author', 'c_rtype','c_genre','publisher','pub_date','isbn','eisbn','c_lang','keywords','e_book_yn','cover_image','desc','url','price','c_grade','c_category','c_category2','hide_yn','hide_from_guest_yn','toc'
     ];
 
 

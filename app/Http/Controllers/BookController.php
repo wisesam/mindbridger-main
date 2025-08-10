@@ -453,6 +453,7 @@ class BookController extends Controller
             $book->c_grade=$request->input('c_grade');  
             $book->c_category=$request->input('c_category');  
             $book->c_category2=$request->input('c_category2');  
+            $book->toc=$request->input('toc');  
 
             $book->save();
             if($isbn_error) {
@@ -570,6 +571,7 @@ class BookController extends Controller
         $book->c_grade=$request->input('c_grade');  
         $book->c_category=$request->input('c_category');  
         $book->c_category2=$request->input('c_category2');  
+        $book->toc=$request->input('toc');
             
         if($request->input('file_name')){
                 $book->cover_image=$fileNameToStore;

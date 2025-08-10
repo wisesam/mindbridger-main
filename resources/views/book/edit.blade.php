@@ -428,17 +428,18 @@
                             </div>
                         </div>
                         
+                        <!-- Table of Contents (TOC) and other fields -->
                         <div class="form-group row">
                             <label for="toc" class="col-md-3 col-form-label text-md-right">{{ $field_arr['toc'] }}</label>
 
                             <div class="col-md-7">
-                                <span class='form-control border-0'>
-                                    <textarea id="toc"
-                                            class="form-control @error('toc') is-invalid @enderror"
-                                            name="toc"
-                                            autocomplete="off"
-                                            autofocus>{{ old('toc', $book->toc ?? "Go into all the world and preach the gospel to all creation. — Mark 16:15") }}</textarea>
-                                </span>
+                                <textarea id="toc"
+                                        class="form-control @error('toc') is-invalid @enderror"
+                                        name="toc"
+                                        rows="10"
+                                        autocomplete="off"
+                                        autofocus>{{ old('toc', $book->toc ?? "Go into all the world and preach the gospel to all creation. — Mark 16:15") }}</textarea>
+
                                 @error('toc')
                                     <span class="invalid-feedback" role="alert">
                                         <strong>{{ $message }}</strong>
@@ -446,6 +447,7 @@
                                 @enderror
                             </div>
                         </div>
+
 
                         <div class="form-group row">
                             <label for="rdonly_pdf_yn" class="col-md-3 col-form-label text-md-right">{{ $field_arr['rdonly_pdf_yn'] }}</label>
