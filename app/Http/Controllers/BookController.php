@@ -774,4 +774,37 @@ class BookController extends Controller
         $book->rfiles=implode(';',$rfiles);
         $book->save();
     }
+
+
+        /**
+     * Display the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function auto_toc($id)
+    {
+        if(session()->has('lib_inst')){
+            $theInst= new \vwmldbm\code\Inst_var(null,session('lib_inst'));
+            // session(['lib_inst' => $theInst->no]);
+            //session('lib_inst')=$theInst->inst_uname;
+        }
+        else if(! Auth::check()) {
+            if(config('app.multi_inst','')) { // multi-inst mode
+                if(!session()->has('lib_inst')) {                    
+                    return view('auth.inst'); // multi-inst mode should start from institution
+                }
+            }
+            else { // if multi-institution is not enabled, use the default institution
+                session(['lib_inst' => config('app.inst',config('app.inst',1))]);
+            }
+        } 
+        else if(session()->has('lib_inst')){
+            $theInst= new \vwmldbm\code\Inst_var(null,session('lib_inst'));            
+            session(['inst_uname' => $theInst->inst_uname]);
+        } 
+
+        $book=Book::where('inst',session('lib_inst'))
+            ->where('id',$id)->first();
+    }
 }

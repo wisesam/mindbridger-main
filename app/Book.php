@@ -43,8 +43,10 @@ class Book extends Model
         'title' => 'string',
         'author' => 'string',
         'pub_date' => 'date:Y-m-d H:i:s',
-        'reg_date' => 'date:Y-m-d H:i:s'
+        'reg_date' => 'date:Y-m-d H:i:s',
+        'auto_toc' => 'array',  // lets you read/write it as PHP array
     ];
+
 
     // Timestamps
     public $timestamps = false;

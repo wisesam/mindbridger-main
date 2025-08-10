@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('book', function (Blueprint $table) {
-            $table->longText('toc')->nullable()->after('updated_at');
+            $table->longText('toc')->nullable()->after('files');
             $table->json('auto_toc')->nullable()->after('toc');
         });
     }
