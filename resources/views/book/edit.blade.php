@@ -427,18 +427,19 @@
                                 @enderror
                             </div>
                         </div>
-                        
-                        <!-- Table of Contents (TOC) and other fields -->
+
+                        <!-- Table of Contents (TOC) -->
                         <div class="form-group row">
                             <label for="toc" class="col-md-3 col-form-label text-md-right">{{ $field_arr['toc'] }}</label>
 
                             <div class="col-md-7">
                                 <textarea id="toc"
-                                        class="form-control @error('toc') is-invalid @enderror"
-                                        name="toc"
-                                        rows="10"
-                                        autocomplete="off"
-                                        autofocus>{{ old('toc', $book->toc ?? "Go into all the world and preach the gospel to all creation. — Mark 16:15") }}</textarea>
+                                    class="form-control @error('toc') is-invalid @enderror"
+                                    name="toc"
+                                    rows="10"
+                                    autocomplete="off"
+                                    autofocus>{{ old('toc', $book->toc ?? "Go into all the world and preach the gospel to all creation. — Mark 16:15") }}
+                                </textarea>
 
                                 @error('toc')
                                     <span class="invalid-feedback" role="alert">
@@ -447,7 +448,67 @@
                                 @enderror
                             </div>
                         </div>
+                        
+                        
+                    @if(!empty($book->files))
+                        <!-- Table of Contents (Auto_TOC) -->
+                        <div class="form-group row">
+                            <label for="auto_toc" class="col-md-3 col-form-label text-md-right">
+                            <div>{{ $field_arr['auto_toc'] }}</div>
+                            <div>
+                                <button
+                                    type="button"
+                                    id="btn-auto-toc"
+                                    class="btn btn-primary"
+                                    data-url="{{ route('book.auto_toc', ['book' => $book->id]) }}">
+                                    {{ __('Auto ToC') }}
+                                </button>
+                            </div>
+                            </label>
 
+                            <div class="col-md-7">
+                               <span>
+                                {{$book->auto_toc}}
+                               </span>
+
+                                @error('auto_toc')
+                                    <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                                @enderror
+                            </div>
+
+                            <script>
+                            document.getElementById('btn-auto-toc').addEventListener('click', async function () {
+                                alert('hi');
+                                const btn = this;
+                                const url = btn.dataset.url;
+
+                                const orig = btn.innerHTML;
+                                btn.disabled = true;
+                                btn.innerHTML = 'Generating…';
+
+                                try {
+                                    const res = await fetch(url, {
+                                        method: 'GET',
+                                        headers: { 'Accept': 'application/json' }
+                                    });
+                                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+                                    const data = await res.json();
+                                    document.getElementById('toc').value = data.toc ?? '';
+                                    document.getElementById('auto_toc').value = JSON.stringify(data.auto_toc ?? {});
+                                } catch (e) {
+                                    alert('Failed to generate Auto ToC: ' + e.message);
+                                } finally {
+                                    btn.disabled = false;
+                                    btn.innerHTML = orig;
+                                }
+                            });
+                            </script>
+
+                        </div>
+                    @endif
 
                         <div class="form-group row">
                             <label for="rdonly_pdf_yn" class="col-md-3 col-form-label text-md-right">{{ $field_arr['rdonly_pdf_yn'] }}</label>

@@ -781,32 +781,24 @@ class BookController extends Controller
         /**
      * Display the specified resource.
      *
-     * @param  int  $id
+     * @param  int  $book_id
      * @return \Illuminate\Http\Response
      */
-    public function auto_toc($id)
+    public function auto_toc($book_id, Request $request)
     {
-        if(session()->has('lib_inst')){
-            $theInst= new \vwmldbm\code\Inst_var(null,session('lib_inst'));
-            // session(['lib_inst' => $theInst->no]);
-            //session('lib_inst')=$theInst->inst_uname;
-        }
-        else if(! Auth::check()) {
-            if(config('app.multi_inst','')) { // multi-inst mode
-                if(!session()->has('lib_inst')) {                    
-                    return view('auth.inst'); // multi-inst mode should start from institution
-                }
-            }
-            else { // if multi-institution is not enabled, use the default institution
-                session(['lib_inst' => config('app.inst',config('app.inst',1))]);
-            }
-        } 
-        else if(session()->has('lib_inst')){
-            $theInst= new \vwmldbm\code\Inst_var(null,session('lib_inst'));            
-            session(['inst_uname' => $theInst->inst_uname]);
-        } 
+        $book = Book::findOrFail($book_id);
 
-        $book=Book::where('inst',session('lib_inst'))
-            ->where('id',$id)->first();
+        // Generate or retrieve ToC
+        $generatedToc = $book->toc ?: "Chapter 1...\nChapter 2...\nChapter 3...";
+        $outline = $book->auto_toc ?: [
+            ['title' => 'Chapter 1', 'page' => 1],
+            ['title' => 'Chapter 2', 'page' => 15],
+            ['title' => 'Chapter 3', 'page' => 31],
+        ];
+
+        return response()->json([
+            'toc' => $generatedToc,
+            'auto_toc' => $outline,
+        ]);
     }
 }

@@ -97,6 +97,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('book/{book}/favorite', [BookUserFavoriteController::class, 'check'])->name('book.favorite.check');
     Route::get('book/{book}/favorite_count', [BookUserFavoriteController::class, 'count'])->name('book.favorite.count');
     Route::delete('book/{book}/favorite', [BookUserFavoriteController::class, 'destroy'])->name('book.favorite.remove');
+    Route::get('book/{book}/auto_toc', [BookController::class, 'auto_toc'])->name('book.auto_toc');
 });
 
 
