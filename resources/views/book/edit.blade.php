@@ -479,16 +479,16 @@
                         <!-- Table of Contents (Auto_TOC) -->
                         <div class="form-group row">
                             <label for="auto_toc" class="col-md-3 col-form-label text-md-right">
-                            <div>{{ $field_arr['auto_toc'] }}</div>
-                            <div>
-                                <button
-                                    type="button"
-                                    id="btn-auto-toc"
-                                    class="btn btn-primary"
-                                    data-url="{{ route('book.auto_toc', ['book' => $book->id]) }}">
-                                    {{ __('Auto ToC') }}
-                                </button>
-                            </div>
+                                <div style="margin-bottom: 10px;">{{ __("Auto ToC") }}</div>
+                                <div style="margin-bottom: 10px;">
+                                    <button
+                                        type="button"
+                                        id="btn-auto-toc"
+                                        class="btn btn-primary"
+                                        data-url="{{ route('book.auto_toc', ['book' => $book->id]) }}">
+                                        {{ __('Get ToC by AI') }}
+                                    </button>
+                                </div>
 
                         <!-- PDF Viewer URL -->
                             <?php
@@ -549,7 +549,8 @@
                                                     `${'  '.repeat(Math.max(0, x.level-1))}${i+1}. ${x.title}${x.page ? ' (p.'+x.page+')' : ''}`
                                                 ).join('\n');
 
-                                                document.getElementById('auto_toc').innerHTML = tocText;
+                                                document.getElementById('toc').value = tocText;
+                                                document.getElementById('auto_toc').innerHTML = JSON.stringify(flat);
                                         
                                             } catch (e) {
                                                 console.error(e); alert('ToC read failed: ' + e.message);
