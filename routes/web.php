@@ -76,7 +76,7 @@ Route::get('/book_copy/create/{book}', [Book_copyController::class, 'create'])->
 Route::get('/asearch', [BookController::class, 'asearch'])->name('book.asearch'); // [SJH]
 
 // Rental Specific Routes
-Route::resource('rental', RentalController::class); // [SJH] 2024.12.19
+// Route::resource('rental', RentalController::class); // [SJH] 2024.12.19
 Route::get('rental/create/{book_copy}', [RentalController::class, 'create'])->name('rental.create'); // [SJH]
 Route::get('rental/{user}/all', [RentalController::class, 'list'])->name('rental.user.all'); // [SJH]
 Route::get('rental/{user}/rented', [RentalController::class, 'rented_list'])->name('rental.user.rented'); // [SJH]
@@ -97,6 +97,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('book/{book}/favorite', [BookUserFavoriteController::class, 'check'])->name('book.favorite.check');
     Route::get('book/{book}/favorite_count', [BookUserFavoriteController::class, 'count'])->name('book.favorite.count');
     Route::delete('book/{book}/favorite', [BookUserFavoriteController::class, 'destroy'])->name('book.favorite.remove');
+    Route::get('book/{book}/auto_toc', [BookController::class, 'auto_toc'])->name('book.auto_toc');
 });
 
 

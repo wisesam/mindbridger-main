@@ -32,6 +32,32 @@
 
 @extends('layouts.root')
 @section('content')
+
+<!-- to be refactored-->
+<!-- i18n (optional, used by the viewer UI) -->
+<link rel="resource" type="application/l10n"
+      href="<?= $_SESSION['app.url'] ?>/lib/pdf.js/web/locale/locale.properties">
+
+<!-- Core library (v2.x UMD build) -->
+<script src="<?= $_SESSION['app.url'] ?>/lib/pdf.js/build/pdf.js"></script>
+
+<script>
+  // pdf.js v2.x exposes itself here; create the familiar alias:
+  window.pdfjsLib = window['pdfjs-dist/build/pdf'] || window.pdfjsLib || window.PDFJS;
+
+  if (!window.pdfjsLib) {
+    console.error('pdf.js failed to load: check the path to build/pdf.js');
+  } else {
+    // Point the worker to your local copy (must be same-origin)
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "<?= $_SESSION['app.url'] ?>/lib/pdf.js/build/pdf.worker.js";
+  }
+</script>
+
+<!-- Your code that uses pdfjsLib (or the stock viewer) -->
+<script src="<?= $_SESSION['app.url'] ?>/lib/pdf.js/web/viewer.js"></script>
+
+
 <script src="{{ auto_asset('/lib/jquery/jquery.form.min.js') }}"></script>
 <script src="{{ auto_asset('/lib/ckeditor_4c/ckeditor.js') }}"></script>
 <script>
@@ -427,7 +453,158 @@
                                 @enderror
                             </div>
                         </div>
+
+                        <!-- Table of Contents (TOC) -->
+                        <div class="form-group row">
+                            <label for="toc" class="col-md-3 col-form-label text-md-right">
+                                {{__("Table of Contents")}}
+                            </label>
+                            <div class="col-md-7">
+                                <textarea id="toc"
+                                    class="form-control @error('toc') is-invalid @enderror"
+                                    name="toc"
+                                    rows="10"
+                                    autocomplete="off"
+                                    autofocus>{{ old('toc', $book->toc ?? "") }}
+                                </textarea>
+
+                                @error('toc')
+                                    <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                                @enderror
+                            </div>
+                        </div>
                         
+                        
+                    @if(!empty($book->files))
+                        <!-- Table of Contents (Auto_TOC) -->
+                        <div class="form-group row">
+                            <label for="auto_toc" class="col-md-3 col-form-label text-md-right">
+                                <div style="margin-bottom: 10px;">{{ __("Auto ToC") }}</div>
+                            </label>
+
+                            <div class="col-md-7">
+                                <span style="margin-right: 10px;">
+                                    <button
+                                        type="button"
+                                        id="btn-auto-toc"
+                                        class="btn btn-primary"
+                                        data-url="{{ route('book.auto_toc', ['book' => $book->id]) }}">
+                                        {{ __('Get ToC by AI') }}
+                                    </button>
+
+                                    <script>
+                                        document.getElementById('btn-auto-toc').addEventListener('click', async function () {
+                                            const btn = this;
+                                            const url = btn.dataset.url;
+
+                                            const orig = btn.innerHTML;
+                                            btn.disabled = true;
+                                            btn.innerHTML = "{{__('Generating…')}}";
+
+                                            try {
+                                                const res = await fetch(url, {
+                                                    method: 'GET',
+                                                    headers: { 'Accept': 'application/json' }
+                                                });
+                                                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+                                                const data = await res.json();
+                                                if(!isEmpty(data.auto_toc)) {
+                                                    document.getElementById('auto_toc').value = JSON.stringify(data.auto_toc ?? {});
+                                                    document.getElementById('toc').value = JSON.stringify(data.auto_toc ?? {});
+                                                } else {
+                                                    alert("{{__('No ToC found!')}}");
+                                                }
+                                                
+                                            } catch (e) {
+                                                alert('Failed to generate Auto ToC: ' + e.message);
+                                            } finally {
+                                                btn.disabled = false;
+                                                btn.innerHTML = orig;
+                                            }
+                                        });
+                                    </script>
+
+                                </span>
+
+                                <?php
+                                // url for PDFviewer. Ensure the PDF URL is correctly formed
+                                    $rfiles=explode(';',$book->rfiles);        
+                                    $pdfUrl = $_SESSION['app.url']."/lib/get_book_file.php?rf={$rfiles[0]}&rid={$book->rid}";
+                                ?>
+                                <span class="mb-2">
+                                    <button id="btn-auto_toc_js" class="btn btn-secondary"
+                                        data-pdf-url="{{ $pdfUrl }}">Extract ToC
+                                    </button>
+
+                                    <script>
+                                        (async function () {
+                                            const btn = document.getElementById('btn-auto_toc_js');
+                                            if (!btn) return;
+
+                                            async function resolveDestToPageNum(pdf, dest) {
+                                                let explicit = dest;
+                                                if (typeof dest === 'string') {
+                                                explicit = await pdf.getDestination(dest); // named -> explicit
+                                                }
+                                                if (Array.isArray(explicit) && explicit[0]) {
+                                                const pageIndex = await pdf.getPageIndex(explicit[0]); // 0-based
+                                                return pageIndex + 1;
+                                                }
+                                                return null;
+                                            }
+
+                                            async function flattenOutline(pdf, items, level = 1, acc = []) {
+                                                for (const it of items) {
+                                                const page = it.dest ? await resolveDestToPageNum(pdf, it.dest) : null;
+                                                acc.push({ title: (it.title || '').trim(), page, level });
+                                                if (it.items && it.items.length) await flattenOutline(pdf, it.items, level + 1, acc);
+                                                }
+                                                return acc;
+                                            }
+
+                                            btn.addEventListener('click', async () => {
+                                                const url = btn.dataset.pdfUrl;
+                                                if (!url) return alert('Missing PDF URL');
+
+                                                btn.disabled = true; const label = btn.innerHTML; btn.innerHTML = 'Reading…';
+                                                try {
+                                                    // Old-phone friendly options
+                                                    const loadingTask = pdfjsLib.getDocument({
+                                                        url,
+                                                        disableAutoFetch: true,  // reduce memory/network
+                                                        disableStream: true      // simpler path for old browsers
+                                                    });
+                                                    const pdf = await loadingTask.promise;
+
+                                                    let outline = await pdf.getOutline();
+                                                    if (!outline) outline = [];
+
+                                                    const flat = await flattenOutline(pdf, outline);
+                                                    const tocText = flat.map((x, i) =>
+                                                        `${'  '.repeat(Math.max(0, x.level-1))}${i+1}. ${x.title}${x.page ? ' (p.'+x.page+')' : ''}`
+                                                    ).join('\n');
+                                                    if(!isEmpty(flat)) {
+                                                        document.getElementById('toc').value = tocText;
+                                                        document.getElementById('auto_toc').value = JSON.stringify(flat);
+                                                    } else alert("{{__('No ToC found!')}}");
+                                            
+                                                } catch (e) {
+                                                    console.error(e); alert('ToC read failed: ' + e.message);
+                                                } finally {
+                                                    btn.disabled = false; btn.innerHTML = label;
+                                                }
+                                            });
+                                        })();
+                                    </script>
+                                </span>
+                            <!-- End PDF Viewer URL -->
+                               <input type='hidden' id='auto_toc' name='auto_toc' value=@json(old("auto_toc", $book->auto_toc ?? []))>
+                            </div>
+                        </div>
+                    @endif
                         <div class="form-group row">
                             <label for="rdonly_pdf_yn" class="col-md-3 col-form-label text-md-right">{{ $field_arr['rdonly_pdf_yn'] }}</label>
 
@@ -617,7 +794,7 @@
                                     @enderror
                                 @else 
                                     <img onClick='open_cover_img(this)' style='cursor:pointer;' src='{{config('app.url','/nwlibrary')}}/storage/cover_images/{{$_SESSION['lib_inst']}}/{{$book->cover_image}}' height='200'>
-                                    &nbsp; <a href="javascript:confirm_del()"><img src='{{config('app.url','/nwlibrary')}}/image/button/trash.png' height='40' class='wlibrary_icon'></a>
+                                    &nbsp; <a href="javascript:confirm_del()"><img src="{{config('app.url','/nwlibrary')}}/image/button/trash.png" height='40' class='wlibrary_icon'></a>
                                     <input type='hidden' name='del_cover_image'>
                                     <script>
                                         function confirm_del(){

@@ -21,7 +21,7 @@ class Book extends Model
      * @var array
      */
     protected $fillable = [
-        'inst','id','title', 'author', 'c_rtype','c_genre','publisher','pub_date','isbn','eisbn','c_lang','keywords','e_book_yn','cover_image','desc','url','price','c_grade','c_category','c_category2','hide_yn','hide_from_guest_yn'
+        'inst','id','title', 'author', 'c_rtype','c_genre','publisher','pub_date','isbn','eisbn','c_lang','keywords','e_book_yn','cover_image','desc','url','price','c_grade','c_category','c_category2','hide_yn','hide_from_guest_yn','toc','rfiles'
     ];
 
 
@@ -31,6 +31,7 @@ class Book extends Model
      * @var array
      */
     protected $hidden = [
+        'auto_toc'
     ];
 
 
@@ -43,8 +44,10 @@ class Book extends Model
         'title' => 'string',
         'author' => 'string',
         'pub_date' => 'date:Y-m-d H:i:s',
-        'reg_date' => 'date:Y-m-d H:i:s'
+        'reg_date' => 'date:Y-m-d H:i:s',
+        // 'auto_toc' => 'array',  // lets you read/write it as PHP array
     ];
+
 
     // Timestamps
     public $timestamps = false;

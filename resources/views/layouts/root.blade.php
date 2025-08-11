@@ -19,16 +19,17 @@
     <meta tttp-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
-    <script src="{{ auto_asset('/lib/js/popper/popper.js') }}"></script>
+    <script src="{{ auto_asset('/lib/js/popper.1.16.0.min.js') }}"></script>
     <script src="{{ auto_asset('/lib/jquery/jquery-3.4.1.min.js') }}"></script>
     <script src="{{ auto_asset('/lib/jquery/ui/1.12.1/jquery-ui.min.js') }}"></script>
     <script src="{{ auto_asset('/lib/bootstrap-4.4.1-dist/js/bootstrap.js') }}"></script>
+
+    <script src="{{ auto_asset('/lib/js/util.js') }}?v=20250810"></script>
 
     @if(isset($frontHome))
         <script src="{{ auto_asset('/lib/bootstrap-3.4.1/dist/js/bootstrap.min.js') }}"></script>
         <!--script src="{{ asset('/lib/jquery.mobile-1.4.5/jquery-3.4.1.min.js') }}"></script-->
     @endif
-    <!--script src="{{ asset('/lib/js/app.js') }}"></script-->   
     
     @if(isset($frontHome))        
         <link href="{{ auto_asset('/lib/bootstrap-4.4.1-dist/css/bootstrap.min.css?nocache') }}" rel="stylesheet">

@@ -10,7 +10,7 @@ function show_list_old_files($book,$perm,$rid){
 	
     $rfiles=explode(';',$book->rfiles);
     $cnt=1;
-	foreach($files as $key =>$val){
+	foreach($files as $key =>$val) {
 		$onClickDel=null;
 		$pdfDownTag=null; // when read only PDF is not set
 		if($val) {
@@ -29,7 +29,7 @@ function show_list_old_files($book,$perm,$rid){
 					$fpath = config('app.root') . "/storage/app/ebook/{$_SESSION['lib_inst']}/{$book->rid}/{$rfiles[$key]}";
                     $fsize = file_exists($fpath) ? \wlibrary\code\format_fsize(filesize($fpath), 'MB', 1) . "MB" : "N/A";
 
-                    $viewerUrl = config('app.url') . "/lib/pdf.js/web/viewer.php?file=&rf={$rfiles[$key]}&rid=$rid";
+                    $viewerUrl = config('app.url') . "/lib/pdf.js/web/?file=&rf={$rfiles[$key]}&rid=$rid";
                     $downloadUrl = config('app.url') . "/lib/get_book_file.php?rf=" . $rfiles[$key] . "&rid=$rid";
 
                     $imgSrc = $book->cover_image ?  config('app.url','/nwlibrary')."/storage/cover_images/".$_SESSION['lib_inst']."/".$book->cover_image : config('app.url') . "/image/pdf-icon.png";
@@ -162,7 +162,7 @@ function edit_list_old_files($book,$perm,$rid){
 				$down_tag=null;
 				$down_tag="<a href=\"";
 				if($fext=='pdf'){ // readonly pdf
-					$down_tag.=config('app.url')."/lib/pdf.js/web/viewer.php?file=&rf={$rfiles[$key]}&rid=$rid";
+					$down_tag.=config('app.url')."/lib/pdf.js/web/?file=&rf={$rfiles[$key]}&rid=$rid";
 									
 					if($isAdmin || $book->rdonly_pdf_yn!='Y') {						
 						$pdfDownTag=" &nbsp; <a href=\"".config('app.url')."/lib/get_book_file.php?rf=".$rfiles[$key]."&rid=$rid\" target='_blank'>";
