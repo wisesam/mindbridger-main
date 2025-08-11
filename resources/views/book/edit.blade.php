@@ -601,8 +601,7 @@
                                     </script>
                                 </span>
                             <!-- End PDF Viewer URL -->
-                               <input type='hidden' id='auto_toc' vlue="{{old('auto_toc', json_encode($book->auto_toc ?? []))}}">
-            
+                               <input type='hidden' id='auto_toc' name='auto_toc' value=@json(old("auto_toc", $book->auto_toc ?? []))>
                             </div>
                         </div>
                     @endif
@@ -795,7 +794,7 @@
                                     @enderror
                                 @else 
                                     <img onClick='open_cover_img(this)' style='cursor:pointer;' src='{{config('app.url','/nwlibrary')}}/storage/cover_images/{{$_SESSION['lib_inst']}}/{{$book->cover_image}}' height='200'>
-                                    &nbsp; <a href="javascript:confirm_del()"><img src='{{config('app.url','/nwlibrary')}}/image/button/trash.png' height='40' class='wlibrary_icon'></a>
+                                    &nbsp; <a href="javascript:confirm_del()"><img src="{{config('app.url','/nwlibrary')}}/image/button/trash.png" height='40' class='wlibrary_icon'></a>
                                     <input type='hidden' name='del_cover_image'>
                                     <script>
                                         function confirm_del(){

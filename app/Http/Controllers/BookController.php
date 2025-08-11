@@ -454,6 +454,7 @@ class BookController extends Controller
             $book->c_category=$request->input('c_category');  
             $book->c_category2=$request->input('c_category2');  
             $book->toc=$request->input('toc');  
+            $book->auto_toc=$request->input('auto_toc');  
 
             $book->save();
             if($isbn_error) {
@@ -572,6 +573,7 @@ class BookController extends Controller
         $book->c_category=$request->input('c_category');  
         $book->c_category2=$request->input('c_category2');  
         $book->toc=$request->input('toc');
+        $book->auto_toc=$request->input('auto_toc');  
             
         if($request->input('file_name')){
                 $book->cover_image=$fileNameToStore;
@@ -790,15 +792,7 @@ class BookController extends Controller
         $book = Book::where("inst",$inst)->where("id",$book_id)->get()[0];
 
         // Generate or retrieve ToC
-        // $outline = $book->auto_toc ?: [
-        //     ['title' => 'Chapter 1', 'page' => 1],
-        //     ['title' => 'Chapter 2', 'page' => 15],
-        //     ['title' => 'Chapter 3', 'page' => 31],
-        // ];
-
-        // return response()->json([
-        //     'auto_toc' => $outline,
-        // ]);
+       
 
         return response()->json([
             'auto_toc' => [

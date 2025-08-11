@@ -10,7 +10,7 @@ function show_list_old_files($book,$perm,$rid){
 	
     $rfiles=explode(';',$book->rfiles);
     $cnt=1;
-	foreach($files as $key =>$val){
+	foreach($files as $key =>$val) {
 		$onClickDel=null;
 		$pdfDownTag=null; // when read only PDF is not set
 		if($val) {
