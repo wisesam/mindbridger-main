@@ -53,6 +53,7 @@
                     <label style="cursor:pointer;" class="ml-2 mb-0">
                         <input type="checkbox" id="favorite-checkbox" style="display:none;" onchange="toggleFavorite(this)">
                         <img id="favorite-icon" src="{{ config('app.url','/wlibrary') }}/image/button/heart-empty2.png" class="zoom img-icon-pointer"/>
+                        <img id="eshelf-icon" src="{{ config('app.url','/wlibrary') }}/image/button/ebook-empty.png" class="zoom img-icon-pointer" style="margin-left:8px;"/>
                     </label>
 
                     <script>
@@ -141,7 +142,7 @@
                             @if(Auth::check() || $book->e_res_af_login_yn!='Y') 
                             <div class="col-md-9">
                                 <?PHP 
-                                        echo show_list_old_files($book,$perm,$book->rid);                                
+                                    echo show_list_old_files($book,$perm,$book->rid);                                
                                 ?>
                                 <ol id='fileList'></ol>                               
                                                             
@@ -156,6 +157,123 @@
                         </div>
 
                     @endif
+
+                <!-- ToC Display: Accordion -->
+                @if($book->toc)
+                    <div class="form-group row">
+                        <label for="rtype" class="col-md-3 col-form-label text-md-right font-weight-bold">
+                            {{ __("Table of Contents") }}
+                        </label>
+
+                        <div class="col-md-9">
+                            <div class="accordion" id="tocAccordion">
+                                @php
+                                // Get ToC from old input or model
+                                $tocJson = old('auto_toc', $book->auto_toc ?? '[]');
+                                $toc = is_array($tocJson) ? $tocJson : json_decode($tocJson, true) ?? [];
+
+                                // Group: level 1 = chapters; attach following items with level > 1 as children until next level 1
+                                $chapters = [];
+                                $current = null;
+                                foreach ($toc as $item) {
+                                    $item = [
+                                        'title' => $item['title'] ?? 'Untitled',
+                                        'page'  => $item['page'] ?? null,
+                                        'level' => $item['level'] ?? 1,
+                                    ];
+                                    if ($item['level'] <= 1) {
+                                        if ($current) $chapters[] = $current;
+                                        $current = ['title' => $item['title'], 'page' => $item['page'], 'children' => []];
+                                    } else {
+                                        if (!$current) { // in case the JSON starts with > level 1
+                                            $current = ['title' => 'Chapter', 'page' => null, 'children' => []];
+                                        }
+                                        $current['children'][] = $item;
+                                    }
+                                }
+                                if ($current) $chapters[] = $current;
+                                @endphp
+                            </div>
+                            
+                            <div id="tocAccordion">
+                                @foreach($chapters as $idx => $ch)
+                                    @php
+                                    $collapseId = "tocCollapse{$idx}";
+                                    $headingId  = "tocHeading{$idx}";
+                                    @endphp
+
+                                    <div class="card">
+                                    <div class="card-header" id="{{ $headingId }}">
+                                        <h5 class="mb-0 d-flex align-items-center justify-content-between">
+                                        <button class="btn btn-link" type="button" data-toggle="collapse"
+                                                data-target="#{{ $collapseId }}" aria-expanded="false" aria-controls="{{ $collapseId }}">
+                                            {{ $ch['title'] }}
+                                            @if(!is_null($ch['page']))
+                                            <span class="badge badge-secondary ml-2">p. {{ $ch['page'] }}</span>
+                                            @endif
+                                        </button>
+
+                                        @if(!is_null($ch['page']))
+                                            <button type="button" class="btn btn-sm btn-primary ml-2" data-page="{{ $ch['page'] }}" onclick="goToPage(this)">
+                                            Go to page
+                                            </button>
+                                        @endif
+                                        </h5>
+                                    </div>
+
+                                    <div id="{{ $collapseId }}" class="collapse" aria-labelledby="{{ $headingId }}" data-parent="#tocAccordion">
+                                        <div class="card-body p-0">
+                                        @if(count($ch['children']))
+                                            <ul class="list-group list-group-flush">
+                                            @foreach($ch['children'] as $child)
+                                                <li class="list-group-item d-flex align-items-center justify-content-between">
+                                                <span>
+                                                    @if(($child['level'] ?? 2) > 2)
+                                                    {{-- simple indent for deeper levels --}}
+                                                    <span class="text-muted mr-2" style="display:inline-block; width: {{ (($child['level']-2)*14) }}px;"></span>
+                                                    @endif
+                                                    {{ $child['title'] }}
+                                                </span>
+                                                @if(!is_null($child['page']))
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm" data-page="{{ $child['page'] }}" onclick="goToPage(this)">
+                                                    p. {{ $child['page'] }}
+                                                    </button>
+                                                @endif
+                                                </li>
+                                            @endforeach
+                                            </ul>
+                                        @else
+                                            <div class="p-3 text-muted">No sub-sections.</div>
+                                        @endif
+                                        </div>
+                                    </div>
+                                    </div>
+                                @endforeach
+                                </div>
+
+                                <script>
+                                // Replace with your actual PDF jump logic (e.g., PDF.js, viewer API, or server route)
+                                function goToPage(btn) {
+                                    var page = btn.getAttribute('data-page');
+                                    if (!page) return;
+                                    // Example hooks:
+                                    // window.PDFViewerApplication.pdfViewer.currentPageNumber = parseInt(page, 10);
+                                    // or dispatch an event your viewer listens to:
+                                    // window.dispatchEvent(new CustomEvent('book:goToPage', { detail: { page: parseInt(page, 10) }}));
+                                    console.log('Go to page:', page);
+                                }
+                                </script>
+                        </div>
+                    </div>
+                    @else
+                        <div class="form-group row">
+                            <label for="rtype" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Table of Contents") }}</label>
+                            <div class="col-md-9">
+                                {{ __("No Table of Contents available.") }}
+                            </div>
+                        </div>
+                    @endif
+                <!-- End ToC Display: Accordion -->
 
                     <div class="form-group row">
                         <label for="rtype" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['c_rtype'] }}</label>
