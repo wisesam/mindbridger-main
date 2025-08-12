@@ -15,8 +15,8 @@
      - eg, chown -R apache mindbridger-main, chgrp -R apache mindbridger-main
 3. composer install
 4. cp /.env.example .env  (update needed)
-5. cp /app/config/app(default).php config/app.php (update needed)
-6. cp /app/config/database (default).php config/database .php (update needed)
+5. cp /config/app(default).php config/app.php (update needed)
+6. cp /config/database (default).php config/database .php (update needed)
 7. php artisan key:generate (update .env)
 8. DB Migration (Library related table installation)
 - php artisan migrate
