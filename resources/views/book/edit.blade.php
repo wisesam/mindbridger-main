@@ -33,7 +33,6 @@
 @extends('layouts.root')
 @section('content')
 
-<!-- to be refactored-->
 <!-- i18n (optional, used by the viewer UI) -->
 <link rel="resource" type="application/l10n"
       href="<?= $_SESSION['app.url'] ?>/lib/pdf.js/web/locale/locale.properties">
