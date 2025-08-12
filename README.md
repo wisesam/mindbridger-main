@@ -9,12 +9,14 @@
 ### https://github.com/wisesam/mindbridger.git
 
 ## Now you can install MindBridger Main Laravel program
-1. Main Larabel repo (backend + frontend) 
-2. https://github.com/wisesam/mindbridger-main.git
+1. Main Larabel repo (backend + frontend)
+   - https://github.com/wisesam/mindbridger-main.git
+   - Adujust directory permission if needed (Linux and MacOS):
+     - eg, chown -R apache mindbridger-main, chgrp -R apache mindbridger-main
 3. composer install
-4. cp /.env.example .env  (update needed)
-5. cp /app/config/app(default).php config/app.php (update needed)
-6. cp /app/config/database (default).php config/database .php (update needed)
+4. cp .env.example .env  (update needed)
+5. cp config/app(default).php config/app.php (update needed)
+6. cp config/database (default).php config/database .php (update needed)
 7. php artisan key:generate (update .env)
 8. DB Migration (Library related table installation)
 - php artisan migrate
