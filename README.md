@@ -19,8 +19,10 @@
 6. cp config/database (default).php config/database .php (update needed)
 7. php artisan key:generate (update .env)
 8. DB Migration (Library related table installation)
-- php artisan migrate
-- php artisan db:seed --class=CodeSeeder
+ - php artisan migrate
+ - php artisan db:seed --class=CodeSeeder
+ (If migration gives error like " No such file or directory", then update DB_SOCKET in .env)
+
 9. Create a symbolic link (for cover images)
 - (Windows CMD example)  mklink /D storage "c:\xampp\mindbridger-main\storage\app\public"
 - (Linux, MacOS example) ln -s /var/www/mindbridger-main/storage/app/public storage
