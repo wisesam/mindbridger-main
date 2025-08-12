@@ -24,9 +24,10 @@
    - (If migration gives error like " No such file or directory", then update DB_SOCKET in .env)
 
 8. Create a symbolic link (for cover images)
+   - Go to root of mindbridger (eg, c:\xampp\htdocs\mindbridger, /var/www/html/mindbridger)
    - (Windows CMD example)  mklink /D storage "c:\xampp\mindbridger-main\storage\app\public"
    - (Linux, MacOS example) ln -s /var/www/mindbridger-main/storage/app/public storage
-9. Click Update button from http://localhost/mindbridger/vwmldbm
+10. Click Update button from http://localhost/mindbridger/vwmldbm
 
 ## Demo
 <a href="https://wise4edu.net/wlibrary/inst/ina" target="_blank">Habibi Library (Sudanese Community School in Cairo)</a>
