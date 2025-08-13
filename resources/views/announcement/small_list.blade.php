@@ -3,7 +3,7 @@
     // $field_arr=array();
     // \vwmldbm\code\get_field_name_all('announcement',$field_arr);
     if(!isset($ann)) {
-        $ann=App\Announcement::where('inst',$_SESSION['lib_inst'])->orderBy('top_yn','desc')->take(3)->get();
+        $ann=App\Models\Announcement::where('inst',$_SESSION['lib_inst'])->orderBy('top_yn','desc')->take(3)->get();
     }
 ?>
 

@@ -3,8 +3,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Pagination;
-use App\User;
-use App\Rental;
+use App\Models\User;
+use App\Models\Rental;
 
 require_once(config('app.root')."/app/Libraries/code.php");
 require_once(config('app.root2')."/vwmldbm/config.php");

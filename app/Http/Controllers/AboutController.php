@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Auth; // [SJH]
 use Illuminate\Support\Facades\DB; // [SJH]
 use Illuminate\Support\Facades\Hash; // [SJH]
 
-use App\About; // [SJH]
+use App\Models\About; // [SJH]
 
 require_once(config('app.root')."/app/Libraries/code.php");
 require_once(config('app.root2')."/vwmldbm/config.php");

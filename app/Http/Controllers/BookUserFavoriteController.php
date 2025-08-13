@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Pagination;
-use App\Book; 
+use App\Models\Book; 
 use App\Models\BookUserFavorite;
 use DB; // instead of Eloquent, use DB
 
