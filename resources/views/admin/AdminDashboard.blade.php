@@ -4,15 +4,15 @@
 	}
 
 	if(!isset($numBooks)) {
-		$numBooks=App\Book::where('inst',$_SESSION['lib_inst'])->get()->count();
+		$numBooks=App\Models\Book::where('inst',$_SESSION['lib_inst'])->get()->count();
 	}
 
 	if(!isset($numCopies)) {
-		$numCopies=App\Book_copy::where('inst',$_SESSION['lib_inst'])->get()->count();
+		$numCopies=App\Models\Book_copy::where('inst',$_SESSION['lib_inst'])->get()->count();
 	}
 	
 	if(!isset($numRentals)) {
-		$numRentals=App\Rental::num('RENTED');
+		$numRentals=App\Models\Rental::num('RENTED');
 	}
 
 	$fpath=config('app.root')."/storage/app/ebook/{$_SESSION['lib_inst']}";
