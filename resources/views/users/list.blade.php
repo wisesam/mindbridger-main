@@ -45,8 +45,8 @@
                         if(!Auth::user()->isAdmin('SA') && Auth::user()->isAdmin('SA',$u['id'])) // skip the usper admin if the user is not super admin
                             continue; 
 
-                        $rented_num=App\Rental::num('RENTED',$u['id']);  
-                        $all_num=App\Rental::num(null,$u['id']);
+                        $rented_num=App\Models\Rental::num('RENTED',$u['id']);  
+                        $all_num=App\Models\Rental::num(null,$u['id']);
 
                         $rented_num_tag=0;
                         if($rented_num) {
