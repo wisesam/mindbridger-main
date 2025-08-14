@@ -61,7 +61,7 @@
                     <tr>
                         <td>{{$u['id']}}</td>
                         <td>{{$u['name']}}</td>
-                        <td><?=App\User::get_utype($u['utype'])?></td>
+                        <td><?=App\Models\User::get_utype($u['utype'])?></td>
                         <td>
                             <?PHP
                                 if($u['code_c_utype']) echo $c_utype_arr[$u['code_c_utype']]
