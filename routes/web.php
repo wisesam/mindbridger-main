@@ -32,7 +32,6 @@ Route::get('locale/{locale}', function ($locale) {
 	return redirect()->back();
 });
 
-// Route::get('/','RootController@test'); // 6.2 version
 Route::get('/',[RootController::class, 'index']);
 Route::get('/wv2login',[RootController::class,'wv2login']);
 
@@ -85,12 +84,6 @@ Route::get('rental/book_copy/{book_copy}/rented', [RentalController::class, 'ren
 
 Route::resource('announcement', AnnouncementController::class);
 
-// cache clear by url [SJH]
-Route::get('/clear-cache', function() {
-    Artisan::call('cache:clear');
-    return "Cache is cleared";
-});
-
 Route::middleware(['auth'])->group(function () {
     Route::get('favorite', [BookUserFavoriteController::class, 'index'])->name('book.favorite');
     Route::post('book/{book}/favorite', [BookUserFavoriteController::class, 'store'])->name('book.favorite.store');
@@ -104,3 +97,9 @@ Route::middleware(['auth'])->group(function () {
 // AI Book Recommendation Routes
 Route::get('/recommend', [BookAIAdvisorController::class, 'form'])->name('recommend.form');
 Route::post('/recommend', [BookAIAdvisorController::class, 'recommend'])->name('recommend');
+
+// cache clear by url [SJH]
+Route::get('/clear-cache', function() {
+    Artisan::call('cache:clear');
+    return "Cache is cleared";
+});
