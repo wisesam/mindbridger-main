@@ -41,7 +41,7 @@
                     <th></th>
                 </tr>                
                 @foreach($ulist as $u)
-                    <?php 
+                    @php 
                         if(!Auth::user()->isAdmin('SA') && Auth::user()->isAdmin('SA',$u['id'])) // skip the usper admin if the user is not super admin
                             continue; 
 
@@ -57,7 +57,7 @@
                         if($all_num) {
                             $all_num_tag="<a href='".config('app.url','/wlibrary')."/rental/".$u['id']."/all'>$all_num</a>";
                         }
-                    ?>
+                    @endphp
                     <tr>
                         <td>{{$u['id']}}</td>
                         <td>{{$u['name']}}</td>
