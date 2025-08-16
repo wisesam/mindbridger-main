@@ -11,6 +11,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\RentalController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\BookUserFavoriteController;
+use App\Http\Controllers\BookUserEshelfController;
 use App\Http\Controllers\BookAIAdvisorController;
 /*
 |--------------------------------------------------------------------------
@@ -91,6 +92,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('book/{book}/favorite_count', [BookUserFavoriteController::class, 'count'])->name('book.favorite.count');
     Route::delete('book/{book}/favorite', [BookUserFavoriteController::class, 'destroy'])->name('book.favorite.remove');
     Route::get('book/{book}/auto_toc', [BookController::class, 'auto_toc'])->name('book.auto_toc');
+    Route::get('eshelf', [BookUserEshelfController::class, 'index'])->name('book.eshelf');
+    Route::post('book/{book}/eshelf', [BookUserEshelfController::class, 'store'])->name('book.eshelf.store');
+    Route::get('book/{book}/eshelf', [BookUserEshelfController::class, 'check'])->name('book.eshelf.check');
+    Route::delete('book/{book}/eshelf', [BookUserEshelfController::class, 'destroy'])->name('book.eshelf.remove');
 });
 
 

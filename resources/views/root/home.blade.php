@@ -64,7 +64,9 @@ if(!isset($numRentals)) {
                 <div class="dashboardbox">
                     <div class="dashb">
                         <div class="d-inline-flex">
-                            <span class="dashb_num">0</span>
+                            <a href="{{config('app.url','/wlibrary')}}/eshelf">
+                                <span class="dashb_num">{{$numEshelf}}</span>
+                            </a>
                         </div >
                         <div>
                             <img class="d-block w-100" src="image/shelf.png?nocache=1"  width='100%' height='100%'>

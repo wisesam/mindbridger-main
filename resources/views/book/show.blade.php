@@ -138,11 +138,16 @@ html, body { height: 100%; }
                     <label style="cursor:pointer;" class="ml-2 mb-0">
                         <input type="checkbox" id="favorite-checkbox" style="display:none;" onchange="toggleFavorite(this)">
                         <img id="favorite-icon" src="{{ config('app.url','/wlibrary') }}/image/button/heart-empty2.png" class="zoom img-icon-pointer"/>
+                    </label>
+                    <label>
+                        <input type="checkbox" id="eshelf-checkbox" style="display:none;" onchange="toggleEshelf(this)">
                         <img id="eshelf-icon" src="{{ config('app.url','/wlibrary') }}/image/button/ebook-empty.png" class="zoom img-icon-pointer" style="margin-left:8px;"/>
                     </label>
 
                     <script>
-                            let isFavorited = false;                
+                            let isFavorited = false;
+                            let isEshelfOn = false;
+
                             $.get("{{ route('book.favorite.check', ['book' => $book->id]) }}")
                                 .done(function (response) {
                                     if (response.favorited) {
@@ -159,6 +164,23 @@ html, body { height: 100%; }
                                 }
                             });
 
+                            // For My E-Shelf
+                            $.get("{{ route('book.eshelf.check', ['book' => $book->id]) }}")
+                                .done(function (response) {
+                                    if (response.isMyEshelf) {
+                                        isEshelfOn = true;
+                                        $('#eshelf-icon').attr('src', '{{ config("app.url","/wlibrary") }}/image/button/ebook-filled.png');
+                                        $('#eshelf-checkbox').prop('checked', true);
+                                    }
+                                });
+
+                            $(document).ready(function () {
+                                if (isEshelfOn) {
+                                    $('#eshelf-checkbox').prop('checked', true);
+                                    $('#eshelf-icon').attr('src', '{{ config("app.url","/wlibrary") }}/image/button/ebook-filled.png');
+                                }
+                            });
+
                             function toggleFavorite(checkbox) {
                                 let isChecked = checkbox.checked;
                                 let icon = $('#favorite-icon');
@@ -172,6 +194,25 @@ html, body { height: 100%; }
                                     icon.attr('src', '{{ config("app.url","/wlibrary") }}/image/button/heart-empty2.png');
                                     $.ajax({
                                         url: "{{ route('book.favorite.remove', ['book' => $book->id]) }}",
+                                        type: 'DELETE',
+                                        data: { _token: '{{ csrf_token() }}' }
+                                    });
+                                }
+                            }
+
+                            function toggleEshelf(checkbox) {
+                                let isChecked = checkbox.checked;
+                                let icon = $('#eshelf-icon');
+                                if (isChecked) { // try to add it as my eshelf book
+                                    icon.attr('src', '{{ config("app.url","/wlibrary") }}/image/button/ebook-filled.png');
+                                    $.post("{{ route('book.eshelf.store', ['book' => $book->id]) }}", {
+                                        _token: '{{ csrf_token() }}'
+                                    });
+
+                                } else { // try to remove my eshelf book
+                                    icon.attr('src', '{{ config("app.url","/wlibrary") }}/image/button/ebook-empty.png');
+                                    $.ajax({
+                                        url: "{{ route('book.eshelf.remove', ['book' => $book->id]) }}",
                                         type: 'DELETE',
                                         data: { _token: '{{ csrf_token() }}' }
                                     });
