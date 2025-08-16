@@ -8,7 +8,7 @@
     else session(['refreshed' => false]);
 
     if(session()->has('lib_inst')) {
-        $about_hf=App\About::where('inst',session('lib_inst'))->first();
+        $about_hf=App\Models\About::where('inst',session('lib_inst'))->first();
     }
 ?>
 <!doctype html>

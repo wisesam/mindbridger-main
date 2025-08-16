@@ -1,9 +1,9 @@
 <?php
     // Pre-loading the field values for performance
-    $field_arr=array();
-    \vwmldbm\code\get_field_name_all('announcement',$field_arr);
+    // $field_arr=array();
+    // \vwmldbm\code\get_field_name_all('announcement',$field_arr);
     if(!isset($ann)) {
-        $ann=App\Announcement::where('inst',$_SESSION['lib_inst'])->orderBy('top_yn','desc')->take(3)->get();
+        $ann=App\Models\Announcement::where('inst',$_SESSION['lib_inst'])->orderBy('top_yn','desc')->take(3)->get();
     }
 ?>
 
@@ -14,9 +14,9 @@
         <div class="table-responsive">
           <table class="table table-responsive-sm">
             <tr>
-                <th>{{$field_arr["title"]}}</th>
-                <th>{{$field_arr["create_id"]}}</th>
-                <th>{{$field_arr["ctime"]}}</th>
+                <th>{{__("title")}}</th>
+                <th>{{__("create_id")}}</th>
+                <th>{{__("ctime")}}</th>
             </tr>                
             @foreach($ann as $a)
                 <tr>

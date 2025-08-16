@@ -1,6 +1,6 @@
 <?PHP
 if(!isset($numRentals)) {
-    $numRentals=App\Rental::num('RENTED',Auth::user()->id);
+    $numRentals=App\Models\Rental::num('RENTED',Auth::user()->id);
 }
 ?>
 

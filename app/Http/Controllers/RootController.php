@@ -6,9 +6,9 @@ use Illuminate\Support\Facades\Auth; // [SJH]
 use Illuminate\Support\Facades\DB; // [SJH]
 use Illuminate\Support\Facades\Hash; // [SJH]
 
-use App\User; // [SJH]
-use App\Book; // [SJH]
-use App\Announcement; // [SJH]
+use App\Models\User; // [SJH]
+use App\Models\Book; // [SJH]
+use App\Models\Announcement; // [SJH]
 use App\Models\BookUserFavorite;  // [SJH] 2025.05.21
 
 require_once(config('app.root')."/app/Libraries/code.php");

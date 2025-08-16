@@ -38,6 +38,6 @@ class Announcement extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('about');
+        Schema::dropIfExists('announcement');
     }
 }

@@ -41,12 +41,12 @@
                     <th></th>
                 </tr>                
                 @foreach($ulist as $u)
-                    <?php 
+                    @php 
                         if(!Auth::user()->isAdmin('SA') && Auth::user()->isAdmin('SA',$u['id'])) // skip the usper admin if the user is not super admin
                             continue; 
 
-                        $rented_num=App\Rental::num('RENTED',$u['id']);  
-                        $all_num=App\Rental::num(null,$u['id']);
+                        $rented_num=App\Models\Rental::num('RENTED',$u['id']);  
+                        $all_num=App\Models\Rental::num(null,$u['id']);
 
                         $rented_num_tag=0;
                         if($rented_num) {
@@ -57,11 +57,11 @@
                         if($all_num) {
                             $all_num_tag="<a href='".config('app.url','/wlibrary')."/rental/".$u['id']."/all'>$all_num</a>";
                         }
-                    ?>
+                    @endphp
                     <tr>
                         <td>{{$u['id']}}</td>
                         <td>{{$u['name']}}</td>
-                        <td><?=App\User::get_utype($u['utype'])?></td>
+                        <td><?=App\Models\User::get_utype($u['utype'])?></td>
                         <td>
                             <?PHP
                                 if($u['code_c_utype']) echo $c_utype_arr[$u['code_c_utype']]

@@ -2,15 +2,13 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-
 use Illuminate\Support\Facades\Auth; // [SJH]
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Pagination;
 use DB; // instead of Eloquent, use DB
-use App\Rental; // use the model that we defined [SJH]
-use App\vRental; // use the model that we defined [SJH]
-use App\Book; // use the model that we defined [SJH]
-use App\Book_copy; // use the model that we defined [SJH]
+use App\Models\Rental; // use the model that we defined [SJH]
+use App\Models\Book; // use the model that we defined [SJH]
+use App\Models\Book_copy; // use the model that we defined [SJH]
 
 require_once(config('app.root')."/app/Libraries/code.php");
 require_once(config('app.root2')."/vwmldbm/config.php");
