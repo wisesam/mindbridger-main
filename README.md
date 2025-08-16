@@ -32,10 +32,9 @@
    - if the RESTful routing is not working (eg, http://localhost/mindbridger/login => Not Found ),
      - check(add) VirtualHost setting (eg, /etc/httpd/httpd.conf)
      - check .htaccess (in both mindbridger/ and mindbridger-main/public)
-
-
+       
 ## Demo
-<a href="https://wise4edu.net/wlibrary/inst/ina" target="_blank">Habibi Library (Sudanese Community School in Cairo)</a>
+<a href="https://wise4edu.net/mindbridger" target="_blank">MindBridger Demo</a>
 
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400"></a></p>
 
