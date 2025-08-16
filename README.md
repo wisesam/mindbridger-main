@@ -28,6 +28,11 @@
    - (Windows CMD example)  mklink /D storage "c:\xampp\mindbridger-main\storage\app\public"
    - (Linux, MacOS example) ln -s /var/www/mindbridger-main/storage/app/public storage
 10. Click Update button from http://localhost/mindbridger/vwmldbm
+11. RESTful API endpoints
+   - if the RESTful routing is not working (eg, http://localhost/mindbridger/login => Not Found ),
+     - check(add) VirtualHost setting (eg, /etc/httpd/httpd.conf)
+     - check .htaccess (in both mindbridger/ and mindbridger-main/public)
+
 
 ## Demo
 <a href="https://wise4edu.net/wlibrary/inst/ina" target="_blank">Habibi Library (Sudanese Community School in Cairo)</a>
