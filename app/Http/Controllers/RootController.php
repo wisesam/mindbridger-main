@@ -10,6 +10,7 @@ use App\Models\User; // [SJH]
 use App\Models\Book; // [SJH]
 use App\Models\Announcement; // [SJH]
 use App\Models\BookUserFavorite;  // [SJH] 2025.05.21
+use App\Models\BookUserEshelf;
 
 require_once(config('app.root')."/app/Libraries/code.php");
 require_once(config('app.root2')."/vwmldbm/config.php");
@@ -97,11 +98,16 @@ class RootController extends Controller {
                     return view('admin.AdminDashboard')->with('frontHome',true)->with('books',$books);
                 }
                 else { // normal user logged in
-                    $fav = BookUserFavorite::where('user_id', session('uid'))
-                    ->where('inst', Auth::user()->inst)
-                    ->get();
-                    $numFavorites=$fav->count();
-                    return view('root.home')->with('frontHome',true)->with('books',$books)->with('numFavorites',$numFavorites);
+                    $numFavorites = BookUserFavorite::where('user_id', session('uid'))
+                        ->where('inst', Auth::user()->inst)
+                        ->count();
+                    $numEshelf = BookUserEshelf::where('user_id', session('uid'))
+                        ->where('inst', Auth::user()->inst)
+                        ->count();
+                    return view('root.home')->with('frontHome', true)
+                        ->with('books', $books)
+                        ->with('numFavorites', $numFavorites)
+                        ->with('numEshelf', $numEshelf);
                 }
             }
         }
