@@ -25,7 +25,7 @@ function show_list_old_files($book,$perm,$rid){
 				$down_tag=null;
                 $down_tag="<a href=\"";
                 if($fext=='php') continue; // security
-				else if($fext=='pdf'){ 
+				else if($fext=='pdf') { 
 					$fpath = config('app.root') . "/storage/app/ebook/{$_SESSION['lib_inst']}/{$book->rid}/{$rfiles[$key]}";
                     $fsize = file_exists($fpath) ? \wlibrary\code\format_fsize(filesize($fpath), 'MB', 1) . "MB" : "N/A";
 

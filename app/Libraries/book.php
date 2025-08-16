@@ -17,10 +17,13 @@ class Book {
         
         if($id) {
             $sql = "select * from $DTB_PRE"."_".self::$TB." where inst=".$_SESSION['lib_inst']." and id='$id'";	
-        }
-        else if($rid) {
+        } else if($rid) {
             $sql = "select * from $DTB_PRE"."_".self::$TB." where inst=".$_SESSION['lib_inst']." and rid='$rid'";	
-        }
+        } else {
+			echo "Warning: Book id or rid is not set!<br>";
+			return; // if no id or rid then return
+		}
+
         $res = mysqli_query($conn,$sql);	
         if($res) $rs=mysqli_fetch_array($res);
 

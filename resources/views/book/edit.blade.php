@@ -33,29 +33,28 @@
 @extends('layouts.root')
 @section('content')
 
-<!-- i18n (optional, used by the viewer UI) -->
-<link rel="resource" type="application/l10n"
-      href="<?= $_SESSION['app.url'] ?>/lib/pdf.js/web/locale/locale.properties">
+<!-- pdf.js -->
+    <!-- i18n (optional, used by the viewer UI) -->
+    <link rel="resource" type="application/l10n"
+        href="<?= session('app.url') ?>/lib/pdf.js/web/locale/locale.properties">
 
-<!-- Core library (v2.x UMD build) -->
-<script src="<?= $_SESSION['app.url'] ?>/lib/pdf.js/build/pdf.js"></script>
+    <!-- Core library (v2.x UMD build) -->
+    <script src="<?= session('app.url') ?>/lib/pdf.js/build/pdf.js"></script>
 
-<script>
-  // pdf.js v2.x exposes itself here; create the familiar alias:
-  window.pdfjsLib = window['pdfjs-dist/build/pdf'] || window.pdfjsLib || window.PDFJS;
+    <script>
+    // pdf.js v2.x exposes itself here; create the familiar alias:
+    window.pdfjsLib = window['pdfjs-dist/build/pdf'] || window.pdfjsLib || window.PDFJS;
 
-  if (!window.pdfjsLib) {
-    console.error('pdf.js failed to load: check the path to build/pdf.js');
-  } else {
-    // Point the worker to your local copy (must be same-origin)
-    pdfjsLib.GlobalWorkerOptions.workerSrc =
-      "<?= $_SESSION['app.url'] ?>/lib/pdf.js/build/pdf.worker.js";
-  }
-</script>
-
-<!-- Your code that uses pdfjsLib (or the stock viewer) -->
-<script src="<?= $_SESSION['app.url'] ?>/lib/pdf.js/web/viewer.js"></script>
-
+    if (!window.pdfjsLib) {
+        console.error('pdf.js failed to load: check the path to build/pdf.js');
+    } else {
+        // Point the worker to your local copy (must be same-origin)
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "<?= session('app.url') ?>/lib/pdf.js/build/pdf.worker.js";
+    }
+    </script>
+    <script src="<?= session('app.url') ?>/lib/pdf.js/web/viewer.js"></script>
+<!-- end pdf.js -->
 
 <script src="{{ auto_asset('/lib/jquery/jquery.form.min.js') }}"></script>
 <script src="{{ auto_asset('/lib/ckeditor_4c/ckeditor.js') }}"></script>
@@ -527,77 +526,128 @@
                                     </script>
 
                                 </span>
-
-                                <?php
+                                @php
                                 // url for PDFviewer. Ensure the PDF URL is correctly formed
                                     $rfiles=explode(';',$book->rfiles);        
-                                    $pdfUrl = $_SESSION['app.url']."/lib/get_book_file.php?rf={$rfiles[0]}&rid={$book->rid}";
-                                ?>
+                                    $pdfUrl = session('app.url')."/lib/get_book_file.php?rf={$rfiles[0]}&rid={$book->rid}";
+                                @endphp
                                 <span class="mb-2">
                                     <button id="btn-auto_toc_js" class="btn btn-secondary"
                                         data-pdf-url="{{ $pdfUrl }}">Extract ToC
                                     </button>
 
-                                    <script>
-                                        (async function () {
-                                            const btn = document.getElementById('btn-auto_toc_js');
-                                            if (!btn) return;
+                                  <script>
+                                    (async function () {
+                                        const btn = document.getElementById('btn-auto_toc_js');
+                                        if (!btn) return;
 
-                                            async function resolveDestToPageNum(pdf, dest) {
-                                                let explicit = dest;
-                                                if (typeof dest === 'string') {
-                                                explicit = await pdf.getDestination(dest); // named -> explicit
-                                                }
-                                                if (Array.isArray(explicit) && explicit[0]) {
-                                                const pageIndex = await pdf.getPageIndex(explicit[0]); // 0-based
-                                                return pageIndex + 1;
-                                                }
-                                                return null;
+                                        async function resolveDestToPageNum(pdf, dest) {
+                                            let explicit = dest;
+                                            if (typeof dest === 'string') {
+                                            explicit = await pdf.getDestination(dest); // named -> explicit
                                             }
-
-                                            async function flattenOutline(pdf, items, level = 1, acc = []) {
-                                                for (const it of items) {
-                                                const page = it.dest ? await resolveDestToPageNum(pdf, it.dest) : null;
-                                                acc.push({ title: (it.title || '').trim(), page, level });
-                                                if (it.items && it.items.length) await flattenOutline(pdf, it.items, level + 1, acc);
-                                                }
-                                                return acc;
+                                            if (Array.isArray(explicit) && explicit[0]) {
+                                            const pageIndex = await pdf.getPageIndex(explicit[0]); // 0-based
+                                            return pageIndex + 1;
                                             }
+                                            return null;
+                                        }
 
-                                            btn.addEventListener('click', async () => {
-                                                const url = btn.dataset.pdfUrl;
-                                                if (!url) return alert('Missing PDF URL');
-
-                                                btn.disabled = true; const label = btn.innerHTML; btn.innerHTML = 'Reading…';
-                                                try {
-                                                    // Old-phone friendly options
-                                                    const loadingTask = pdfjsLib.getDocument({
-                                                        url,
-                                                        disableAutoFetch: true,  // reduce memory/network
-                                                        disableStream: true      // simpler path for old browsers
-                                                    });
-                                                    const pdf = await loadingTask.promise;
-
-                                                    let outline = await pdf.getOutline();
-                                                    if (!outline) outline = [];
-
-                                                    const flat = await flattenOutline(pdf, outline);
-                                                    const tocText = flat.map((x, i) =>
-                                                        `${'  '.repeat(Math.max(0, x.level-1))}${i+1}. ${x.title}${x.page ? ' (p.'+x.page+')' : ''}`
-                                                    ).join('\n');
-                                                    if(!isEmpty(flat)) {
-                                                        document.getElementById('toc').value = tocText;
-                                                        document.getElementById('auto_toc').value = JSON.stringify(flat);
-                                                    } else alert("{{__('No ToC found!')}}");
-                                            
-                                                } catch (e) {
-                                                    console.error(e); alert('ToC read failed: ' + e.message);
-                                                } finally {
-                                                    btn.disabled = false; btn.innerHTML = label;
-                                                }
+                                        async function flattenOutline(pdf, items, level = 1, acc = []) {
+                                            for (const it of items) {
+                                            const page = it.dest ? await resolveDestToPageNum(pdf, it.dest) : null;
+                                            acc.push({
+                                                title: (it.title || '').trim(),
+                                                page,             // legacy single page (kept for compatibility)
+                                                start: page,      // we will finalize 'end' later
+                                                end: null,        // to be filled after flatten pass
+                                                level
                                             });
+                                            if (it.items && it.items.length) {
+                                                await flattenOutline(pdf, it.items, level + 1, acc);
+                                            }
+                                            }
+                                            return acc;
+                                        }
+
+                                        function finalizeRanges(flat, numPages) {
+                                            // For each item with a 'start', set 'end' to (next item at same or higher level).start - 1
+                                            for (let i = 0; i < flat.length; i++) {
+                                            const cur = flat[i];
+
+                                            if (cur.start == null) {
+                                                cur.end = null;
+                                                continue;
+                                            }
+
+                                            // Find the next item with level <= cur.level and a known start
+                                            let nextStart = null;
+                                            for (let j = i + 1; j < flat.length; j++) {
+                                                if (flat[j].level <= cur.level && flat[j].start != null) {
+                                                nextStart = flat[j].start;
+                                                break;
+                                                }
+                                            }
+
+                                            let end = (nextStart != null) ? (nextStart - 1) : numPages;
+
+                                            // Clamp and normalize
+                                            if (end < cur.start) end = cur.start;
+                                            if (cur.start < 1) cur.start = 1;
+                                            if (end > numPages) end = numPages;
+
+                                            cur.end = end;
+                                            }
+                                            return flat;
+                                        }
+
+                                        btn.addEventListener('click', async () => {
+                                            const url = btn.dataset.pdfUrl;
+                                            if (!url) return alert('Missing PDF URL');
+
+                                            btn.disabled = true; const label = btn.innerHTML; btn.innerHTML = 'Reading…';
+                                            try {
+                                            const loadingTask = pdfjsLib.getDocument({
+                                                url,
+                                                disableAutoFetch: true,
+                                                disableStream: true
+                                            });
+                                            const pdf = await loadingTask.promise;
+
+                                            let outline = await pdf.getOutline();
+                                            if (!outline) outline = [];
+
+                                            const flat = await flattenOutline(pdf, outline);
+                                            const withRanges = finalizeRanges(flat, pdf.numPages);
+
+                                            // For textarea preview
+                                            const tocText = withRanges.map((x, i) => {
+                                                const indent = '  '.repeat(Math.max(0, x.level - 1));
+                                                let suffix = '';
+                                                if (x.start != null && x.end != null) {
+                                                suffix = (x.start === x.end) ? ` (p.${x.start})` : ` (pp.${x.start}–${x.end})`;
+                                                } else if (x.page != null) {
+                                                suffix = ` (p.${x.page})`;
+                                                }
+                                                return `${indent}${i + 1}. ${x.title}${suffix}`;
+                                            }).join('\n');
+
+                                            if (withRanges.length) {
+                                                document.getElementById('toc').value = tocText;
+                                                document.getElementById('auto_toc').value = JSON.stringify(withRanges);
+                                            } else {
+                                                alert("{{ __('No ToC found!') }}");
+                                            }
+
+                                            } catch (e) {
+                                            console.error(e);
+                                            alert('ToC read failed: ' + e.message);
+                                            } finally {
+                                            btn.disabled = false; btn.innerHTML = label;
+                                            }
+                                        });
                                         })();
-                                    </script>
+                                  </script>
                                 </span>
                             <!-- End PDF Viewer URL -->
                                <input type='hidden' id='auto_toc' name='auto_toc' value=@json(old("auto_toc", $book->auto_toc ?? []))>
