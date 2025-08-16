@@ -304,6 +304,11 @@ class RootController extends Controller {
         session(['app.root2' => config('app.root2','')]); // to pass it to progress_up.php for e-resource upload
         session(['app.url' => config('app.url','')]); // to pass it to progress_up.php for e-resource upload
 
+        $_SESSION['lib_inst'] = session('lib_inst'); // to pass it to progress_up.php for e-resource upload
+        $_SESSION['inst_uname'] = session('inst_uname'); // to pass it to progress_up.php for e-resource upload
+        $_SESSION['app.root'] = config('app.root',''); // to pass it to progress_up.php for e-resource upload
+        $_SESSION['app.root2'] = config('app.root2',''); // to pass it to progress_up.php for e-resource upload
+        $_SESSION['app.url'] = config('app.url',''); // to pass it to progress_up.php for e-resource upload
     }
 }
 

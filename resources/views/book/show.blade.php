@@ -11,9 +11,6 @@
     
     $perm['R'] ='Y'; // Read permission
 	$isAdmin = (Auth::check() && Auth::user()->isAdmin()) ? true : false;
-
-    // fix (may not be valid way) 2025.1.23
-    // session(['lib_inst' => (session('inst_id')??null)]);  
     $isEresource = ($book->files ? true : false);
 ?>
 
@@ -25,7 +22,95 @@
     width:40px; 
     height:auto;
 }
+
+// full-screen modal: Show the Book pages
+/* Remove Bootstrap’s scrollbar-compensation padding on the modal element */
+.edge-to-edge {
+  padding: 0 !important;
+}
+
+/* Make the dialog truly full screen */
+.modal-fullscreen {
+  width: 100vw;         /* full viewport width */
+  max-width: 100vw;     /* override BS4 max-width */
+  height: 100vh;        /* full viewport height */
+  margin: 0;            /* remove BS4 default .5rem margin */
+}
+
+/* Make the content fill the viewport */
+.modal-fullscreen .modal-content {
+  height: 100vh;
+  border: 0;
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Let the body scroll independently if content overflows */
+.modal-fullscreen .modal-body {
+  flex: 1 1 auto;
+  overflow: auto;
+}
+
+/* (Optional) ensure full-height baseline */
+html, body { height: 100%; }
+// End full-screen modal: Show the Book pages
+
 </style>
+
+@php
+// url for PDFviewer. Ensure the PDF URL is correctly formed
+    $rfiles=explode(';',$book->rfiles);
+@endphp
+
+<script>
+  // Base path to PDF.js viewer page
+  var viewerBase = @json(config('app.url') . '/lib/pdf.js/web/');
+
+  function buildViewerUrl(rf, rid, start, end) {
+    // If you need to pass the actual PDF file, set ?file=<encoded-pdf-url>
+    // Your app seems to use rf/rid to resolve the file server-side.
+    var q = '?file='
+          + '&rf=' + encodeURIComponent(rf)
+          + '&rid=' + encodeURIComponent(rid)
+          + '&start=' + encodeURIComponent(start)
+          + '&end=' + encodeURIComponent(end);
+
+    // Tell PDF.js which page to start on via hash
+    var hash = '#page=' + encodeURIComponent(start);
+
+    return viewerBase + q + hash;
+  }
+
+  function goToPage(button) {
+    // Read attributes
+    var page  = button.getAttribute('data-page');   // single anchor page
+    var start = button.getAttribute('data-start') || page;
+    var end   = button.getAttribute('data-end')   || page;
+    var rf    = button.getAttribute('data-rf');
+    var rid   = button.getAttribute('data-rid');
+
+    // Keep values on the modal instance for the lifecycle
+    $('#fullscreenModal').data({ page: page, start: start, end: end, rf: rf, rid: rid });
+
+    $('#fullscreenModal')
+      .off('shown.bs.modal.pdf hidden.bs.modal.pdf')
+      .on('shown.bs.modal.pdf', function () {
+        var data = $(this).data();
+        var viewerUrl = buildViewerUrl(data.rf, data.rid, data.start, data.end);
+
+        document.getElementById('pdfIframe').src = viewerUrl;
+        document.getElementById('fullscreenModalLabel').textContent =
+          (data.start === data.end)
+            ? ('Page ' + data.start)
+            : ('Pages ' + data.start + '–' + data.end);
+      })
+      .on('hidden.bs.modal.pdf', function () {
+        document.getElementById('pdfIframe').src = 'about:blank'; // free resources
+      })
+      .modal('show');
+  }
+</script>
 
 <div class="row justify-content-center">
     <div class="container col-12 mt-0">
@@ -57,8 +142,7 @@
                     </label>
 
                     <script>
-                            let isFavorited = false;
-                            
+                            let isFavorited = false;                
                             $.get("{{ route('book.favorite.check', ['book' => $book->id]) }}")
                                 .done(function (response) {
                                     if (response.favorited) {
@@ -167,102 +251,169 @@
 
                         <div class="col-md-9">
                             <div class="accordion" id="tocAccordion">
-                                @php
-                                // Get ToC from old input or model
-                                $tocJson = old('auto_toc', $book->auto_toc ?? '[]');
-                                $toc = is_array($tocJson) ? $tocJson : json_decode($tocJson, true) ?? [];
+                            @php
+                        // Get ToC from old input or model
+                        $tocJson = old('auto_toc', $book->auto_toc ?? '[]');
+                        $toc = is_array($tocJson) ? $tocJson : json_decode($tocJson, true) ?? [];
 
-                                // Group: level 1 = chapters; attach following items with level > 1 as children until next level 1
-                                $chapters = [];
-                                $current = null;
-                                foreach ($toc as $item) {
-                                    $item = [
-                                        'title' => $item['title'] ?? 'Untitled',
-                                        'page'  => $item['page'] ?? null,
-                                        'level' => $item['level'] ?? 1,
-                                    ];
-                                    if ($item['level'] <= 1) {
-                                        if ($current) $chapters[] = $current;
-                                        $current = ['title' => $item['title'], 'page' => $item['page'], 'children' => []];
-                                    } else {
-                                        if (!$current) { // in case the JSON starts with > level 1
-                                            $current = ['title' => 'Chapter', 'page' => null, 'children' => []];
-                                        }
-                                        $current['children'][] = $item;
-                                    }
-                                }
+                        // Group: level 1 = chapters; attach following items with level > 1 as children until next level 1
+                        $chapters = [];
+                        $current = null;
+
+                        foreach ($toc as $item) {
+                            $item = [
+                                'title' => $item['title'] ?? 'Untitled',
+                                'page'  => $item['page'] ?? null,   // legacy single page
+                                'start' => $item['start'] ?? ($item['page'] ?? null),
+                                'end'   => $item['end']   ?? ($item['page'] ?? null),
+                                'level' => $item['level'] ?? 1,
+                            ];
+
+                            if ($item['level'] <= 1) {
                                 if ($current) $chapters[] = $current;
-                                @endphp
+
+                                $current = [
+                                    'title'    => $item['title'],
+                                    'page'     => $item['page'],
+                                    'start'    => $item['start'],
+                                    'end'      => $item['end'],
+                                    'children' => [],
+                                ];
+                            } else {
+                                if (!$current) { // in case JSON starts with > level 1
+                                    $current = [
+                                        'title'    => 'Chapter',
+                                        'page'     => null,
+                                        'start'    => null,
+                                        'end'      => null,
+                                        'children' => [],
+                                    ];
+                                }
+                                $current['children'][] = $item;
+                            }
+                        }
+                        if ($current) $chapters[] = $current;
+                        @endphp
+
                             </div>
                             
-                            <div id="tocAccordion">
-                                @foreach($chapters as $idx => $ch)
-                                    @php
-                                    $collapseId = "tocCollapse{$idx}";
-                                    $headingId  = "tocHeading{$idx}";
-                                    @endphp
-
-                                    <div class="card">
-                                    <div class="card-header" id="{{ $headingId }}">
-                                        <h5 class="mb-0 d-flex align-items-center justify-content-between">
-                                        <button class="btn btn-link" type="button" data-toggle="collapse"
-                                                data-target="#{{ $collapseId }}" aria-expanded="false" aria-controls="{{ $collapseId }}">
-                                            {{ $ch['title'] }}
-                                            @if(!is_null($ch['page']))
-                                            <span class="badge badge-secondary ml-2">p. {{ $ch['page'] }}</span>
-                                            @endif
+                        <!-- Fullscreen Modal: For the ranges of book -->
+                        <div class="modal fade edge-to-edge" id="fullscreenModal" tabindex="-1" role="dialog"
+                            aria-labelledby="fullscreenModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-fullscreen" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header py-2">
+                                        <h5 class="modal-title" id="fullscreenModalLabel">Document Viewer</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
                                         </button>
-
-                                        @if(!is_null($ch['page']))
-                                            <button type="button" class="btn btn-sm btn-primary ml-2" data-page="{{ $ch['page'] }}" onclick="goToPage(this)">
-                                            Go to page
-                                            </button>
-                                        @endif
-                                        </h5>
                                     </div>
 
-                                    <div id="{{ $collapseId }}" class="collapse" aria-labelledby="{{ $headingId }}" data-parent="#tocAccordion">
-                                        <div class="card-body p-0">
-                                        @if(count($ch['children']))
-                                            <ul class="list-group list-group-flush">
-                                            @foreach($ch['children'] as $child)
-                                                <li class="list-group-item d-flex align-items-center justify-content-between">
-                                                <span>
-                                                    @if(($child['level'] ?? 2) > 2)
-                                                    {{-- simple indent for deeper levels --}}
-                                                    <span class="text-muted mr-2" style="display:inline-block; width: {{ (($child['level']-2)*14) }}px;"></span>
-                                                    @endif
-                                                    {{ $child['title'] }}
-                                                </span>
-                                                @if(!is_null($child['page']))
-                                                    <button type="button" class="btn btn-outline-secondary btn-sm" data-page="{{ $child['page'] }}" onclick="goToPage(this)">
-                                                    p. {{ $child['page'] }}
-                                                    </button>
-                                                @endif
-                                                </li>
-                                            @endforeach
-                                            </ul>
-                                        @else
-                                            <div class="p-3 text-muted">No sub-sections.</div>
-                                        @endif
-                                        </div>
+                                    <div class="modal-body p-0">
+                                        <!-- PDF.js iframe -->
+                                        <iframe id="pdfIframe" title="PDF Viewer"
+                                                style="width:100%; height:100%; border:0;" allow="fullscreen"></iframe>
                                     </div>
-                                    </div>
-                                @endforeach
                                 </div>
+                            </div>
+                        </div>
+                        <!-- End Fullscreen Modal: For the ranges of book -->
 
-                                <script>
-                                // Replace with your actual PDF jump logic (e.g., PDF.js, viewer API, or server route)
-                                function goToPage(btn) {
-                                    var page = btn.getAttribute('data-page');
-                                    if (!page) return;
-                                    // Example hooks:
-                                    // window.PDFViewerApplication.pdfViewer.currentPageNumber = parseInt(page, 10);
-                                    // or dispatch an event your viewer listens to:
-                                    // window.dispatchEvent(new CustomEvent('book:goToPage', { detail: { page: parseInt(page, 10) }}));
-                                    console.log('Go to page:', page);
-                                }
-                                </script>
+                        <div id="tocAccordion">
+                    @foreach($chapters as $idx => $ch)
+                        @php
+                            $collapseId = "tocCollapse{$idx}";
+                            $headingId  = "tocHeading{$idx}";
+                            $startPage  = $ch['start'] ?? $ch['page'];
+                            $endPage    = $ch['end'] ?? $ch['page'];
+                        @endphp
+
+                        <div class="card">
+                        <div class="card-header" id="{{ $headingId }}">
+                            <h5 class="mb-0 d-flex align-items-center justify-content-between">                      
+                            <button class="btn btn-link" type="button"  data-toggle="collapse"
+                                data-target="#{{ $collapseId }}" aria-expanded="false" aria-controls="{{ $collapseId }}"
+                                data-page="{{ $ch['page'] }}"
+                                data-start="{{ $startPage }}"
+                                data-end="{{ $endPage }}"
+                                data-rf="{{ e($rfiles[0]) }}"
+                                data-rid="{{ e($book->rid) }}"
+                            ">
+
+                                {{ $ch['title'] }}
+                                @if(!is_null($ch['page']))
+                                
+                                <span class="badge badge-secondary ml-2">
+                                    @if($startPage !== $endPage)
+                                    pp. {{ $startPage }}–{{ $endPage }}
+                                    @else
+                                    p. {{ $startPage }}
+                                    @endif
+                                </span>
+                                @endif
+                            </button>
+
+
+                            @if(!is_null($ch['page']))
+                                <button type="button"
+                                        class="btn btn-sm btn-primary ml-2"
+                                        data-page="{{ $ch['page'] }}"
+                                        data-start="{{ $startPage }}"
+                                        data-end="{{ $endPage }}"
+                                        data-rf="{{ e($rfiles[0]) }}"
+                                        data-rid="{{ e($book->rid) }}"
+                                        onclick="goToPage(this)">
+                                {{ __('Go to page') }}
+                                </button>
+                            @endif
+                            </h5>
+                        </div>
+
+                        <div id="{{ $collapseId }}" class="collapse" aria-labelledby="{{ $headingId }}" data-parent="#tocAccordion">
+                            <div class="card-body p-0">
+                            @if(count($ch['children']))
+                                <ul class="list-group list-group-flush">
+                                @foreach($ch['children'] as $child)
+                                    @php
+                                    $cStart = $child['start_page'] ?? $child['page'];
+                                    $cEnd   = $child['end_page'] ?? $child['page'];
+                                    @endphp
+                                    <li class="list-group-item d-flex align-items-center justify-content-between">
+                                    <span>
+                                        @if(($child['level'] ?? 2) > 2)
+                                        <span class="text-muted mr-2" style="display:inline-block; width: {{ (($child['level']-2)*14) }}px;"></span>
+                                        @endif
+                                        {{ $child['title'] }}
+                                    </span>
+
+                                    @if(!is_null($child['page']))
+                                        <button type="button"
+                                                class="btn btn btn-outline-secondary btn-sm"
+                                                data-page="{{ $child['page'] }}"
+                                                data-start="{{ $cStart }}"
+                                                data-end="{{ $cEnd }}"
+                                                data-rf="{{ e($rfiles[0]) }}"
+                                                data-rid="{{ e($book->rid) }}"
+                                                onclick="goToPage(this)">
+                                        @if($cStart !== $cEnd)
+                                            pp. {{ $cStart }}–{{ $cEnd }}
+                                        @else
+                                            p. {{ $cStart }}
+                                        @endif
+                                        </button>
+                                    @endif
+                                    </li>
+                                @endforeach
+                                </ul>
+                            @else
+                                <div class="p-3 text-muted">No sub-sections.</div>
+                            @endif
+                            </div>
+                        </div>
+                        </div>
+                    @endforeach
+                    </div>
+
                         </div>
                     </div>
                     @else
