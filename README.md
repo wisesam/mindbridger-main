@@ -13,24 +13,24 @@
    - https://github.com/wisesam/mindbridger-main.git
    - Adujust directory permission if needed (Linux and MacOS):
      - eg, chown -R apache mindbridger-main, chgrp -R apache mindbridger-main
-2. composer install
 3. cp .env.example .env  (update needed)
 4. cp config/app(default).php config/app.php (update needed)
 5. cp config/database (default).php config/database .php (update needed)
-6. php artisan key:generate (update .env)
-7. DB Migration (Library related table installation)
+6. composer install
+7. php artisan key:generate (update .env)
+8. DB Migration (Library related table installation)
    - php artisan migrate
    - php artisan db:seed --class=CodeSeeder
    - (If migration gives error like " No such file or directory", then update DB_SOCKET in .env)
 
-8. Create a symbolic link (for cover images)
+9. Create a symbolic link (for cover images)
    - Go to root of mindbridger (eg, c:\xampp\htdocs\mindbridger, /var/www/html/mindbridger)
    - (Windows CMD example)  mklink /D storage "c:\xampp\mindbridger-main\storage\app\public"
    - (Linux, MacOS example) ln -s /var/www/mindbridger-main/storage/app/public storage
 10. Click Update button from http://localhost/mindbridger/vwmldbm
-
+       
 ## Demo
-<a href="https://wise4edu.net/wlibrary/inst/ina" target="_blank">Habibi Library (Sudanese Community School in Cairo)</a>
+<a href="https://wise4edu.net/mindbridger" target="_blank">MindBridger Demo</a>
 
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400"></a></p>
 
