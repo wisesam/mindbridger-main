@@ -20,7 +20,7 @@ class Book extends Model
      * @var array
      */
     protected $fillable = [
-        'inst','id','title', 'author', 'c_rtype','c_genre','publisher','pub_date','isbn','eisbn','c_lang','keywords','e_book_yn','cover_image','desc','url','price','c_grade','c_category','c_category2','hide_yn','hide_from_guest_yn','toc','rfiles'
+        'inst','id','title', 'author', 'c_rtype','c_genre','publisher','pub_date','isbn','eisbn','c_lang','keywords','e_book_yn','cover_image','desc','url','price','c_grade','c_category','c_category2','hide_yn','hide_from_guest_yn','toc','rfiles','meta_data'
     ];
 
 
@@ -29,8 +29,10 @@ class Book extends Model
      *
      * @var array
      */
+
+     // meta_info is used for storing additional metadata in JSON format which is extracted by AI API
     protected $hidden = [
-        'auto_toc'
+        'auto_toc',
     ];
 
 
