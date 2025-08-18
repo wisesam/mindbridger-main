@@ -3,7 +3,6 @@
     if(!isset($search_word)) $search_word=null; // search
     if(!isset($search_target)) $search_target=null; // search
     $mode=Request::segment(2); 
-
 ?>
 @if($mode!='choose_list')     
     <div class="container text-center" id='wlibrary_back_btt' style='display:none;'>

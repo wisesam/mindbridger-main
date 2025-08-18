@@ -646,6 +646,9 @@
                                                     }).join('\n');
                                                     document.getElementById('auto_toc').value = JSON.stringify(withRanges);
                                                 } else {
+                                                    let defaultToC = [{ title: "One", page: 1, start: 1, end: pdf.numPages, level: 1 }];
+                                                    document.getElementById('auto_toc').value = JSON.stringify(defaultToC);
+                                                    document.getElementById('toc').value = "1. One (pp. 1–" + pdf.numPages + ")";
                                                     alert("{{ __('No ToC found!') }}");
                                                 }
 
@@ -1028,7 +1031,6 @@
                                             document.getElementById('wise_photo_data').value = dataURL;
                                             document.editForm.cover_image.value=''; // empty file because we are not uploading file but string (wise_photo_data)
                                             document.editForm.operation.value='FUPLOAD'; 
-                                          
                                         }
                                        document.editForm.submit();
                                     }

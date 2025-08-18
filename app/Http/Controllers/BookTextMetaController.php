@@ -76,7 +76,8 @@ class BookTextMetaController extends Controller
     - difficulty (elementary, middle, high school, college)
     - theme
     - summary (7-10 sentences)
-
+    
+    The output language should be {app()->getLocale()}
     Respond ONLY with valid JSON.
 
     Excerpt:
