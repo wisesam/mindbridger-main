@@ -367,24 +367,24 @@ html, body { height: 100%; }
                                 $headingId  = "tocHeading{$idx}";
                                 $startPage  = $ch['start'] ?? $ch['page'];
                                 $endPage    = $ch['end'] ?? $ch['page'];
+                                $hasChildren = !empty($ch['children']);
                             @endphp
 
                             <div class="card">
                                 <div class="card-header" id="{{ $headingId }}">
-                                    <h5 class="mb-0 d-flex align-items-center justify-content-between">                      
-                                        <button class="btn btn-link" type="button"  
-                                                data-toggle="collapse"
-                                                data-target="#{{ $collapseId }}" 
-                                                aria-expanded="false" 
-                                                aria-controls="{{ $collapseId }}"
-                                                data-page="{{ $ch['page'] }}"
-                                                data-start="{{ $startPage }}"
-                                                data-end="{{ $endPage }}"
-                                                data-rf="{{ e($rfiles[0]) }}"
-                                                data-rid="{{ e($book->rid) }}">
-
-                                            {{ $ch['title'] }}
-                                            @if(!is_null($ch['page']))
+                                    <h5 class="mb-0 d-flex align-items-center justify-content-between">     
+                                        {{-- If chapter has children, make title clickable to expand --}}
+                                        @if($hasChildren)
+                                            <button class="btn btn-link" type="button"  
+                                                    data-toggle="collapse"
+                                                    data-target="#{{ $collapseId }}" 
+                                                    aria-expanded="false" 
+                                                    aria-controls="{{ $collapseId }}"
+                                                    data-start="{{ $startPage }}"
+                                                    data-end="{{ $endPage }}"
+                                                    data-rf="{{ e($rfiles[0]) }}"
+                                                    data-rid="{{ e($book->rid) }}">
+                                                {{ $ch['title'] }}
                                                 <span class="badge badge-secondary ml-2">
                                                     @if($startPage !== $endPage)
                                                         pp. {{ $startPage }}–{{ $endPage }}
@@ -392,13 +392,25 @@ html, body { height: 100%; }
                                                         p. {{ $startPage }}
                                                     @endif
                                                 </span>
-                                            @endif
-                                        </button>
+                                            </button>
+                                        @else
+                                            {{-- No children: plain text title, no toggle --}}
+                                            <span>
+                                                {{ $ch['title'] }}
+                                                <span class="badge badge-secondary ml-2">
+                                                    @if($startPage !== $endPage)
+                                                        pp. {{ $startPage }}–{{ $endPage }}
+                                                    @else
+                                                        p. {{ $startPage }}
+                                                    @endif
+                                                </span>
+                                            </span>
+                                        @endif
 
+                                        {{-- Go to page button always available --}}
                                         @if(!is_null($ch['page']))
                                             <button type="button"
                                                     class="btn btn-sm btn-primary ml-2"
-                                                    data-page="{{ $ch['page'] }}"
                                                     data-start="{{ $startPage }}"
                                                     data-end="{{ $endPage }}"
                                                     data-rf="{{ e($rfiles[0]) }}"
@@ -410,9 +422,10 @@ html, body { height: 100%; }
                                     </h5>
                                 </div>
 
-                                <div id="{{ $collapseId }}" class="collapse" aria-labelledby="{{ $headingId }}" data-parent="#tocAccordion">
-                                    <div class="card-body p-0">
-                                        @if(count($ch['children']))
+                                {{-- Only render collapsible body if children exist --}}
+                                @if($hasChildren)
+                                    <div id="{{ $collapseId }}" class="collapse" aria-labelledby="{{ $headingId }}" data-parent="#tocAccordion">
+                                        <div class="card-body p-0">
                                             <ul class="list-group list-group-flush">
                                                 @foreach($ch['children'] as $child)
                                                     @php
@@ -430,7 +443,6 @@ html, body { height: 100%; }
                                                         @if(!is_null($child['page']))
                                                             <button type="button"
                                                                     class="btn btn-outline-secondary btn-sm"
-                                                                    data-page="{{ $child['page'] }}"
                                                                     data-start="{{ $cStart }}"
                                                                     data-end="{{ $cEnd }}"
                                                                     data-rf="{{ e($rfiles[0]) }}"
@@ -446,14 +458,11 @@ html, body { height: 100%; }
                                                     </li>
                                                 @endforeach
                                             </ul>
-                                        @else
-                                            <div class="p-3 text-muted">No sub-sections.</div>
-                                        @endif
+                                        </div>
                                     </div>
-                                </div>
+                                @endif
                             </div>
                         @endforeach
-
                     </div>
 
                         </div>
