@@ -99,4 +99,3 @@ class BookAIAdvisorController extends Controller
         } else return response()->json(['auto_meta' => 'No text provided for analysis.']);
     }
 }
-

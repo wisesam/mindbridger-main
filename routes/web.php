@@ -13,6 +13,8 @@ use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\BookUserFavoriteController;
 use App\Http\Controllers\BookUserEshelfController;
 use App\Http\Controllers\BookAIAdvisorController;
+use App\Http\Controllers\BookTextMetaController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -101,7 +103,8 @@ Route::middleware(['auth'])->group(function () {
 // AI Book Operation Routes
 Route::get('/recommend', [BookAIAdvisorController::class, 'form'])->name('recommend.form');
 Route::post('/recommend', [BookAIAdvisorController::class, 'recommend'])->name('recommend');
-Route::get('book/{book}/auto_meta', [BookAIAdvisorController::class, 'auto_meta'])->name('auto_meta');
+Route::post('book/{book}/extract_meta', [BookTextMetaController::class, 'extract_meta'])->name('extract_meta');
+Route::get('book/{book}/chapter_txt', [BookTextMetaController::class, 'chapter_txt'])->name('chapter_txt');
 
 // cache clear by url [SJH]
 Route::get('/clear-cache', function() {

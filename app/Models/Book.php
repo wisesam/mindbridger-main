@@ -94,3 +94,13 @@ class Book extends Model
      */
     public function get_copy_num()
     {
+        $res = DB::select(
+            "SELECT COUNT(id) AS cnt 
+             FROM " . config('database.connections.mysql.prefix') . "book_copy 
+             WHERE inst = '{$_SESSION['lib_inst']}' 
+             AND bid = '{$this->getAttribute('id')}'"
+        );
+
+        return $res[0]->cnt;
+    }
+}
