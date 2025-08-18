@@ -473,6 +473,26 @@
                                 @enderror
                             </div>
                         </div>
+                        
+                        <div class="form-group row">
+                            <label for="auto_toc" class="col-md-3 col-form-label text-md-right">
+                                {{__("ToC (Modifiable)")}}
+                            </label>
+                            <div class="col-md-7">
+                                <textarea id="auto_toc"
+                                    class="form-control @error('toc') is-invalid @enderror"
+                                    name="auto_toc"
+                                    rows="4"
+                                    autocomplete="off"
+                                    autofocus>{{ old('auto_toc', $book->auto_toc ?? '[]') }}
+                                </textarea>
+                                @error('auto_toc')
+                                    <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                                @enderror
+                            </div>
+                        </div>
 
                         <!-- Meta Data from PDF -->
                         <div class="form-group row">
@@ -483,7 +503,7 @@
                                 <textarea id="meta_data"
                                     class="form-control @error('meta_data') is-invalid @enderror"
                                     name="meta_data"
-                                    rows="4"
+                                    rows="3"
                                     autocomplete="off"
                                     autofocus>{{ old('meta_data', $book->meta_data ?? "") }}
                                 </textarea>
@@ -664,11 +684,7 @@
                                     })();
                                     </script>
                                 </span>
-                            <!-- End PDF Viewer URL -->
-                            <textarea id="auto_toc" name="auto_toc" style="display:none;">
-                                {{ old('auto_toc', $book->auto_toc ?? '[]') }}
-                            </textarea>
-                               
+                            <!-- End PDF Viewer URL -->                               
                                <span style="margin-left: 10px;">
                                   <!-- Meta Info by AI API -->
                                     <button
