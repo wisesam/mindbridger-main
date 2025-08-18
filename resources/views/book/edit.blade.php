@@ -533,8 +533,8 @@
                                     $pdfUrl = session('app.url')."/lib/get_book_file.php?rf={$rfiles[0]}&rid={$book->rid}";
                                 @endphp
                                 <span class="mb-2">
-                                    <button id="btn-auto_toc_js" class="btn btn-secondary"
-                                        data-pdf-url="{{ $pdfUrl }}">Meta Data from PDF 
+                                    <button id="btn-auto_toc_js" class="btn btn-primary"
+                                        data-pdf-url="{{ $pdfUrl }}">1. Meta Data from PDF 
                                     </button>
 
                                     <script>
@@ -674,9 +674,9 @@
                                     <button
                                         type="button"
                                         id="btn-auto-meta"
-                                        class="btn btn-primary"
+                                        class="btn btn-info"
                                         data-url="{{ route('extract_meta', ['book' => $book->id]) }}">
-                                        {{ __('Meta Info by AI') }}
+                                        {{ __('2. Meta Info by AI') }}
                                     </button>
 
                                     <script>
