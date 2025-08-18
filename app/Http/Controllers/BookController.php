@@ -467,7 +467,8 @@ class BookController extends Controller
                     'book_id' => $id
                 ],
                 [
-                    'text' => $request->input('pdf_text')
+                    'text' => $request->input('pdf_text'),
+                    'meta' => $request->input('meta_info'),
                 ]
             );
     
@@ -601,7 +602,8 @@ class BookController extends Controller
                 'book_id' => $id
             ],
             [
-                'text' => $request->input('pdf_text')
+                'text' => $request->input('pdf_text'),
+                'meta' => $request->input('meta_info'),
             ]
         );
 
