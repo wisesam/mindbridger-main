@@ -6,10 +6,10 @@
 
 ?>
 @if($mode!='choose_list')     
-    <div class="container text-center" id='wlibrary_back_btt' style='display:none;'>
+    <!-- <div class="container text-center" id='wlibrary_back_btt' style='display:none;'>
         <button type='button' class='btn btn-success'  onClick="window.history.back();">{{__("Go back")}}</button>
-    </div> 
-    <nav class="navbar navbar-expand-lg bg-info navbar-dark flex-direction: column" id='wlibrary_navbar'>
+    </div>  -->
+    <nav class="navbar navbar-light flex-direction: column" id='wlibrary_navbar'>
         <script>
             $(document).ready(function() {                
              // This is a trick to hide the navigation bar from inner iframes
@@ -19,17 +19,76 @@
               }             
             });
         </script>
-        <form class="form-inline" action='{{config('app.url')}}/book' name='form1'>        
-            <div class="input-group mt-3 mb-3">                
-                <input class="form-control" type="search" name='search_word' placeholder="{{__("Search Resource")}}" value='{{$search_word}}' aria-label="Search">
-                <button class="btn btn-outline-dark ml-1" type="submit">{{__("Search")}}</button>
-                <button class="btn btn-outline-dark ml-1" style="color:yellow;" onClick="window.location.href='{{config('app.url')}}/asearch/'" type="button">{{__("Advanced")}}</button>
-            </div>
-        </form>
         
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+        <div class="d-flex justify-content-between align-items-center w-100">
+            <div class="d-flex align-items-center">
+            <div style="width:145px;height:45px;">
+                <a href="{{config('app.url','/wlibrary')}}">
+                    <img class="d-block" src="{{config('app.url','/wlibrary')}}/image/logo2.png?nocache=1"  width='100%' height='100%'>
+                </a>
+            </div>
+            <form class="form-inline" action='{{config('app.url')}}/book' name='form1'>        
+                    <div class="input-group mt-3 mb-3">    
+                        <input class="form-control" type="search" name='search_word' placeholder="{{__("Search Resource")}}" value='{{$search_word}}' aria-label="Search">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary" type="button" id="button-addon2">
+                                <img class="d-block" src="image/search_black.png?nocache=1"  width='100%' height='100%' />
+                            </button>
+                          </div>
+                    </div>
+                </form>
+                {{-- 상세검색 버튼 --}}
+                {{-- <button class="btn btn-outline-dark ml-1" onClick="window.location.href='{{config('app.url')}}/asearch/'" type="button">{{__("Advanced")}}</button> --}}
+                <button class="btn btn-primary ml-1" onClick="window.location.href='{{config('app.url','/wlibrary')}}/recommend'" type="button" style="width: 38px; height: 38px; padding: 0; background: linear-gradient(135deg, #007bff, #0056b3); border: none; box-shadow: 0 2px 8px rgba(0,123,255,0.3);">
+                    <img class="d-block mx-auto" src="image/ai.png?nocache=4" width="30" height="30" alt="AI" style="filter: invert(1);" />
+                </button>
+        </div>
+
+            <!-- Right side elements grouped together -->
+            <div class="d-flex align-items-center">
+                
+
+                <!-- Login buttons -->
+                <div class="d-flex align-items-center" style="margin-left: 1rem;">
+                    @guest                   
+                        @if(config('app.multi_inst',''))
+                            @if(session()->has('lib_inst'))
+                                <a class="btn btn-outline-warning btn-sm" href="{{route('login')}}" style="height: 38px; padding: 0.375rem 0.75rem;">{{__('Login')}}</a>
+                            @endif
+                            <a class="btn btn-outline-warning btn-sm ml-2" href="{{route('login_clear')}}" style="height: 38px; padding: 0.375rem 0.75rem;">{{__('Inst')}}</a>
+                        @else
+                            <a class="btn btn-outline-warning btn-sm" href="{{route('login')}}" style="height: 38px; padding: 0.375rem 0.75rem;">{{__('Login')}}</a>
+                        @endif         
+                    @else 
+                        <div class="dropdown">
+                            <a id="navbarDropdown2" class="btn btn-outline-info btn-sm dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre style="height: 38px; padding: 0.375rem 0.75rem;">
+                                {{ Auth::user()->name }} <span class="caret"></span>
+                            </a>
+
+                            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown2">
+                                <a class="dropdown-item" href="{{ auto_url(route('users.edit', Auth::user()->id),[], false) }}">
+                                    {{ __('My Profile') }}
+                                </a>
+
+                                <a class="dropdown-item" href="{{ auto_url('logout') }}"
+                                    onclick="event.preventDefault();
+                                                document.getElementById('logout-form').submit();">
+                                    {{ __('Logout') }}
+                                </a>
+
+                                <form id="logout-form" action="{{ auto_url('logout') }}" method="POST" style="display: none;">
+                                    @csrf
+                                </form>
+                            </div>
+                        </div>
+                    @endguest
+                </div>
+
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar" style="margin-left: 1rem;">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+            </div>
+        </div>
         
         <div class="collapse navbar-collapse" id="collapsibleNavbar">
             <!-- Links -->
@@ -70,15 +129,14 @@
                     </div>
                 </li>
 
-                <li class="nav-item dropdown">
+                <!-- <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         {{__("Announcement / BBS")}} 
                     </a>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                         <a class="dropdown-item" href="{{config('app.url','/wlibrary')}}/announcement">{{__("Announcement")}}</a>                        
-                        <!--div class="dropdown-divider"></div-->
                     </div>
-                </li>
+                </li> -->
                 @auth
                     @if(Auth::user()->isAdmin())
                     <li class="nav-item dropdown">
@@ -95,57 +153,13 @@
                         </div>
                     </li>
                     @endif
-                @endauth
+                @endauth 
             </ul>
 
             <ul class="navbar-nav ml-auto">
-                @guest                   
-                    @if(config('app.multi_inst',''))
-                        @if(session()->has('lib_inst'))
-                            <li class="nav-item">
-                                <a class="nav-link text-nowrap font-weight-bold text-warning" href="{{route('login')}}">{{__('Login')}}</a>
-                            </li>
-                        @endif
-                            <li class="nav-item ">
-                                <a class="nav-link text-nowrap text-warning" href="{{route('login_clear')}}">{{__('Inst')}}</a>
-                            </li>
-                    @else
-                        <li class="nav-item ">
-                            <a class="nav-link text-nowrap font-weight-bold text-warning" href="{{route('login')}}">{{__('Login')}}</a>
-                        </li>
-                    @endif         
-                @else 
-                    <li class="nav-item dropdown">
-                        <a id="navbarDropdown2" class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
-                            {{ Auth::user()->name }} <span class="caret"></span>
-                        </a>
-
-                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown2">
-                            <a class="dropdown-item" href="{{ auto_url(route('users.edit', Auth::user()->id),[], false) }}">
-                                {{ __('My Profile') }}
-                            </a>
-
-                            <a class="dropdown-item" href="{{ auto_url('logout') }}"
-                                onclick="event.preventDefault();
-                                            document.getElementById('logout-form').submit();">
-                                {{ __('Logout') }}
-                            </a>
-
-                            <form id="logout-form" action="{{ auto_url('logout') }}" method="POST" style="display: none;">
-                                @csrf
-                            </form>
-                        </div>
-                    </li>
-
-                    @if(false && Auth::user()->isAdmin())
-                    <li class="nav-item">
-                        <a class="btn btn-primary" href="{{config('app.url','/wlibrary')}}/register">Register</a>
-                    </li> 
-                    @endif
-                @endguest
                 <li class="nav-item">        
                     <?PHP            
-                        echo \wlibrary\code\print_lang(null,app()->getLocale()," class='form-control btn-info nav-item' style='width:80px;'  onChange=\"window.location='".config('app.url','/wlibrary')."/locale/'+this.value;\"");
+                        echo \wlibrary\code\print_lang(null,app()->getLocale()," class='form-control btn-outline-info nav-item' style='width:80px;'  onChange=\"window.location='".config('app.url','/wlibrary')."/locale/'+this.value;\"");
                     ?>
                 </li>
             </ul>       

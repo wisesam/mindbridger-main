@@ -22,7 +22,7 @@
     <script src="{{ auto_asset('/lib/js/popper.1.16.0.min.js') }}"></script>
     <script src="{{ auto_asset('/lib/jquery/jquery-3.4.1.min.js') }}"></script>
     <script src="{{ auto_asset('/lib/jquery/ui/1.12.1/jquery-ui.min.js') }}"></script>
-    <script src="{{ auto_asset('/lib/bootstrap-4.4.1-dist/js/bootstrap.js') }}"></script>
+    <script src="{{ auto_asset('/lib/bootstrap-4.6.2-dist/js/bootstrap.js') }}"></script>
 
     <script src="{{ auto_asset('/lib/js/util.js') }}?v=20250810"></script>
 
@@ -32,9 +32,9 @@
     @endif
     
     @if(isset($frontHome))        
-        <link href="{{ auto_asset('/lib/bootstrap-4.4.1-dist/css/bootstrap.min.css?nocache') }}" rel="stylesheet">
+        <link href="{{ auto_asset('/lib/bootstrap-4.6.2-dist/css/bootstrap.min.css?nocache') }}" rel="stylesheet">
         <link href="{{ auto_asset('/lib/bootstrap-3.4.1/dist/css/bootstrap_carousel_only.css?nocache=7') }}" rel="stylesheet">
-    @else <link href="{{ auto_asset('/lib/bootstrap-4.4.1-dist/css/bootstrap.min.css') }}" rel="stylesheet">
+    @else <link href="{{ auto_asset('/lib/bootstrap-4.6.2-dist/css/bootstrap.min.css') }}" rel="stylesheet">
     @endif
 
     @if(isset($aboutPage))   
@@ -103,6 +103,10 @@
             margin-top: 30px;
         }
 
+        .nav-header {
+            width: 100%;
+        }
+
         .dashb {
             display: flex;
             flex-direction: row;
@@ -134,26 +138,25 @@
 </head>
 <body>
     <div>
-        <div class="container text-center mb-3 mt-3">
-            <?PHP
-                if(isset($about_hf->header)) echo $about_hf->header;
-                else echo "<div class='container text-center' style='color:red;font-style:italic;font-weight:bold;font-size:large;' display:'inline;'> WISE Library Beta System</div>";
-            ?>
-        </div> 
-
-        @include('include.navbar')        
-        <div class="container" style='width:100%;'>
-            @include('include.messages')
-            @yield('content')
+        <div class="sticky-top border-bottom bg-white">
+            <div class="container" style="margin-top: 0px;">
+                @include('include.navbar')        
+            </div>
         </div>
 
-        <div class="container text-center mb-3 mt-3">
+        <div class="container" style='width:100%; margin-top: 0px;'>
+            @include('include.messages')
+        </div>
+
+        @yield('content')
+
+        <div class="container text-center mt-0">
             <?PHP
                 if(isset($about_hf->footer)) echo $about_hf->footer;
             ?>
         </div>
 
-        <div class="container text-center mb-3 mt-4">
+        <div class="container text-center my-4">
             Copyright &copy; 2014-<?=date ("Y") ;?>  www.wise4edu.com reserved by WISE Team
         </div>
     </div>
