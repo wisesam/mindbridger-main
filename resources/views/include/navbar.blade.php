@@ -35,13 +35,13 @@
                             <input class="form-control" type="search" name='search_word' placeholder="{{__("Search Resource")}}" value='{{$search_word}}' aria-label="Search">
                             <div class="input-group-append">
                                 <button class="btn btn-outline-secondary" type="button" id="button-addon2">
-                                    <img class="d-block" src="image/search_black.png?nocache=1"  width='100%' height='100%' />
+                                    <img class="d-block" src="{{config('app.url','/wlibrary')}}/image/search_black.png?nocache=1"  width='100%' height='100%' />
                                 </button>
                               </div>
                         </div>
                     </form>
                     <button class="btn btn-primary ml-2" onClick="window.location.href='{{config('app.url','/wlibrary')}}/recommend'" type="button" style="width: 38px; height: 38px; padding: 0; background: linear-gradient(135deg, #007bff, #0056b3); border: none; box-shadow: 0 2px 8px rgba(0,123,255,0.3);">
-                        <img class="d-block mx-auto" src="image/ai.png?nocache=4" width="30" height="30" alt="AI" style="filter: invert(1);" />
+                        <img class="d-block mx-auto" src="{{config('app.url','/wlibrary')}}/image/ai.png?nocache=4" width="30" height="30" alt="AI" style="filter: invert(1);" />
                     </button>
                 </div>
             </div>

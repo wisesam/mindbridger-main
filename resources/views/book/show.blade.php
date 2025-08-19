@@ -16,11 +16,239 @@
 
 @extends('layouts.root')
 @section('content')
+<!-- FontAwesome CDN -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
 .img-icon-pointer {
     cursor:pointer;
     width:40px; 
     height:auto;
+}
+
+/* Action Icons Styling */
+.action-icon-wrapper {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 1rem;
+    height: 32px;
+}
+
+.action-icon-wrapper:first-child {
+    margin-left: 0;
+}
+
+.action-icon-wrapper i {
+    transition: all 0.3s ease;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.action-icon-wrapper i:hover {
+    transform: scale(1.1);
+    opacity: 0.8;
+}
+
+/* Share Popup Styles */
+.share-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(5px);
+}
+
+.share-popup {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow: hidden;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.share-popup-header {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.share-popup-header h5 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.3s ease;
+}
+
+.close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.share-popup-body {
+    padding: 2rem;
+}
+
+.share-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.share-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    background: white;
+    color: #495057;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.share-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    border-color: #007bff;
+}
+
+.share-facebook:hover {
+    background: #1877f2;
+    color: white;
+    border-color: #1877f2;
+}
+
+.share-twitter:hover {
+    background: #1da1f2;
+    color: white;
+    border-color: #1da1f2;
+}
+
+.share-linkedin:hover {
+    background: #0077b5;
+    color: white;
+    border-color: #0077b5;
+}
+
+.share-email:hover {
+    background: #6c757d;
+    color: white;
+    border-color: #6c757d;
+}
+
+.share-btn i {
+    font-size: 1.2rem;
+    width: 24px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.share-btn:hover i {
+    transform: scale(1.1);
+}
+
+.share-url-section {
+    border-top: 1px solid #e9ecef;
+    padding-top: 1.5rem;
+}
+
+.share-url-section label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.75rem;
+}
+
+.share-url-section .input-group {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.share-url-section .form-control {
+    border: none;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    background: #f8f9fa;
+}
+
+.share-url-section .btn {
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.share-url-section .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .share-popup {
+        width: 95%;
+        margin: 1rem;
+    }
+    
+    .share-popup-header {
+        padding: 1rem;
+    }
+    
+    .share-popup-body {
+        padding: 1.5rem;
+    }
+    
+    .share-options {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .share-btn {
+        padding: 0.75rem;
+        font-size: 0.9rem;
+    }
 }
 
 // full-screen modal: Show the Book pages
@@ -117,32 +345,131 @@ html, body { height: 100%; }
         <div class="card">
             <div class="card-header col-12">
             @if($isAdmin)
-                <span style='margin-left: 12px; display:inline'>
-                    <img src="{{config('app.url','/wlibrary')}}/image/button/set.png" class="zoom img-icon-pointer" onClick="window.location='{{config('app.url','/wlibrary')."/book/".$book->id}}/edit'">
+                <span class="action-icon-wrapper">
+                    <i class="fas fa-cog zoom img-icon-pointer" onClick="window.location='{{config('app.url','/wlibrary')."/book/".$book->id}}/edit'" style="cursor:pointer; font-size: 24px; color: #6c757d;"></i>
                 </span>
             @endif
-                <span style='margin-left: 12px; display:inline'>
-                    <img src="{{config('app.url','/wlibrary')}}/image/button/share.png" class="zoom img-icon-pointer" onClick="textToClipboard('<?=config('app.url','/wlibrary')."/inst/".session('inst_uname')."/book/".$book->id?>')">
+                <span class="action-icon-wrapper">
+                    <i class="fas fa-share-alt zoom img-icon-pointer" onClick="openSharePopup()" style="cursor:pointer; font-size: 24px; color: #6c757d;"></i>
                 </span>
                 <script>
-                     function textToClipboard (text) {                        
-                        navigator.clipboard.writeText(text)
-                            .then(() => { alert(`<?=__("The Resource URL was coppied to your clipboard!")?>`) })
-                            .catch((error) => { alert(`Copy failed! ${error}`) });	
+                     function openSharePopup() {
+                        const shareUrl = '<?=config('app.url','/wlibrary')."/inst/".session('inst_uname')."/book/".$book->id?>';
+                        const shareTitle = '<?=addslashes($book->title)?>';
+                        const shareText = '<?=addslashes($book->author)?> - <?=addslashes($book->title)?>';
+                        
+                        // Create share popup
+                        const popup = document.createElement('div');
+                        popup.className = 'share-popup-overlay';
+                        popup.innerHTML = `
+                            <div class="share-popup">
+                                <div class="share-popup-header">
+                                    <h5 class="mb-0">{{__("Share this resource")}}</h5>
+                                    <button type="button" class="close-btn" onclick="closeSharePopup()">&times;</button>
+                                </div>
+                                <div class="share-popup-body">
+                                    <div class="share-options">
+                                        <button class="share-btn share-facebook" onclick="shareToFacebook('${shareUrl}', '${shareTitle}')">
+                                            <i class="fab fa-facebook-f"></i>
+                                            Facebook
+                                        </button>
+                                        <button class="share-btn share-twitter" onclick="shareToTwitter('${shareUrl}', '${shareText}')">
+                                            <i class="fab fa-twitter"></i>
+                                            Twitter
+                                        </button>
+                                        <button class="share-btn share-linkedin" onclick="shareToLinkedIn('${shareUrl}', '${shareTitle}', '${shareText}')">
+                                            <i class="fab fa-linkedin-in"></i>
+                                            LinkedIn
+                                        </button>
+                                        <button class="share-btn share-email" onclick="shareToEmail('${shareUrl}', '${shareTitle}', '${shareText}')">
+                                            <i class="fas fa-envelope"></i>
+                                            Email
+                                        </button>
+                                    </div>
+                                    <div class="share-url-section">
+                                        <label for="share-url" class="form-label">{{__("Or copy the link")}}:</label>
+                                        <div class="input-group">
+                                            <input type="text" id="share-url" class="form-control" value="${shareUrl}" readonly>
+                                            <div class="input-group-append">
+                                                <button class="btn btn-outline-secondary" type="button" onclick="copyShareUrl()">
+                                                    {{__("Copy")}}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        
+                        document.body.appendChild(popup);
+                        document.body.style.overflow = 'hidden';
+                    }
+                    
+                    function closeSharePopup() {
+                        const popup = document.querySelector('.share-popup-overlay');
+                        if (popup) {
+                            popup.remove();
+                            document.body.style.overflow = 'auto';
+                        }
+                    }
+                    
+                    function shareToFacebook(url, title) {
+                        const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+                        window.open(shareUrl, '_blank', 'width=600,height=400');
+                    }
+                    
+                    function shareToTwitter(url, text) {
+                        const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+                        window.open(shareUrl, '_blank', 'width=600,height=400');
+                    }
+                    
+                    function shareToLinkedIn(url, title, text) {
+                        const shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
+                        window.open(shareUrl, '_blank', 'width=600,height=400');
+                    }
+                    
+                    function shareToEmail(url, title, text) {
+                        const subject = encodeURIComponent(title);
+                        const body = encodeURIComponent(`${text}\n\n${url}`);
+                        const mailtoUrl = `mailto:?subject=${subject}&body=${body}`;
+                        window.location.href = mailtoUrl;
+                    }
+                    
+                    function copyShareUrl() {
+                        const urlInput = document.getElementById('share-url');
+                        urlInput.select();
+                        urlInput.setSelectionRange(0, 99999);
+                        navigator.clipboard.writeText(urlInput.value)
+                            .then(() => {
+                                const copyBtn = urlInput.nextElementSibling.querySelector('button');
+                                const originalText = copyBtn.textContent;
+                                copyBtn.textContent = '{{__("Copied!")}}';
+                                copyBtn.classList.add('btn-success');
+                                setTimeout(() => {
+                                    copyBtn.textContent = originalText;
+                                    copyBtn.classList.remove('btn-success');
+                                }, 2000);
+                            })
+                            .catch((error) => {
+                                alert(`{{__("Copy failed!")}} ${error}`);
+                            });
                     }
                 </script>
 
             @if(Auth::check() && !$isAdmin)
-                <span style='margin-left: 12px; display:inline'>
+                <span class="action-icon-wrapper">
                     <!-- Favorite Checkbox with Heart Icon -->
-                    <label style="cursor:pointer;" class="ml-2 mb-0">
+                    <label style="cursor:pointer;" class="mb-0">
                         <input type="checkbox" id="favorite-checkbox" style="display:none;" onchange="toggleFavorite(this)">
-                        <img id="favorite-icon" src="{{ config('app.url','/wlibrary') }}/image/button/heart-empty2.png" class="zoom img-icon-pointer"/>
+                        <i id="favorite-icon" class="far fa-heart zoom img-icon-pointer" style="cursor:pointer; font-size: 24px; color: #dc3545;"></i>
                     </label>
-                    <label>
+                </span>
+                <span class="action-icon-wrapper">
+                    <label style="cursor:pointer;">
                         <input type="checkbox" id="eshelf-checkbox" style="display:none;" onchange="toggleEshelf(this)">
-                        <img id="eshelf-icon" src="{{ config('app.url','/wlibrary') }}/image/button/ebook-empty.png" class="zoom img-icon-pointer" style="margin-left:8px;"/>
+                        <i id="eshelf-icon" class="fas fa-book-open zoom img-icon-pointer" style="cursor:pointer; font-size: 24px; color: #28a745;"></i>
                     </label>
+                </span>
 
                     <script>
                             let isFavorited = false;
@@ -152,7 +479,7 @@ html, body { height: 100%; }
                                 .done(function (response) {
                                     if (response.favorited) {
                                         isFavorited = true;
-                                        $('#favorite-icon').attr('src', '{{ config("app.url","/wlibrary") }}/image/button/heart-filled2.png');
+                                        $('#favorite-icon').removeClass('far fa-heart').addClass('fas fa-heart');
                                         $('#favorite-checkbox').prop('checked', true);
                                     }
                                 });
@@ -160,7 +487,7 @@ html, body { height: 100%; }
                             $(document).ready(function () {
                                 if (isFavorited) {
                                     $('#favorite-checkbox').prop('checked', true);
-                                    $('#favorite-icon').attr('src', '{{ config("app.url","/wlibrary") }}/image/button/heart-filled2.png');
+                                    $('#favorite-icon').removeClass('far fa-heart').addClass('fas fa-heart');
                                 }
                             });
 
@@ -169,7 +496,7 @@ html, body { height: 100%; }
                                 .done(function (response) {
                                     if (response.isMyEshelf) {
                                         isEshelfOn = true;
-                                        $('#eshelf-icon').attr('src', '{{ config("app.url","/wlibrary") }}/image/button/ebook-filled.png');
+                                        $('#eshelf-icon').removeClass('fas fa-book-open').addClass('fas fa-book-open-reader');
                                         $('#eshelf-checkbox').prop('checked', true);
                                     }
                                 });
@@ -177,7 +504,7 @@ html, body { height: 100%; }
                             $(document).ready(function () {
                                 if (isEshelfOn) {
                                     $('#eshelf-checkbox').prop('checked', true);
-                                    $('#eshelf-icon').attr('src', '{{ config("app.url","/wlibrary") }}/image/button/ebook-filled.png');
+                                    $('#eshelf-icon').removeClass('fas fa-book-open').addClass('fas fa-book-open-reader');
                                 }
                             });
 
@@ -185,13 +512,13 @@ html, body { height: 100%; }
                                 let isChecked = checkbox.checked;
                                 let icon = $('#favorite-icon');
                                 if (isChecked) { // try to add it as favorite
-                                    icon.attr('src', '{{ config("app.url","/wlibrary") }}/image/button/heart-filled2.png');
+                                    icon.removeClass('far fa-heart').addClass('fas fa-heart');
                                     $.post("{{ route('book.favorite.store', ['book' => $book->id]) }}", {
                                         _token: '{{ csrf_token() }}'
                                     });
 
                                 } else { // try to remove favorite
-                                    icon.attr('src', '{{ config("app.url","/wlibrary") }}/image/button/heart-empty2.png');
+                                    icon.removeClass('fas fa-heart').addClass('far fa-heart');
                                     $.ajax({
                                         url: "{{ route('book.favorite.remove', ['book' => $book->id]) }}",
                                         type: 'DELETE',
@@ -201,16 +528,15 @@ html, body { height: 100%; }
                             }
 
                             function toggleEshelf(checkbox) {
-                                let isChecked = checkbox.checked;
                                 let icon = $('#eshelf-icon');
-                                if (isChecked) { // try to add it as my eshelf book
-                                    icon.attr('src', '{{ config("app.url","/wlibrary") }}/image/button/ebook-filled.png');
+                                if (checkbox.checked) { // try to add it as my eshelf book
+                                    icon.removeClass('fas fa-book-open').addClass('fas fa-book-open-reader');
                                     $.post("{{ route('book.eshelf.store', ['book' => $book->id]) }}", {
                                         _token: '{{ csrf_token() }}'
                                     });
 
                                 } else { // try to remove my eshelf book
-                                    icon.attr('src', '{{ config("app.url","/wlibrary") }}/image/button/ebook-empty.png');
+                                    icon.removeClass('fas fa-book-open-reader').addClass('fas fa-book-open');
                                     $.ajax({
                                         url: "{{ route('book.eshelf.remove', ['book' => $book->id]) }}",
                                         type: 'DELETE',
