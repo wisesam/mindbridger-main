@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth; // [SJH]
 use App\Libraries\Code; // [SJH]
 use Illuminate\Http\Request;
 use Illuminate\Auth\Events\Registered;
+use App\Models\Book; // use the model that we defined [SJH]
 
 require_once(config('app.root')."/app/Libraries/code.php");
 require_once(config('app.root2')."/vwmldbm/config.php");
@@ -71,5 +72,30 @@ class BookAIAdvisorController extends Controller
     {
         return view('recommendations.form');
     }
-}
 
+
+    
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  int  $book_id
+     * @return \Illuminate\Http\Response
+     */
+    // meta data AI API
+    // title,author,genre,difficulty, theme, summary
+    public function auto_meta($book_id, Request $request)
+    {
+        $inst=session('lib_inst');
+        $book = Book::where("inst",$inst)->where("id",$book_id)->get()[0];
+        
+        $text = $request->input('text'); // text of 10 pages or specific section
+        if(!empty($text)) {
+             return response()->json([
+                'auto_meta' => [
+                    ['summary' => $text],
+                ],
+            ]);
+        } else return response()->json(['auto_meta' => 'No text provided for analysis.']);
+    }
+}

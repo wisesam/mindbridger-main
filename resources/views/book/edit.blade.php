@@ -474,69 +474,90 @@
                             </div>
                         </div>
                         
-                        
-                    @if(!empty($book->files))
-                        <!-- Table of Contents (Auto_TOC) -->
                         <div class="form-group row">
                             <label for="auto_toc" class="col-md-3 col-form-label text-md-right">
-                                <div style="margin-bottom: 10px;">{{ __("Auto ToC") }}</div>
+                                {{__("ToC (Modifiable)")}}
+                            </label>
+                            <div class="col-md-7">
+                                <textarea id="auto_toc"
+                                    class="form-control @error('toc') is-invalid @enderror"
+                                    name="auto_toc"
+                                    rows="4"
+                                    autocomplete="off"
+                                    autofocus>{{ old('auto_toc', $book->auto_toc ?? '[]') }}
+                                </textarea>
+                                @error('auto_toc')
+                                    <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <!-- Meta Data from PDF -->
+                        <div class="form-group row">
+                            <label for="meta_data" class="col-md-3 col-form-label text-md-right">
+                                {{__("Meta Data (PDF)")}}
+                            </label>
+                            <div class="col-md-7">
+                                <textarea id="meta_data"
+                                    class="form-control @error('meta_data') is-invalid @enderror"
+                                    name="meta_data"
+                                    rows="3"
+                                    autocomplete="off"
+                                    autofocus>{{ old('meta_data', $book->meta_data ?? "") }}
+                                </textarea>
+
+                                @error('meta_data')
+                                    <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                                @enderror
+                            </div>
+                        </div>
+                        
+                        <!-- Text from PDF -->
+                        <div class="form-group row">
+                            <label for="pdf_text" class="col-md-3 col-form-label text-md-right">
+                                {{__("Text (PDF)")}}
+                            </label>
+                            <div class="col-md-7">
+                                <textarea id="pdf_text"
+                                    class="form-control @error('pdf_text') is-invalid @enderror"
+                                    name="pdf_text"
+                                    rows="4"
+                                    autocomplete="off"
+                                    autofocus>{{ old('pdf_text', $bookTextMeta->text ?? "") }}
+                                </textarea>
+
+                                @error('pdf_text')
+                                    <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                                @enderror
+                            </div>
+                        </div>
+
+
+                    @if(!empty($book->files))
+                        <!-- Table of Contents (meta_data) -->
+                        <div class="form-group row">
+                            <label for="meta_data" class="col-md-3 col-form-label text-md-right">
+                                <div style="margin-bottom: 10px;">{{ __("Auto Meta") }}</div>
                             </label>
 
                             <div class="col-md-7">
-                                <span style="margin-right: 10px;">
-                                    <button
-                                        type="button"
-                                        id="btn-auto-toc"
-                                        class="btn btn-primary"
-                                        data-url="{{ route('book.auto_toc', ['book' => $book->id]) }}">
-                                        {{ __('Get ToC by AI') }}
-                                    </button>
-
-                                    <script>
-                                        document.getElementById('btn-auto-toc').addEventListener('click', async function () {
-                                            const btn = this;
-                                            const url = btn.dataset.url;
-
-                                            const orig = btn.innerHTML;
-                                            btn.disabled = true;
-                                            btn.innerHTML = "{{__('Generating…')}}";
-
-                                            try {
-                                                const res = await fetch(url, {
-                                                    method: 'GET',
-                                                    headers: { 'Accept': 'application/json' }
-                                                });
-                                                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-                                                const data = await res.json();
-                                                if(!isEmpty(data.auto_toc)) {
-                                                    document.getElementById('auto_toc').value = JSON.stringify(data.auto_toc ?? {});
-                                                    document.getElementById('toc').value = JSON.stringify(data.auto_toc ?? {});
-                                                } else {
-                                                    alert("{{__('No ToC found!')}}");
-                                                }
-                                                
-                                            } catch (e) {
-                                                alert('Failed to generate Auto ToC: ' + e.message);
-                                            } finally {
-                                                btn.disabled = false;
-                                                btn.innerHTML = orig;
-                                            }
-                                        });
-                                    </script>
-
-                                </span>
                                 @php
                                 // url for PDFviewer. Ensure the PDF URL is correctly formed
                                     $rfiles=explode(';',$book->rfiles);        
                                     $pdfUrl = session('app.url')."/lib/get_book_file.php?rf={$rfiles[0]}&rid={$book->rid}";
                                 @endphp
                                 <span class="mb-2">
-                                    <button id="btn-auto_toc_js" class="btn btn-secondary"
-                                        data-pdf-url="{{ $pdfUrl }}">Extract ToC
+                                    <button id="btn-auto_toc_js" class="btn btn-primary"
+                                        data-pdf-url="{{ $pdfUrl }}">1. Meta Data from PDF 
                                     </button>
 
-                                  <script>
+                                    <script>
                                     (async function () {
                                         const btn = document.getElementById('btn-auto_toc_js');
                                         if (!btn) return;
@@ -544,59 +565,51 @@
                                         async function resolveDestToPageNum(pdf, dest) {
                                             let explicit = dest;
                                             if (typeof dest === 'string') {
-                                            explicit = await pdf.getDestination(dest); // named -> explicit
+                                                explicit = await pdf.getDestination(dest);
                                             }
                                             if (Array.isArray(explicit) && explicit[0]) {
-                                            const pageIndex = await pdf.getPageIndex(explicit[0]); // 0-based
-                                            return pageIndex + 1;
+                                                const pageIndex = await pdf.getPageIndex(explicit[0]);
+                                                return pageIndex + 1;
                                             }
                                             return null;
                                         }
 
                                         async function flattenOutline(pdf, items, level = 1, acc = []) {
                                             for (const it of items) {
-                                            const page = it.dest ? await resolveDestToPageNum(pdf, it.dest) : null;
-                                            acc.push({
-                                                title: (it.title || '').trim(),
-                                                page,             // legacy single page (kept for compatibility)
-                                                start: page,      // we will finalize 'end' later
-                                                end: null,        // to be filled after flatten pass
-                                                level
-                                            });
-                                            if (it.items && it.items.length) {
-                                                await flattenOutline(pdf, it.items, level + 1, acc);
-                                            }
+                                                const page = it.dest ? await resolveDestToPageNum(pdf, it.dest) : null;
+                                                acc.push({
+                                                    title: (it.title || '').trim(),
+                                                    page,
+                                                    start: page,
+                                                    end: null,
+                                                    level
+                                                });
+                                                if (it.items && it.items.length) {
+                                                    await flattenOutline(pdf, it.items, level + 1, acc);
+                                                }
                                             }
                                             return acc;
                                         }
 
                                         function finalizeRanges(flat, numPages) {
-                                            // For each item with a 'start', set 'end' to (next item at same or higher level).start - 1
                                             for (let i = 0; i < flat.length; i++) {
-                                            const cur = flat[i];
-
-                                            if (cur.start == null) {
-                                                cur.end = null;
-                                                continue;
-                                            }
-
-                                            // Find the next item with level <= cur.level and a known start
-                                            let nextStart = null;
-                                            for (let j = i + 1; j < flat.length; j++) {
-                                                if (flat[j].level <= cur.level && flat[j].start != null) {
-                                                nextStart = flat[j].start;
-                                                break;
+                                                const cur = flat[i];
+                                                if (cur.start == null) {
+                                                    cur.end = null;
+                                                    continue;
                                                 }
-                                            }
-
-                                            let end = (nextStart != null) ? (nextStart - 1) : numPages;
-
-                                            // Clamp and normalize
-                                            if (end < cur.start) end = cur.start;
-                                            if (cur.start < 1) cur.start = 1;
-                                            if (end > numPages) end = numPages;
-
-                                            cur.end = end;
+                                                let nextStart = null;
+                                                for (let j = i + 1; j < flat.length; j++) {
+                                                    if (flat[j].level <= cur.level && flat[j].start != null) {
+                                                        nextStart = flat[j].start;
+                                                        break;
+                                                    }
+                                                }
+                                                let end = (nextStart != null) ? (nextStart - 1) : numPages;
+                                                if (end < cur.start) end = cur.start;
+                                                if (cur.start < 1) cur.start = 1;
+                                                if (end > numPages) end = numPages;
+                                                cur.end = end;
                                             }
                                             return flat;
                                         }
@@ -607,50 +620,147 @@
 
                                             btn.disabled = true; const label = btn.innerHTML; btn.innerHTML = 'Reading…';
                                             try {
-                                            const loadingTask = pdfjsLib.getDocument({
-                                                url,
-                                                disableAutoFetch: true,
-                                                disableStream: true
-                                            });
-                                            const pdf = await loadingTask.promise;
+                                                const loadingTask = pdfjsLib.getDocument({
+                                                    url,
+                                                    disableAutoFetch: true,
+                                                    disableStream: true
+                                                });
+                                                const pdf = await loadingTask.promise;
 
-                                            let outline = await pdf.getOutline();
-                                            if (!outline) outline = [];
+                                                // ----- (1) Get outline/ToC -----
+                                                let outline = await pdf.getOutline();
+                                                if (!outline) outline = [];
+                                                const flat = await flattenOutline(pdf, outline);
+                                                const withRanges = finalizeRanges(flat, pdf.numPages);
 
-                                            const flat = await flattenOutline(pdf, outline);
-                                            const withRanges = finalizeRanges(flat, pdf.numPages);
-
-                                            // For textarea preview
-                                            const tocText = withRanges.map((x, i) => {
-                                                const indent = '  '.repeat(Math.max(0, x.level - 1));
-                                                let suffix = '';
-                                                if (x.start != null && x.end != null) {
-                                                suffix = (x.start === x.end) ? ` (p.${x.start})` : ` (pp.${x.start}–${x.end})`;
-                                                } else if (x.page != null) {
-                                                suffix = ` (p.${x.page})`;
+                                                if (withRanges.length) {
+                                                    document.getElementById('toc').value = withRanges.map((x, i) => {
+                                                        const indent = '  '.repeat(Math.max(0, x.level - 1));
+                                                        let suffix = '';
+                                                        if (x.start != null && x.end != null) {
+                                                            suffix = (x.start === x.end) ? ` (p.${x.start})` : ` (pp.${x.start}–${x.end})`;
+                                                        } else if (x.page != null) {
+                                                            suffix = ` (p.${x.page})`;
+                                                        }
+                                                        return `${indent}${i + 1}. ${x.title}${suffix}`;
+                                                    }).join('\n');
+                                                    document.getElementById('auto_toc').value = JSON.stringify(withRanges);
+                                                } else {
+                                                    let defaultToC = [{ title: "One", page: 1, start: 1, end: pdf.numPages, level: 1 }];
+                                                    document.getElementById('auto_toc').value = JSON.stringify(defaultToC);
+                                                    document.getElementById('toc').value = "1. One (pp. 1–" + pdf.numPages + ")";
+                                                    alert("{{ __('No ToC found!') }}");
                                                 }
-                                                return `${indent}${i + 1}. ${x.title}${suffix}`;
-                                            }).join('\n');
 
-                                            if (withRanges.length) {
-                                                document.getElementById('toc').value = tocText;
-                                                document.getElementById('auto_toc').value = JSON.stringify(withRanges);
-                                            } else {
-                                                alert("{{ __('No ToC found!') }}");
-                                            }
+                                                // ----- (2) Get PDF metadata -----
+                                                let { info, metadata } = await pdf.getMetadata();
+                                                let metaData = {
+                                                    Title: info.Title || "",
+                                                    Author: info.Author || "",
+                                                    Subject: info.Subject || "",
+                                                    Keywords: info.Keywords || "",
+                                                    Creator: info.Creator || "",
+                                                    Producer: info.Producer || "",
+                                                    CreationDate: info.CreationDate || "",
+                                                    ModDate: info.ModDate || "",
+                                                    MetadataXML: metadata ? metadata.getAll() : ""
+                                                };
+                                                document.getElementById('meta_data').value = JSON.stringify(metaData ?? {}, null, 2);
+
+                                                // ----- (3) Get PDF text as JSON -----
+                                                let textPages = [];
+                                                for (let i = 1; i <= pdf.numPages; i++) {
+                                                    let page = await pdf.getPage(i);
+                                                    let content = await page.getTextContent();
+                                                    let pageText = content.items.map(item => item.str).join(" ");
+                                                    textPages.push({ page: i, text: pageText });
+                                                }
+                                                document.getElementById('pdf_text').value = JSON.stringify(textPages ?? [], null, 2);
 
                                             } catch (e) {
-                                            console.error(e);
-                                            alert('ToC read failed: ' + e.message);
+                                                console.error(e);
+                                                alert('PDF processing failed: ' + e.message);
                                             } finally {
-                                            btn.disabled = false; btn.innerHTML = label;
+                                                btn.disabled = false; btn.innerHTML = label;
                                             }
                                         });
-                                        })();
-                                  </script>
+                                    })();
+                                    </script>
                                 </span>
-                            <!-- End PDF Viewer URL -->
-                               <input type='hidden' id='auto_toc' name='auto_toc' value=@json(old("auto_toc", $book->auto_toc ?? []))>
+                            <!-- End PDF Viewer URL -->                               
+                               <span style="margin-left: 10px;">
+                                  <!-- Meta Info by AI API -->
+                                    <button
+                                        type="button"
+                                        id="btn-auto-meta"
+                                        class="btn btn-info"
+                                        data-url="{{ route('extract_meta', ['book' => $book->id]) }}">
+                                        {{ __('2. Meta Info by AI') }}
+                                    </button>
+
+                                    <script>
+                                        document.getElementById('btn-auto-meta').addEventListener('click', async function () {
+                                            const btn = this;
+                                            const url = btn.dataset.url; // e.g. /book/{id}/extract_meta
+
+                                            const orig = btn.innerHTML;
+                                            btn.disabled = true;
+                                            btn.innerHTML = "{{__('Generating…')}}";
+
+                                            try {
+                                                // Grab pdf_text from hidden input
+                                                const pdfText = document.getElementById('pdf_text').value;
+                                                const res = await fetch(url, {
+                                                    method: 'POST',
+                                                    headers: { 
+                                                        'Accept': 'application/json',
+                                                        'Content-Type': 'application/json',
+                                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                                    },
+                                                    body: JSON.stringify({ pdf_text: pdfText })
+                                                });
+
+                                                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+                                                const data = await res.json();
+
+                                                if (data.meta_data) {
+                                                    document.getElementById('meta_info').value = JSON.stringify(data.meta_data ?? {}, null, 2);
+                                                } else {
+                                                    alert("{{__('No Meta Info found!')}}");
+                                                }
+                                            } catch (e) {
+                                                alert('Failed to generate Auto Meta Info: ' + e.message);
+                                            } finally {
+                                                btn.disabled = false;
+                                                btn.innerHTML = orig;
+                                            }
+                                        });
+                                        </script>
+
+                                  <!-- end Meta Info by AI API -->  
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label for="meta_info" class="col-md-3 col-form-label text-md-right">
+                                {{__("Meta Info (AI)")}}
+                            </label>
+                            <div class="col-md-7">
+                                <textarea id="meta_info"
+                                    class="form-control @error('meta_info') is-invalid @enderror"
+                                    name="meta_info"
+                                    rows="4"
+                                    autocomplete="off"
+                                    autofocus>{{ old('meta_info', $bookTextMeta->meta ?? "") }}
+                                </textarea>
+
+                                @error('meta_info')
+                                    <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                                @enderror
                             </div>
                         </div>
                     @endif
@@ -921,7 +1031,6 @@
                                             document.getElementById('wise_photo_data').value = dataURL;
                                             document.editForm.cover_image.value=''; // empty file because we are not uploading file but string (wise_photo_data)
                                             document.editForm.operation.value='FUPLOAD'; 
-                                          
                                         }
                                        document.editForm.submit();
                                     }

@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Pagination;
 use App\Models\Book; // use the model that we defined [SJH]
 use App\Models\Book_copy; // use the model that we defined [SJH]
+use App\Models\BookTextMeta; 
 use DB; // instead of Eloquent, use DB
 
 require_once(config('app.root2')."/vwmldbm/config.php");
@@ -263,8 +264,6 @@ class BookController extends Controller
 
         $book->save();
         return redirect('/book/'.$book->id.'/edit')->with('success',__("Book Created"));
-
-        
     }
 
     /**
@@ -361,7 +360,10 @@ class BookController extends Controller
         $book_copy=Book_copy::where('inst',session('lib_inst'))
                         ->where('bid',$book->id)->get()->toArray();        
         
-        return view('book.edit')->with('book',$book)->with('book_copy',$book_copy);
+        $bookTextMeta=BookTextMeta::where('inst',session('lib_inst'))
+            ->where('book_id',$book->id)->first();
+
+        return view('book.edit')->with('book',$book)->with('book_copy',$book_copy)->with('bookTextMeta',$bookTextMeta);
     }
 
     /**
@@ -455,8 +457,22 @@ class BookController extends Controller
             $book->c_category2=$request->input('c_category2');  
             $book->toc=$request->input('toc');  
             $book->auto_toc=$request->input('auto_toc');  
+            $book->meta_data=$request->input('meta_data');  
 
             $book->save();
+
+            $bookTextMeta = BookTextMeta::updateOrCreate(
+                [
+                    'inst'    => session('lib_inst'),
+                    'book_id' => $id
+                ],
+                [
+                    'text' => $request->input('pdf_text'),
+                    'meta' => $request->input('meta_info'),
+                ]
+            );
+    
+
             if($isbn_error) {
                 return redirect('/book/'.$book->id.'/edit')->with('error',__("Duplicate ISBN/e-ISBN!"));
             }
@@ -573,12 +589,24 @@ class BookController extends Controller
         $book->c_category=$request->input('c_category');  
         $book->c_category2=$request->input('c_category2');  
         $book->toc=$request->input('toc');
-        $book->auto_toc=$request->input('auto_toc');  
-            
+        $book->auto_toc=$request->input('auto_toc');
+        $book->meta_data=$request->input('meta_data');
+        
         if($request->input('file_name')){
                 $book->cover_image=$fileNameToStore;
         }
         $book->save();
+        $bookTextMeta = BookTextMeta::updateOrCreate(
+            [
+                'inst'    => session('lib_inst'),
+                'book_id' => $id
+            ],
+            [
+                'text' => $request->input('pdf_text'),
+                'meta' => $request->input('meta_info'),
+            ]
+        );
+
         if($isbn_error) {
             return redirect('/book/'.$book->id.'/edit')->with('error',__("Duplicate ISBN/e-ISBN!"));
         }
@@ -777,29 +805,5 @@ class BookController extends Controller
         }
         $book->rfiles=implode(';',$rfiles);
         $book->save();
-    }
-
-
-        /**
-     * Display the specified resource.
-     *
-     * @param  int  $book_id
-     * @return \Illuminate\Http\Response
-     */
-    public function auto_toc($book_id, Request $request)
-    {
-        $inst=session('lib_inst');
-        $book = Book::where("inst",$inst)->where("id",$book_id)->get()[0];
-
-        // Generate or retrieve ToC
-       
-
-        return response()->json([
-            'auto_toc' => [
-                ['title' => 'Chapter 1', 'page' => 1],
-                ['title' => 'Chapter 2', 'page' => 15],
-                ['title' => 'Chapter 3', 'page' => 31],
-            ],
-        ]);
     }
 }
