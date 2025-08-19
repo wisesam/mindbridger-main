@@ -12,6 +12,22 @@
     $perm['R'] ='Y'; // Read permission
 	$isAdmin = (Auth::check() && Auth::user()->isAdmin()) ? true : false;
     $isEresource = ($book->files ? true : false);
+
+
+ // if the normal user logged in, and has reading history use it otherwise use book's auto_toc
+    $tocOrigin = null; // ToC(Table of Contents) from either book or reading history
+    $bookTocMode = false;
+    $historyTocMode = false;
+
+    if(!Auth::check() || $isAdmin) { // guest mode or admin
+        if(!empty($book->auto_toc)) {
+            $tocOrigin = $book->auto_toc;
+            $bookTocMode = true;
+        } 
+    } else if(Auth::check() && !$isAdmin && !empty($readingHistory->historyData)) { // normal user with reading history
+        $tocOrigin = $readingHistory->historyData;
+        $historyTocMode = true;
+    }
 ?>
 
 @extends('layouts.root')
@@ -104,6 +120,22 @@ html, body { height: 100%; }
           (data.start === data.end)
             ? ('Page ' + data.start)
             : ('Pages ' + data.start + '–' + data.end);
+        
+        document.getElementById('fullscreenModalLabel').innerHTML +=
+            " <img src='{{ config('app.url','/wlibrary') }}/image/ai-assistant.png' class='zoom img-icon-pointer ml-2' alt='AI Assistant'>";
+
+      @if($historyTocMode)
+        document.getElementById('fullscreenModalLabel').innerHTML +=
+            " <button id='startButton' class='btn btn-primary ml-2'>{{ __('Start Reading') }}</button>";
+        document.getElementById('fullscreenModalLabel').innerHTML +=
+            " <button id='finishButton' class='btn btn-warning' style='margin-left:10px;display:none;'>{{ __('Finish') }}</button>";
+      
+
+       <?php
+        
+       ?>
+      @endif
+
       })
       .on('hidden.bs.modal.pdf', function () {
         document.getElementById('pdfIframe').src = 'about:blank'; // free resources
@@ -144,80 +176,235 @@ html, body { height: 100%; }
                         <img id="eshelf-icon" src="{{ config('app.url','/wlibrary') }}/image/button/ebook-empty.png" class="zoom img-icon-pointer" style="margin-left:8px;"/>
                     </label>
 
+                    @if($isEresource)
+                     <label>
+                        @php
+                            if(empty($readingHistory) || $readingHistory->startable())
+                                $sButtonDisplay="inline";
+                            else $sButtonDisplay="none";
+                        @endphp       
+                        
+                        <button type="button" style="display:{{$sButtonDisplay}};" id="startReadingButton"
+                            class="btn btn-sm btn-warning ml-2">
+                            {{ __('Start Reading') }}
+                        </button>
+
+                        @php
+                            if(!empty($readingHistory) && $readingHistory->finishable())
+                                $fButtonDisplay="inline";
+                            else $fButtonDisplay="none";
+                        @endphp
+                        <span class="badge badge-info" style="display:{{$fButtonDisplay}};">
+                            {{ __('In Progress') }}
+                        </span>
+                        <button type="button" style="display:{{$fButtonDisplay}};" id="finishReadingButton"
+                                class="btn btn-sm btn-danger ml-2">
+                            {{ __('Finish Reading') }}
+                        </button>
+
+                     </label>
+                     @if(!empty($readingHistory) && $readingHistory->status == 'completed')
+                      <label>     
+                        <span class="badge badge-success">
+                            {{ __('Finished') }}
+                        </span>
+                      </label>
+                      <label>
+                        <button type="button" id="resetReadingButton"
+                                class="btn btn-sm btn-danger ml-2">
+                            {{ __('Reset') }}
+                        </button>
+                      </label>
+                    @endif
+
+                     <script>
+                        let auto_toc_exist = false;
+                        @if(!empty($book->auto_toc))
+                            auto_toc_exist = true;
+                        @endif
+                        $(document).ready(function () {
+                            $('#startReadingButton').on('click', function () {
+                                if(!auto_toc_exist) {
+                                    alert("{{__('Table of Contents is not available for this book. Please generate one first.')}}");
+                                    return false; // Prevent further action
+                                }
+                                if(confirm("{{__("Do you want to start reading this book?")}}")) {
+                                    $.ajax({
+                                        url: "{{ route('reading_history.set_status', ['book' => $book->id]) }}",
+                                        type: "POST",
+                                        data: {
+                                            status: "in_progress",
+                                            operation: "create_history",
+                                            book_id: "{{ $book->id }}",
+                                            _token: "{{ csrf_token() }}"
+                                        },
+                                        success: function (response) {
+                                            if (response.success) {
+                                                console.log("Success:", response);
+                                                document.getElementById('startReadingButton').style.display = 'none';
+                                                document.getElementById('finishReadingButton').style.display = 'inline';
+                                                document.getElementById('eshelf-checkbox').checked=true;
+                                                toggleEshelf(document.getElementById('eshelf-checkbox'));
+                                                location.reload();
+                                                /* alert("Let's start reading!"); */
+                                            } else {
+                                                console.warn("Unexpected response:", response);
+                                                document.getElementById('startReadingButton').style.display = 'inline';
+                                                document.getElementById('finishReadingButton').style.display = 'none';
+                                                alert("Failed to update status.");
+                                            }
+                                        },
+                                        error: function (xhr) {
+                                            console.error("Error:", xhr.responseText);
+                                            document.getElementById('startReadingButton').style.display = 'inline';
+                                            document.getElementById('finishReadingButton').style.display = 'none';
+                                            alert("Something went wrong!");
+                                        }
+                                    });
+                                } else {
+                                    return false; // User cancelled
+                                }
+                            });
+
+                            $('#finishReadingButton').on('click', function () {
+                                if(confirm("{{__("Do you want to finish reading this book?")}}")) {
+                                    $.ajax({
+                                        url: "{{ route('reading_history.set_status', ['book' => $book->id]) }}",
+                                        type: "POST",
+                                        data: {
+                                            status: "completed",
+                                            book_id: "{{ $book->id }}",
+                                            _token: "{{ csrf_token() }}"
+                                        },
+                                        success: function (response) {
+                                            if (response.success) {
+                                                console.log("Success:", response);
+                                                document.getElementById('finishReadingButton').style.display = 'none';
+                                                /* alert("Reading finished!"); */
+                                                location.reload();
+                                            } else {
+                                                console.warn("Unexpected response:", response);
+                                                document.getElementById('finishReadingButton').style.display = 'inline';
+                                                alert("Failed to update status.");
+                                            }
+                                        },
+                                        error: function (xhr) {
+                                            console.error("Error:", xhr.responseText);
+                                            document.getElementById('finishReadingButton').style.display = 'inline';
+                                            alert("Something went wrong!");
+                                        }
+                                    });
+                                }
+                            });
+
+
+                            $('#resetReadingButton').on('click', function () {
+                                if(confirm("{{__("Do you want to reset reading history of the book? All data will be lost!")}}")) {
+                                    $.ajax({
+                                        url: "{{ route('reading_history.destroy', ['book' => $book->id]) }}",
+                                        type: "POST",
+                                        data: {
+                                            book_id: "{{ $book->id }}",
+                                            _token: "{{ csrf_token() }}"
+                                        },
+                                        success: function (response) {
+                                            if (response.success) {
+                                                console.log("Success:", response);
+                                                document.getElementById('resetReadingButton').style.display = 'none';
+                                                /* alert("Reading finished!"); */
+                                                location.reload();
+                                            } else {
+                                                console.warn("Unexpected response:", response);
+                                                document.getElementById('resetReadingButton').style.display = 'inline';
+                                                alert("Failed to update status.");
+                                            }
+                                        },
+                                        error: function (xhr) {
+                                            console.error("Error:", xhr.responseText);
+                                            document.getElementById('resetReadingButton').style.display = 'inline';
+                                            alert("Something went wrong!");
+                                        }
+                                    });
+                                }
+                            });
+                        });
+
+                    </script>
+                    @endif                    
                     <script>
-                            let isFavorited = false;
-                            let isEshelfOn = false;
+                        let isFavorited = false;
+                        let isEshelfOn = false;
 
-                            $.get("{{ route('book.favorite.check', ['book' => $book->id]) }}")
-                                .done(function (response) {
-                                    if (response.favorited) {
-                                        isFavorited = true;
-                                        $('#favorite-icon').attr('src', '{{ config("app.url","/wlibrary") }}/image/button/heart-filled2.png');
-                                        $('#favorite-checkbox').prop('checked', true);
-                                    }
-                                });
-
-                            $(document).ready(function () {
-                                if (isFavorited) {
-                                    $('#favorite-checkbox').prop('checked', true);
+                        $.get("{{ route('book.favorite.check', ['book' => $book->id]) }}")
+                            .done(function (response) {
+                                if (response.favorited) {
+                                    isFavorited = true;
                                     $('#favorite-icon').attr('src', '{{ config("app.url","/wlibrary") }}/image/button/heart-filled2.png');
+                                    $('#favorite-checkbox').prop('checked', true);
                                 }
                             });
 
-                            // For My E-Shelf
-                            $.get("{{ route('book.eshelf.check', ['book' => $book->id]) }}")
-                                .done(function (response) {
-                                    if (response.isMyEshelf) {
-                                        isEshelfOn = true;
-                                        $('#eshelf-icon').attr('src', '{{ config("app.url","/wlibrary") }}/image/button/ebook-filled.png');
-                                        $('#eshelf-checkbox').prop('checked', true);
-                                    }
+                        $(document).ready(function () {
+                            if (isFavorited) {
+                                $('#favorite-checkbox').prop('checked', true);
+                                $('#favorite-icon').attr('src', '{{ config("app.url","/wlibrary") }}/image/button/heart-filled2.png');
+                            }
+                        });
+
+                        // For My E-Shelf
+                        $.get("{{ route('book.eshelf.check', ['book' => $book->id]) }}")
+                            .done(function (response) {
+                                if (response.isMyEshelf) {
+                                    isEshelfOn = true;
+                                    $('#eshelf-icon').attr('src', '{{ config("app.url","/wlibrary") }}/image/button/ebook-filled.png');
+                                    $('#eshelf-checkbox').prop('checked', true);
+                                }
+                            });
+
+                        $(document).ready(function () {
+                            if (isEshelfOn) {
+                                $('#eshelf-checkbox').prop('checked', true);
+                                $('#eshelf-icon').attr('src', '{{ config("app.url","/wlibrary") }}/image/button/ebook-filled.png');
+                            }
+                        });
+
+                        function toggleFavorite(checkbox) {
+                            let isChecked = checkbox.checked;
+                            let icon = $('#favorite-icon');
+                            if (isChecked) { // try to add it as favorite
+                                icon.attr('src', '{{ config("app.url","/wlibrary") }}/image/button/heart-filled2.png');
+                                $.post("{{ route('book.favorite.store', ['book' => $book->id]) }}", {
+                                    _token: '{{ csrf_token() }}'
                                 });
 
-                            $(document).ready(function () {
-                                if (isEshelfOn) {
-                                    $('#eshelf-checkbox').prop('checked', true);
-                                    $('#eshelf-icon').attr('src', '{{ config("app.url","/wlibrary") }}/image/button/ebook-filled.png');
-                                }
-                            });
-
-                            function toggleFavorite(checkbox) {
-                                let isChecked = checkbox.checked;
-                                let icon = $('#favorite-icon');
-                                if (isChecked) { // try to add it as favorite
-                                    icon.attr('src', '{{ config("app.url","/wlibrary") }}/image/button/heart-filled2.png');
-                                    $.post("{{ route('book.favorite.store', ['book' => $book->id]) }}", {
-                                        _token: '{{ csrf_token() }}'
-                                    });
-
-                                } else { // try to remove favorite
-                                    icon.attr('src', '{{ config("app.url","/wlibrary") }}/image/button/heart-empty2.png');
-                                    $.ajax({
-                                        url: "{{ route('book.favorite.remove', ['book' => $book->id]) }}",
-                                        type: 'DELETE',
-                                        data: { _token: '{{ csrf_token() }}' }
-                                    });
-                                }
+                            } else { // try to remove favorite
+                                icon.attr('src', '{{ config("app.url","/wlibrary") }}/image/button/heart-empty2.png');
+                                $.ajax({
+                                    url: "{{ route('book.favorite.remove', ['book' => $book->id]) }}",
+                                    type: 'DELETE',
+                                    data: { _token: '{{ csrf_token() }}' }
+                                });
                             }
+                        }
 
-                            function toggleEshelf(checkbox) {
-                                let isChecked = checkbox.checked;
-                                let icon = $('#eshelf-icon');
-                                if (isChecked) { // try to add it as my eshelf book
-                                    icon.attr('src', '{{ config("app.url","/wlibrary") }}/image/button/ebook-filled.png');
-                                    $.post("{{ route('book.eshelf.store', ['book' => $book->id]) }}", {
-                                        _token: '{{ csrf_token() }}'
-                                    });
+                        function toggleEshelf(checkbox) {
+                            let isChecked = checkbox.checked;
+                            let icon = $('#eshelf-icon');
+                            if (isChecked) { // try to add it as my eshelf book
+                                icon.attr('src', '{{ config("app.url","/wlibrary") }}/image/button/ebook-filled.png');
+                                $.post("{{ route('book.eshelf.store', ['book' => $book->id]) }}", {
+                                    _token: '{{ csrf_token() }}'
+                                });
 
-                                } else { // try to remove my eshelf book
-                                    icon.attr('src', '{{ config("app.url","/wlibrary") }}/image/button/ebook-empty.png');
-                                    $.ajax({
-                                        url: "{{ route('book.eshelf.remove', ['book' => $book->id]) }}",
-                                        type: 'DELETE',
-                                        data: { _token: '{{ csrf_token() }}' }
-                                    });
-                                }
+                            } else { // try to remove my eshelf book
+                                icon.attr('src', '{{ config("app.url","/wlibrary") }}/image/button/ebook-empty.png');
+                                $.ajax({
+                                    url: "{{ route('book.eshelf.remove', ['book' => $book->id]) }}",
+                                    type: 'DELETE',
+                                    data: { _token: '{{ csrf_token() }}' }
+                                });
                             }
+                        }
                     </script>
                 </span>
             @endif
@@ -284,7 +471,8 @@ html, body { height: 100%; }
                     @endif
 
                 <!-- ToC Display: Accordion -->
-                @if($book->toc)
+
+                @if(!empty($tocOrigin))
                     <div class="form-group row">
                         <label for="rtype" class="col-md-3 col-form-label text-md-right font-weight-bold">
                             {{ __("Table of Contents") }}
@@ -395,7 +583,7 @@ html, body { height: 100%; }
                                             </button>
                                         @else
                                             {{-- No children: plain text title, no toggle --}}
-                                            <span>
+                                            <span class="btn" style="pointer-events: none; cursor: default;">
                                                 {{ $ch['title'] }}
                                                 <span class="badge badge-secondary ml-2">
                                                     @if($startPage !== $endPage)
@@ -464,17 +652,26 @@ html, body { height: 100%; }
                             </div>
                         @endforeach
                     </div>
-
+                </div>
+                <script>
+                    $(document).ready(function () {
+                        @if($historyTocMode)
+                            // Expand all accordion panels
+                            $('#tocAccordion .collapse').each(function () {
+                                $(this).collapse('show');
+                            });
+                        @endif
+                    });
+                </script>
+            </div>
+                @else
+                    <div class="form-group row">
+                        <label for="rtype" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Table of Contents") }}</label>
+                        <div class="col-md-9">
+                            {{ __("No Table of Contents available.") }}
                         </div>
                     </div>
-                    @else
-                        <div class="form-group row">
-                            <label for="rtype" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Table of Contents") }}</label>
-                            <div class="col-md-9">
-                                {{ __("No Table of Contents available.") }}
-                            </div>
-                        </div>
-                    @endif
+                @endif
                 <!-- End ToC Display: Accordion -->
 
                     <div class="form-group row">
