@@ -3,17 +3,17 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth; // [SJH]
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Pagination;
-use App\Models\Book; // use the model that we defined [SJH]
-use App\Models\Book_copy; // use the model that we defined [SJH]
+use App\Models\Book; 
+use App\Models\Book_copy; 
 use App\Models\BookTextMeta; 
+use App\Models\ReadingHistory;
 use DB; // instead of Eloquent, use DB
 
 require_once(config('app.root2')."/vwmldbm/config.php");
 require_once(config('app.root2')."/vwmldbm/lib/code.php");
-
 require_once(config('app.root')."/app/Libraries/code.php");
 require_once(config('app.root')."/app/Libraries/book.php");
 require_once(config('app.root')."/app/Libraries/book_copy.php");
@@ -170,7 +170,6 @@ class BookController extends Controller
                 return redirect('/book/'.$book->id.'/edit')->with('error',__("JPG or PNG only!"));
             }
             
-			
 			// check if the cover image directory by the inst no was created (especially in case of multi-inst mode)
 			if(!Storage::exists('public/cover_images/'.session('lib_inst'))) {
 				Storage::makeDirectory('public/cover_images/'.session('lib_inst'));
@@ -199,7 +198,6 @@ class BookController extends Controller
             $fileNameToStore='noimage.jpg';
             $fileNameToStore=null;
         }
-
 
         if($request->input('isbn')) {
             $search_book = Book::where('inst',session('lib_inst'))
@@ -259,7 +257,6 @@ class BookController extends Controller
         $book->c_category=$request->input('c_category');  
         $book->c_category2=$request->input('c_category2');
 
-        
         if($isbn_error) return redirect('/book/create')->with('book',$request->all())->with('error',__("Duplicate ISBN/e-ISBN!"));
 
         $book->save();
@@ -272,7 +269,7 @@ class BookController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show($id, Request $request)
     {
         if(session()->has('lib_inst')){
             $theInst= new \vwmldbm\code\Inst_var(null,session('lib_inst'));
@@ -289,7 +286,7 @@ class BookController extends Controller
                 session(['lib_inst' => config('app.inst',config('app.inst',1))]);
             }
         } 
-        else if(session()->has('lib_inst')){
+        else if(session()->has('lib_inst')) {
             $theInst= new \vwmldbm\code\Inst_var(null,session('lib_inst'));            
             session(['inst_uname' => $theInst->inst_uname]);
         } 
@@ -307,7 +304,7 @@ class BookController extends Controller
             $books=Book::where('inst',session('lib_inst'))
                 ->where('hide_from_guest_yn','<>','Y')
                 ->orderBy('id','desc')->paginate(10);
-            
+        
           // This may not comply with Laravel's philosophy but can't find other solution
             $_SESSION['specialRedirect']=true;
             $_SESSION['specialBookId']=$book->id;
@@ -325,11 +322,34 @@ class BookController extends Controller
                 return redirect('/book/')->with('books',$books)->with('inst',$inst)->with('warning',__("This resource is not available!"));
             }
         }
-
+        
         $book_copy=Book_copy::where('inst',session('lib_inst'))
             ->where('bid',$book->id)->get()->toArray();        
+        
+        // Reading History
+        // From Book view normal users click start reading button
+        $readingHistory = null;
+        if($request->input('reading_action') == "START_READING") {
+            $readingHistory = ReadingHistory::firstOrCreate(
+                [
+                    'inst'    => session('lib_inst'),
+                    'user_id' => session('uid'),
+                    'book_id' => $book->id,
+                ],
+                [
+                    'status'     => ReadingHistory::STATUS_INPROGRESS, // default
+                    'start_time' => now(),
+                ]
+            );
+        } else { 
+            $readingHistory= ReadingHistory::where('inst', session('lib_inst'))
+            ->where('user_id', session('uid'))
+            ->where('book_id', $book->id)
+            ->first();
+        }
+        // End Reading History
 
-        return view('book.show')->with('book',$book)->with('book_copy',$book_copy);
+        return view('book.show')->with('book',$book)->with('book_copy',$book_copy)->with('readingHistory',$readingHistory);
     }
 
     /**
@@ -782,7 +802,7 @@ class BookController extends Controller
         return $rid;
     }
 
-    function man_files($book) {
+    function man_files(Book $book) {
         $files=explode(';',$book->files);
         $rfiles=explode(';',$book->rfiles);
         

@@ -12,6 +12,22 @@
     $perm['R'] ='Y'; // Read permission
 	$isAdmin = (Auth::check() && Auth::user()->isAdmin()) ? true : false;
     $isEresource = ($book->files ? true : false);
+
+
+ // if the normal user logged in, and has reading history use it otherwise use book's auto_toc
+    $tocOrigin = null; // ToC(Table of Contents) from either book or reading history
+    $bookTocMode = false;
+    $historyTocMode = false;
+
+    if(!Auth::check() || $isAdmin) { // guest mode or admin
+        if(!empty($book->auto_toc)) {
+            $tocOrigin = $book->auto_toc;
+            $bookTocMode = true;
+        } 
+    } else if(Auth::check() && !$isAdmin && !empty($readingHistory->historyData)) { // normal user with reading history
+        $tocOrigin = $readingHistory->historyData;
+        $historyTocMode = true;
+    }
 ?>
 
 @extends('layouts.root')
@@ -381,6 +397,22 @@ html, body { height: 100%; }
           (data.start === data.end)
             ? ('Page ' + data.start)
             : ('Pages ' + data.start + '–' + data.end);
+        
+        document.getElementById('fullscreenModalLabel').innerHTML +=
+            " <img src='{{ config('app.url','/wlibrary') }}/image/ai-assistant.png' class='zoom img-icon-pointer ml-2' alt='AI Assistant'>";
+
+      @if($historyTocMode)
+        document.getElementById('fullscreenModalLabel').innerHTML +=
+            " <button id='startButton' class='btn btn-primary ml-2'>{{ __('Start Reading') }}</button>";
+        document.getElementById('fullscreenModalLabel').innerHTML +=
+            " <button id='finishButton' class='btn btn-warning' style='margin-left:10px;display:none;'>{{ __('Finish') }}</button>";
+      
+
+       <?php
+        
+       ?>
+      @endif
+
       })
       .on('hidden.bs.modal.pdf', function () {
         document.getElementById('pdfIframe').src = 'about:blank'; // free resources
@@ -538,211 +570,235 @@ html, body { height: 100%; }
                     </small>
                 </div>
 
-                    <script>
-                            let isFavorited = false;
-                            let isEshelfOn = false;
+                    @if($isEresource)
+                     <label>
+                        @php
+                            if(empty($readingHistory) || $readingHistory->startable())
+                                $sButtonDisplay="inline";
+                            else $sButtonDisplay="none";
+                        @endphp       
+                        
+                        <button type="button" style="display:{{$sButtonDisplay}};" id="startReadingButton"
+                            class="btn btn-sm btn-warning ml-2">
+                            {{ __('Start Reading') }}
+                        </button>
 
-                            $.get("{{ route('book.favorite.check', ['book' => $book->id]) }}")
-                                .done(function (response) {
-                                    if (response.favorited) {
-                                        isFavorited = true;
-                                        $('#favorite-icon').removeClass('far fa-heart').addClass('fas fa-heart');
-                                        $('#favorite-checkbox').prop('checked', true);
-                                    }
-                                });
+                        @php
+                            if(!empty($readingHistory) && $readingHistory->finishable())
+                                $fButtonDisplay="inline";
+                            else $fButtonDisplay="none";
+                        @endphp
+                        <span class="badge badge-info" style="display:{{$fButtonDisplay}};">
+                            {{ __('In Progress') }}
+                        </span>
+                        <button type="button" style="display:{{$fButtonDisplay}};" id="finishReadingButton"
+                                class="btn btn-sm btn-danger ml-2">
+                            {{ __('Finish Reading') }}
+                        </button>
 
-                            $(document).ready(function () {
-                                if (isFavorited) {
-                                    $('#favorite-checkbox').prop('checked', true);
-                                    $('#favorite-icon').removeClass('far fa-heart').addClass('fas fa-heart');
+                     </label>
+                     @if(!empty($readingHistory) && $readingHistory->status == 'completed')
+                      <label>     
+                        <span class="badge badge-success">
+                            {{ __('Finished') }}
+                        </span>
+                      </label>
+                      <label>
+                        <button type="button" id="resetReadingButton"
+                                class="btn btn-sm btn-danger ml-2">
+                            {{ __('Reset') }}
+                        </button>
+                      </label>
+                    @endif
+
+                     <script>
+                        let auto_toc_exist = false;
+                        @if(!empty($book->auto_toc))
+                            auto_toc_exist = true;
+                        @endif
+                        $(document).ready(function () {
+                            $('#startReadingButton').on('click', function () {
+                                if(!auto_toc_exist) {
+                                    alert("{{__('Table of Contents is not available for this book. Please generate one first.')}}");
+                                    return false; // Prevent further action
                                 }
-                            });
-
-                            // For My E-Shelf
-                            $.get("{{ route('book.eshelf.check', ['book' => $book->id]) }}")
-                                .done(function (response) {
-                                    if (response.isMyEshelf) {
-                                        isEshelfOn = true;
-                                        $('#eshelf-icon').removeClass('fas fa-book-open').addClass('fas fa-book-open-reader');
-                                        $('#eshelf-checkbox').prop('checked', true);
-                                    }
-                                });
-
-                            $(document).ready(function () {
-                                if (isEshelfOn) {
-                                    $('#eshelf-checkbox').prop('checked', true);
-                                    $('#eshelf-icon').removeClass('fas fa-book-open').addClass('fas fa-book-open-reader');
-                                }
-                            });
-
-                            function toggleFavorite(checkbox) {
-                                let isChecked = checkbox.checked;
-                                let icon = $('#favorite-icon');
-                                if (isChecked) { // try to add it as favorite
-                                    icon.removeClass('far fa-heart').addClass('fas fa-heart');
-                                    $.post("{{ route('book.favorite.store', ['book' => $book->id]) }}", {
-                                        _token: '{{ csrf_token() }}'
-                                    });
-
-                                } else { // try to remove favorite
-                                    icon.removeClass('fas fa-heart').addClass('far fa-heart');
+                                if(confirm("{{__("Do you want to start reading this book?")}}")) {
                                     $.ajax({
-                                        url: "{{ route('book.favorite.remove', ['book' => $book->id]) }}",
-                                        type: 'DELETE',
-                                        data: { _token: '{{ csrf_token() }}' }
-                                    });
-                                }
-                            }
-
-                            function toggleEshelf(checkbox) {
-                                let icon = $('#eshelf-icon');
-                                if (checkbox.checked) { // try to add it as my eshelf book
-                                    icon.removeClass('fas fa-book-open').addClass('fas fa-book-open-reader');
-                                    $.post("{{ route('book.eshelf.store', ['book' => $book->id]) }}", {
-                                        _token: '{{ csrf_token() }}'
-                                    });
-                                    // Show Start Reading button
-                                    $('#start-reading-btn').show();
-                                    // Check if reading history exists
-                                    checkReadingHistory();
-                                } else { // try to remove my eshelf book
-                                    icon.removeClass('fas fa-book-open-reader').addClass('fas fa-book-open');
-                                    $.ajax({
-                                        url: "{{ route('book.eshelf.remove', ['book' => $book->id]) }}",
-                                        type: 'DELETE',
-                                        data: { _token: '{{ csrf_token() }}' }
-                                    });
-                                    // Hide all reading buttons
-                                    $('#start-reading-btn, #finish-reading-btn, #reset-reading-btn, #reading-time-info').hide();
-                                }
-                            }
-
-                            // Check reading history status
-                            function checkReadingHistory() {
-                                $.get("{{ route('reading_history.check', ['book' => $book->id]) }}")
-                                    .done(function (response) {
-                                        if (response.hasHistory) {
-                                            updateReadingUI(response.history);
+                                        url: "{{ route('reading_history.set_status', ['book' => $book->id]) }}",
+                                        type: "POST",
+                                        data: {
+                                            status: "in_progress",
+                                            operation: "create_history",
+                                            book_id: "{{ $book->id }}",
+                                            _token: "{{ csrf_token() }}"
+                                        },
+                                        success: function (response) {
+                                            if (response.success) {
+                                                console.log("Success:", response);
+                                                document.getElementById('startReadingButton').style.display = 'none';
+                                                document.getElementById('finishReadingButton').style.display = 'inline';
+                                                document.getElementById('eshelf-checkbox').checked=true;
+                                                toggleEshelf(document.getElementById('eshelf-checkbox'));
+                                                location.reload();
+                                                /* alert("Let's start reading!"); */
+                                            } else {
+                                                console.warn("Unexpected response:", response);
+                                                document.getElementById('startReadingButton').style.display = 'inline';
+                                                document.getElementById('finishReadingButton').style.display = 'none';
+                                                alert("Failed to update status.");
+                                            }
+                                        },
+                                        error: function (xhr) {
+                                            console.error("Error:", xhr.responseText);
+                                            document.getElementById('startReadingButton').style.display = 'inline';
+                                            document.getElementById('finishReadingButton').style.display = 'none';
+                                            alert("Something went wrong!");
                                         }
-                                    })
-                                    .fail(function() {
-                                        // If no reading history, show Start Reading button
-                                        $('#start-reading-btn').show();
                                     });
-                            }
-
-                            // Update reading UI based on history
-                            function updateReadingUI(history) {
-                                $('#start-reading-btn').hide();
-                                
-                                if (history.status === 'in_progress') {
-                                    $('#finish-reading-btn').show();
-                                    $('#reading-time-info').show();
-                                    $('#start-time-text').html('독서 시작: ' + new Date(history.start_time).toLocaleString());
-                                } else if (history.status === 'completed') {
-                                    $('#reset-reading-btn').show();
-                                    $('#reading-time-info').show();
-                                    $('#start-time-text').html('독서 시작: ' + new Date(history.start_time).toLocaleString());
-                                    $('#end-time-text').html(' | 독서 완료: ' + new Date(history.end_time).toLocaleString());
-                                }
-                            }
-
-                            // Show reading start modal
-                            function showReadingStartModal() {
-                                // Check if book has auto_toc
-                                @if($book->auto_toc)
-                                    $('#readingStartModal').modal('show');
-                                @else
-                                    alert('먼저 ToC를 생성하세요');
-                                @endif
-                            }
-
-                            // Start reading function
-                            function startReading() {
-                                $('#readingStartModal').modal('hide');
-                                
-                                $.post("{{ route('reading_history.set_status', ['book' => $book->id]) }}", {
-                                    _token: '{{ csrf_token() }}',
-                                    status: 'in_progress'
-                                })
-                                .done(function() {
-                                    // Update UI to show reading in progress
-                                    $('#start-reading-btn').hide();
-                                    $('#finish-reading-btn').show();
-                                    $('#reading-time-info').show();
-                                    $('#start-time-text').html('독서 시작: ' + new Date().toLocaleString());
-                                    
-                                    showToast('독서가 시작되었습니다!', 'success');
-                                })
-                                .fail(function() {
-                                    showToast('독서 시작에 실패했습니다.', 'error');
-                                });
-                            }
-
-                            // Finish reading function
-                            function finishReading() {
-                                $.post("{{ route('reading_history.set_status', ['book' => $book->id]) }}", {
-                                    _token: '{{ csrf_token() }}',
-                                    status: 'completed'
-                                })
-                                .done(function() {
-                                    // Update UI to show reading completed
-                                    $('#finish-reading-btn').hide();
-                                    $('#reset-reading-btn').show();
-                                    $('#end-time-text').html(' | 독서 완료: ' + new Date().toLocaleString());
-                                    
-                                    showToast('독서가 완료되었습니다!', 'success');
-                                })
-                                .fail(function() {
-                                    showToast('독서 완료에 실패했습니다.', 'error');
-                                });
-                            }
-
-                            // Show reset warning modal
-                            function showResetWarning() {
-                                $('#resetWarningModal').modal('show');
-                            }
-
-                            // Reset reading function
-                            function resetReading() {
-                                $('#resetWarningModal').modal('hide');
-                                
-                                $.post("{{ route('reading_history.set_status', ['book' => $book->id]) }}", {
-                                    _token: '{{ csrf_token() }}',
-                                    status: 'reset'
-                                })
-                                .done(function() {
-                                    // Reset UI to initial state
-                                    $('#reset-reading-btn').hide();
-                                    $('#reading-time-info').hide();
-                                    $('#start-time-text, #end-time-text').html('');
-                                    $('#start-reading-btn').show();
-                                    
-                                    showToast('독서 기록이 초기화되었습니다.', 'info');
-                                })
-                                .fail(function() {
-                                    showToast('독서 기록 초기화에 실패했습니다.', 'error');
-                                });
-                            }
-
-                            // Show toast notification
-                            function showToast(message, type = 'info') {
-                                const toast = $(`
-                                    <div class="toast-notification toast-${type}">
-                                        <i class="fas fa-info-circle mr-2"></i>${message}
-                                    </div>
-                                `);
-                                $('body').append(toast);
-                                toast.fadeIn();
-                                setTimeout(() => toast.fadeOut(() => toast.remove()), 3000);
-                            }
-
-                            // Check if book is in e-shelf and show appropriate buttons
-                            $(document).ready(function() {
-                                if (isEshelfOn) {
-                                    checkReadingHistory();
+                                } else {
+                                    return false; // User cancelled
                                 }
                             });
+
+                            $('#finishReadingButton').on('click', function () {
+                                if(confirm("{{__("Do you want to finish reading this book?")}}")) {
+                                    $.ajax({
+                                        url: "{{ route('reading_history.set_status', ['book' => $book->id]) }}",
+                                        type: "POST",
+                                        data: {
+                                            status: "completed",
+                                            book_id: "{{ $book->id }}",
+                                            _token: "{{ csrf_token() }}"
+                                        },
+                                        success: function (response) {
+                                            if (response.success) {
+                                                console.log("Success:", response);
+                                                document.getElementById('finishReadingButton').style.display = 'none';
+                                                /* alert("Reading finished!"); */
+                                                location.reload();
+                                            } else {
+                                                console.warn("Unexpected response:", response);
+                                                document.getElementById('finishReadingButton').style.display = 'inline';
+                                                alert("Failed to update status.");
+                                            }
+                                        },
+                                        error: function (xhr) {
+                                            console.error("Error:", xhr.responseText);
+                                            document.getElementById('finishReadingButton').style.display = 'inline';
+                                            alert("Something went wrong!");
+                                        }
+                                    });
+                                }
+                            });
+
+
+                            $('#resetReadingButton').on('click', function () {
+                                if(confirm("{{__("Do you want to reset reading history of the book? All data will be lost!")}}")) {
+                                    $.ajax({
+                                        url: "{{ route('reading_history.destroy', ['book' => $book->id]) }}",
+                                        type: "POST",
+                                        data: {
+                                            book_id: "{{ $book->id }}",
+                                            _token: "{{ csrf_token() }}"
+                                        },
+                                        success: function (response) {
+                                            if (response.success) {
+                                                console.log("Success:", response);
+                                                document.getElementById('resetReadingButton').style.display = 'none';
+                                                /* alert("Reading finished!"); */
+                                                location.reload();
+                                            } else {
+                                                console.warn("Unexpected response:", response);
+                                                document.getElementById('resetReadingButton').style.display = 'inline';
+                                                alert("Failed to update status.");
+                                            }
+                                        },
+                                        error: function (xhr) {
+                                            console.error("Error:", xhr.responseText);
+                                            document.getElementById('resetReadingButton').style.display = 'inline';
+                                            alert("Something went wrong!");
+                                        }
+                                    });
+                                }
+                            });
+                        });
+
+                    </script>
+                    @endif                    
+                    <script>
+                        let isFavorited = false;
+                        let isEshelfOn = false;
+
+                        $.get("{{ route('book.favorite.check', ['book' => $book->id]) }}")
+                            .done(function (response) {
+                                if (response.favorited) {
+                                    isFavorited = true;
+                                    $('#favorite-icon').attr('src', '{{ config("app.url","/wlibrary") }}/image/button/heart-filled2.png');
+                                    $('#favorite-checkbox').prop('checked', true);
+                                }
+                            });
+
+                        $(document).ready(function () {
+                            if (isFavorited) {
+                                $('#favorite-checkbox').prop('checked', true);
+                                $('#favorite-icon').attr('src', '{{ config("app.url","/wlibrary") }}/image/button/heart-filled2.png');
+                            }
+                        });
+
+                        // For My E-Shelf
+                        $.get("{{ route('book.eshelf.check', ['book' => $book->id]) }}")
+                            .done(function (response) {
+                                if (response.isMyEshelf) {
+                                    isEshelfOn = true;
+                                    $('#eshelf-icon').attr('src', '{{ config("app.url","/wlibrary") }}/image/button/ebook-filled.png');
+                                    $('#eshelf-checkbox').prop('checked', true);
+                                }
+                            });
+
+                        $(document).ready(function () {
+                            if (isEshelfOn) {
+                                $('#eshelf-checkbox').prop('checked', true);
+                                $('#eshelf-icon').attr('src', '{{ config("app.url","/wlibrary") }}/image/button/ebook-filled.png');
+                            }
+                        });
+
+                        function toggleFavorite(checkbox) {
+                            let isChecked = checkbox.checked;
+                            let icon = $('#favorite-icon');
+                            if (isChecked) { // try to add it as favorite
+                                icon.attr('src', '{{ config("app.url","/wlibrary") }}/image/button/heart-filled2.png');
+                                $.post("{{ route('book.favorite.store', ['book' => $book->id]) }}", {
+                                    _token: '{{ csrf_token() }}'
+                                });
+
+                            } else { // try to remove favorite
+                                icon.attr('src', '{{ config("app.url","/wlibrary") }}/image/button/heart-empty2.png');
+                                $.ajax({
+                                    url: "{{ route('book.favorite.remove', ['book' => $book->id]) }}",
+                                    type: 'DELETE',
+                                    data: { _token: '{{ csrf_token() }}' }
+                                });
+                            }
+                        }
+
+                        function toggleEshelf(checkbox) {
+                            let isChecked = checkbox.checked;
+                            let icon = $('#eshelf-icon');
+                            if (isChecked) { // try to add it as my eshelf book
+                                icon.attr('src', '{{ config("app.url","/wlibrary") }}/image/button/ebook-filled.png');
+                                $.post("{{ route('book.eshelf.store', ['book' => $book->id]) }}", {
+                                    _token: '{{ csrf_token() }}'
+                                });
+
+                            } else { // try to remove my eshelf book
+                                icon.attr('src', '{{ config("app.url","/wlibrary") }}/image/button/ebook-empty.png');
+                                $.ajax({
+                                    url: "{{ route('book.eshelf.remove', ['book' => $book->id]) }}",
+                                    type: 'DELETE',
+                                    data: { _token: '{{ csrf_token() }}' }
+                                });
+                            }
+                        }
                     </script>
                 </span>
             @endif
@@ -868,7 +924,8 @@ html, body { height: 100%; }
                     @endif
 
                 <!-- ToC Display: Accordion -->
-                @if($book->toc)
+
+                @if(!empty($tocOrigin))
                     <div class="form-group row">
                         <label for="rtype" class="col-md-3 col-form-label text-md-right font-weight-bold">
                             {{ __("Table of Contents") }}
@@ -979,7 +1036,7 @@ html, body { height: 100%; }
                                             </button>
                                         @else
                                             {{-- No children: plain text title, no toggle --}}
-                                            <span>
+                                            <span class="btn" style="pointer-events: none; cursor: default;">
                                                 {{ $ch['title'] }}
                                                 <span class="badge badge-secondary ml-2">
                                                     @if($startPage !== $endPage)
@@ -1048,17 +1105,26 @@ html, body { height: 100%; }
                             </div>
                         @endforeach
                     </div>
-
+                </div>
+                <script>
+                    $(document).ready(function () {
+                        @if($historyTocMode)
+                            // Expand all accordion panels
+                            $('#tocAccordion .collapse').each(function () {
+                                $(this).collapse('show');
+                            });
+                        @endif
+                    });
+                </script>
+            </div>
+                @else
+                    <div class="form-group row">
+                        <label for="rtype" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Table of Contents") }}</label>
+                        <div class="col-md-9">
+                            {{ __("No Table of Contents available.") }}
                         </div>
                     </div>
-                    @else
-                        <div class="form-group row">
-                            <label for="rtype" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Table of Contents") }}</label>
-                            <div class="col-md-9">
-                                {{ __("No Table of Contents available.") }}
-                            </div>
-                        </div>
-                    @endif
+                @endif
                 <!-- End ToC Display: Accordion -->
 
                     <div class="form-group row">

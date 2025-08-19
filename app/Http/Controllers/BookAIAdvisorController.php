@@ -74,8 +74,6 @@ class BookAIAdvisorController extends Controller
     }
 
 
-    
-
     /**
      * Display the specified resource.
      *

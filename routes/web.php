@@ -98,18 +98,19 @@ Route::middleware(['auth'])->group(function () {
     Route::post('book/{book}/eshelf', [BookUserEshelfController::class, 'store'])->name('book.eshelf.store');
     Route::get('book/{book}/eshelf', [BookUserEshelfController::class, 'check'])->name('book.eshelf.check');
     Route::delete('book/{book}/eshelf', [BookUserEshelfController::class, 'destroy'])->name('book.eshelf.remove');
-    
+
+    // AI Book Operation Routes
+    Route::get('/recommend', [BookAIAdvisorController::class, 'form'])->name('recommend.form');
+    Route::post('/recommend', [BookAIAdvisorController::class, 'recommend'])->name('recommend');
+    Route::post('book/{book}/extract_meta', [BookTextMetaController::class, 'extract_meta'])->name('extract_meta');
+    Route::get('book/{book}/chapter_txt', [BookTextMetaController::class, 'chapter_txt'])->name('chapter_txt');
+
     // Reading History Routes
-    Route::get('reading_history/{book}/check', [ReadingHistoryController::class, 'check'])->name('reading_history.check');
     Route::post('reading_history/{book}/status', [ReadingHistoryController::class, 'set_status'])->name('reading_history.set_status');
+    Route::post('reading_history/{book}/destroy', [ReadingHistoryController::class, 'destroy'])->name('reading_history.destroy');
+   
 });
 
-
-// AI Book Operation Routes
-Route::get('/recommend', [BookAIAdvisorController::class, 'form'])->name('recommend.form');
-Route::post('/recommend', [BookAIAdvisorController::class, 'recommend'])->name('recommend');
-Route::post('book/{book}/extract_meta', [BookTextMetaController::class, 'extract_meta'])->name('extract_meta');
-Route::get('book/{book}/chapter_txt', [BookTextMetaController::class, 'chapter_txt'])->name('chapter_txt');
 
 // cache clear by url [SJH]
 Route::get('/clear-cache', function() {
