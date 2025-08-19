@@ -14,6 +14,7 @@ use App\Http\Controllers\BookUserFavoriteController;
 use App\Http\Controllers\BookUserEshelfController;
 use App\Http\Controllers\BookAIAdvisorController;
 use App\Http\Controllers\BookTextMetaController;
+use App\Http\Controllers\ReadingHistoryController;
 
 /*
 |--------------------------------------------------------------------------
@@ -97,6 +98,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('book/{book}/eshelf', [BookUserEshelfController::class, 'store'])->name('book.eshelf.store');
     Route::get('book/{book}/eshelf', [BookUserEshelfController::class, 'check'])->name('book.eshelf.check');
     Route::delete('book/{book}/eshelf', [BookUserEshelfController::class, 'destroy'])->name('book.eshelf.remove');
+    
+    // Reading History Routes
+    Route::get('reading_history/{book}/check', [ReadingHistoryController::class, 'check'])->name('reading_history.check');
+    Route::post('reading_history/{book}/status', [ReadingHistoryController::class, 'set_status'])->name('reading_history.set_status');
 });
 
 

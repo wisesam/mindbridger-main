@@ -284,6 +284,55 @@
 html, body { height: 100%; }
 // End full-screen modal: Show the Book pages
 
+/* Reading Progress Styles */
+#start-reading-btn, #finish-reading-btn, #reset-reading-btn {
+    transition: all 0.3s ease;
+}
+
+#start-reading-btn:hover, #finish-reading-btn:hover, #reset-reading-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Toast Notification Styles */
+.toast-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: white;
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    z-index: 10000;
+    display: none;
+    max-width: 300px;
+    border-left: 4px solid #007bff;
+}
+
+.toast-success {
+    border-left-color: #28a745;
+}
+
+.toast-warning {
+    border-left-color: #ffc107;
+}
+
+.toast-info {
+    border-left-color: #17a2b8;
+}
+
+.toast-error {
+    border-left-color: #dc3545;
+}
+
+/* Reading Time Info Styles */
+#reading-time-info {
+    background: #f8f9fa;
+    padding: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
 </style>
 
 @php
@@ -470,6 +519,24 @@ html, body { height: 100%; }
                         <i id="eshelf-icon" class="fas fa-book-open zoom img-icon-pointer" style="cursor:pointer; font-size: 24px; color: #28a745;"></i>
                     </label>
                 </span>
+                <button id="start-reading-btn" class="btn btn-success btn-sm ml-2" style="display: none;" onclick="showReadingStartModal()">
+                    <i class="fas fa-play mr-1"></i>Start Reading
+                </button>
+                <button id="finish-reading-btn" class="btn btn-warning btn-sm ml-2" style="display: none;" onclick="finishReading()">
+                    <i class="fas fa-stop mr-1"></i>Finish Reading
+                </button>
+                <button id="reset-reading-btn" class="btn btn-danger btn-sm ml-2" style="display: none;" onclick="showResetWarning()">
+                    <i class="fas fa-undo mr-1"></i>Reset
+                </button>
+                
+                <!-- Reading Time Information -->
+                <div id="reading-time-info" class="mt-2" style="display: none;">
+                    <small class="text-muted">
+                        <i class="fas fa-clock mr-1"></i>
+                        <span id="start-time-text"></span>
+                        <span id="end-time-text"></span>
+                    </small>
+                </div>
 
                     <script>
                             let isFavorited = false;
@@ -534,7 +601,10 @@ html, body { height: 100%; }
                                     $.post("{{ route('book.eshelf.store', ['book' => $book->id]) }}", {
                                         _token: '{{ csrf_token() }}'
                                     });
-
+                                    // Show Start Reading button
+                                    $('#start-reading-btn').show();
+                                    // Check if reading history exists
+                                    checkReadingHistory();
                                 } else { // try to remove my eshelf book
                                     icon.removeClass('fas fa-book-open-reader').addClass('fas fa-book-open');
                                     $.ajax({
@@ -542,12 +612,200 @@ html, body { height: 100%; }
                                         type: 'DELETE',
                                         data: { _token: '{{ csrf_token() }}' }
                                     });
+                                    // Hide all reading buttons
+                                    $('#start-reading-btn, #finish-reading-btn, #reset-reading-btn, #reading-time-info').hide();
                                 }
                             }
+
+                            // Check reading history status
+                            function checkReadingHistory() {
+                                $.get("{{ route('reading_history.check', ['book' => $book->id]) }}")
+                                    .done(function (response) {
+                                        if (response.hasHistory) {
+                                            updateReadingUI(response.history);
+                                        }
+                                    })
+                                    .fail(function() {
+                                        // If no reading history, show Start Reading button
+                                        $('#start-reading-btn').show();
+                                    });
+                            }
+
+                            // Update reading UI based on history
+                            function updateReadingUI(history) {
+                                $('#start-reading-btn').hide();
+                                
+                                if (history.status === 'in_progress') {
+                                    $('#finish-reading-btn').show();
+                                    $('#reading-time-info').show();
+                                    $('#start-time-text').html('독서 시작: ' + new Date(history.start_time).toLocaleString());
+                                } else if (history.status === 'completed') {
+                                    $('#reset-reading-btn').show();
+                                    $('#reading-time-info').show();
+                                    $('#start-time-text').html('독서 시작: ' + new Date(history.start_time).toLocaleString());
+                                    $('#end-time-text').html(' | 독서 완료: ' + new Date(history.end_time).toLocaleString());
+                                }
+                            }
+
+                            // Show reading start modal
+                            function showReadingStartModal() {
+                                // Check if book has auto_toc
+                                @if($book->auto_toc)
+                                    $('#readingStartModal').modal('show');
+                                @else
+                                    alert('먼저 ToC를 생성하세요');
+                                @endif
+                            }
+
+                            // Start reading function
+                            function startReading() {
+                                $('#readingStartModal').modal('hide');
+                                
+                                $.post("{{ route('reading_history.set_status', ['book' => $book->id]) }}", {
+                                    _token: '{{ csrf_token() }}',
+                                    status: 'in_progress'
+                                })
+                                .done(function() {
+                                    // Update UI to show reading in progress
+                                    $('#start-reading-btn').hide();
+                                    $('#finish-reading-btn').show();
+                                    $('#reading-time-info').show();
+                                    $('#start-time-text').html('독서 시작: ' + new Date().toLocaleString());
+                                    
+                                    showToast('독서가 시작되었습니다!', 'success');
+                                })
+                                .fail(function() {
+                                    showToast('독서 시작에 실패했습니다.', 'error');
+                                });
+                            }
+
+                            // Finish reading function
+                            function finishReading() {
+                                $.post("{{ route('reading_history.set_status', ['book' => $book->id]) }}", {
+                                    _token: '{{ csrf_token() }}',
+                                    status: 'completed'
+                                })
+                                .done(function() {
+                                    // Update UI to show reading completed
+                                    $('#finish-reading-btn').hide();
+                                    $('#reset-reading-btn').show();
+                                    $('#end-time-text').html(' | 독서 완료: ' + new Date().toLocaleString());
+                                    
+                                    showToast('독서가 완료되었습니다!', 'success');
+                                })
+                                .fail(function() {
+                                    showToast('독서 완료에 실패했습니다.', 'error');
+                                });
+                            }
+
+                            // Show reset warning modal
+                            function showResetWarning() {
+                                $('#resetWarningModal').modal('show');
+                            }
+
+                            // Reset reading function
+                            function resetReading() {
+                                $('#resetWarningModal').modal('hide');
+                                
+                                $.post("{{ route('reading_history.set_status', ['book' => $book->id]) }}", {
+                                    _token: '{{ csrf_token() }}',
+                                    status: 'reset'
+                                })
+                                .done(function() {
+                                    // Reset UI to initial state
+                                    $('#reset-reading-btn').hide();
+                                    $('#reading-time-info').hide();
+                                    $('#start-time-text, #end-time-text').html('');
+                                    $('#start-reading-btn').show();
+                                    
+                                    showToast('독서 기록이 초기화되었습니다.', 'info');
+                                })
+                                .fail(function() {
+                                    showToast('독서 기록 초기화에 실패했습니다.', 'error');
+                                });
+                            }
+
+                            // Show toast notification
+                            function showToast(message, type = 'info') {
+                                const toast = $(`
+                                    <div class="toast-notification toast-${type}">
+                                        <i class="fas fa-info-circle mr-2"></i>${message}
+                                    </div>
+                                `);
+                                $('body').append(toast);
+                                toast.fadeIn();
+                                setTimeout(() => toast.fadeOut(() => toast.remove()), 3000);
+                            }
+
+                            // Check if book is in e-shelf and show appropriate buttons
+                            $(document).ready(function() {
+                                if (isEshelfOn) {
+                                    checkReadingHistory();
+                                }
+                            });
                     </script>
                 </span>
             @endif
+        </div>
+        
+        <!-- Reading Start Modal -->
+        <div class="modal fade" id="readingStartModal" tabindex="-1" role="dialog" aria-labelledby="readingStartModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="readingStartModalLabel">
+                            <i class="fas fa-book-open text-success mr-2"></i>독서 시작
+                        </h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <p class="mb-0">
+                            <i class="fas fa-check-circle text-success" style="font-size: 3rem;"></i>
+                        </p>
+                        <h5 class="mt-3">e-shelf에 담겼습니다.</h5>
+                        <p class="text-muted">독서를 시작하시겠습니까?</p>
+                    </div>
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">아니오</button>
+                        <button type="button" class="btn btn-success" onclick="startReading()">
+                            <i class="fas fa-play mr-1"></i>네, 시작합니다
+                        </button>
+                    </div>
+                </div>
             </div>
+        </div>
+        
+        <!-- Reset Warning Modal -->
+        <div class="modal fade" id="resetWarningModal" tabindex="-1" role="dialog" aria-labelledby="resetWarningModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="resetWarningModalLabel">
+                            <i class="fas fa-exclamation-triangle text-warning mr-2"></i>경고
+                        </h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <p class="mb-0">
+                            <i class="fas fa-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+                        </p>
+                        <h5 class="mt-3 text-warning">All reading history will be deleted</h5>
+                        <p class="text-muted">모든 독서 기록이 삭제됩니다. 계속하시겠습니까?</p>
+                    </div>
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+                        <button type="button" class="btn btn-danger" onclick="resetReading()">
+                            <i class="fas fa-trash mr-1"></i>삭제
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
             <div class="card-body col-12">
                 <form method="POST" name='form1' id='pform' action="{{config('app.url','/wlibrary')."/book/".$book->id}}" enctype="multipart/form-data">
                     @csrf 
