@@ -21,28 +21,30 @@
         </script>
         
         <div class="d-flex justify-content-between align-items-center w-100">
-            <div class="d-flex align-items-center">
-            <div style="width:145px;height:45px;">
-                <a href="{{config('app.url','/wlibrary')}}">
-                    <img class="d-block" src="{{config('app.url','/wlibrary')}}/image/logo2.png?nocache=1"  width='100%' height='100%'>
-                </a>
+            <div class="d-flex align-items-center logo-section">
+                <div style="width:145px;height:45px;">
+                    <a href="{{config('app.url','/wlibrary')}}">
+                        <img class="d-block" src="{{config('app.url','/wlibrary')}}/image/logo2.png?nocache=1"  width='100%' height='100%'>
+                    </a>
+                </div>
+                
+                <!-- Search and AI inline on larger screens -->
+                <div class="d-none d-md-flex align-items-center ml-4">
+                    <form class="form-inline" action='{{config('app.url')}}/book' name='form1'>        
+                        <div class="input-group">    
+                            <input class="form-control" type="search" name='search_word' placeholder="{{__("Search Resource")}}" value='{{$search_word}}' aria-label="Search">
+                            <div class="input-group-append">
+                                <button class="btn btn-outline-secondary" type="button" id="button-addon2">
+                                    <img class="d-block" src="image/search_black.png?nocache=1"  width='100%' height='100%' />
+                                </button>
+                              </div>
+                        </div>
+                    </form>
+                    <button class="btn btn-primary ml-2" onClick="window.location.href='{{config('app.url','/wlibrary')}}/recommend'" type="button" style="width: 38px; height: 38px; padding: 0; background: linear-gradient(135deg, #007bff, #0056b3); border: none; box-shadow: 0 2px 8px rgba(0,123,255,0.3);">
+                        <img class="d-block mx-auto" src="image/ai.png?nocache=4" width="30" height="30" alt="AI" style="filter: invert(1);" />
+                    </button>
+                </div>
             </div>
-            <form class="form-inline" action='{{config('app.url')}}/book' name='form1'>        
-                    <div class="input-group mt-3 mb-3">    
-                        <input class="form-control" type="search" name='search_word' placeholder="{{__("Search Resource")}}" value='{{$search_word}}' aria-label="Search">
-                        <div class="input-group-append">
-                            <button class="btn btn-outline-secondary" type="button" id="button-addon2">
-                                <img class="d-block" src="image/search_black.png?nocache=1"  width='100%' height='100%' />
-                            </button>
-                          </div>
-                    </div>
-                </form>
-                {{-- 상세검색 버튼 --}}
-                {{-- <button class="btn btn-outline-dark ml-1" onClick="window.location.href='{{config('app.url')}}/asearch/'" type="button">{{__("Advanced")}}</button> --}}
-                <button class="btn btn-primary ml-1" onClick="window.location.href='{{config('app.url','/wlibrary')}}/recommend'" type="button" style="width: 38px; height: 38px; padding: 0; background: linear-gradient(135deg, #007bff, #0056b3); border: none; box-shadow: 0 2px 8px rgba(0,123,255,0.3);">
-                    <img class="d-block mx-auto" src="image/ai.png?nocache=4" width="30" height="30" alt="AI" style="filter: invert(1);" />
-                </button>
-        </div>
 
             <!-- Right side elements grouped together -->
             <div class="d-flex align-items-center">
@@ -66,11 +68,11 @@
                             </a>
 
                             <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown2">
-                                <a class="dropdown-item" href="{{ auto_url(route('users.edit', Auth::user()->id),[], false) }}">
+                                <a class="btn btn-outline-info btn-sm dropdown-toggle" href="{{ auto_url(route('users.edit', Auth::user()->id),[], false) }}">
                                     {{ __('My Profile') }}
                                 </a>
 
-                                <a class="dropdown-item" href="{{ auto_url('logout') }}"
+                                <a class="btn btn-outline-info btn-sm dropdown-toggle" href="{{ auto_url('logout') }}"
                                     onclick="event.preventDefault();
                                                 document.getElementById('logout-form').submit();">
                                     {{ __('Logout') }}
@@ -86,6 +88,27 @@
 
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar" style="margin-left: 1rem;">
                     <span class="navbar-toggler-icon"></span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Search and AI section - responsive layout -->
+        <div class="search-ai-section mt-3 w-100">
+            <div class="d-flex justify-content-end align-items-center w-100">
+                <form class="form-inline" action='{{config('app.url')}}/book' name='form1'>        
+                    <div class="input-group">    
+                        <input class="form-control" type="search" name='search_word' placeholder="{{__("Search Resource")}}" value='{{$search_word}}' aria-label="Search">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary" type="button" id="button-addon2">
+                                <img class="d-block" src="image/search_black.png?nocache=1"  width='100%' height='100%' />
+                            </button>
+                          </div>
+                    </div>
+                </form>
+                {{-- 상세검색 버튼 --}}
+                {{-- <button class="btn btn-outline-dark ml-1" onClick="window.location.href='{{config('app.url')}}/asearch/'" type="button">{{__("Advanced")}}</button> --}}
+                <button class="btn btn-primary ml-2" onClick="window.location.href='{{config('app.url','/wlibrary')}}/recommend'" type="button" style="width: 38px; height: 38px; padding: 0; background: linear-gradient(135deg, #007bff, #0056b3); border: none; box-shadow: 0 2px 8px rgba(0,123,255,0.3);">
+                    <img class="d-block mx-auto" src="image/ai.png?nocache=4" width="30" height="30" alt="AI" style="filter: invert(1);" />
                 </button>
             </div>
         </div>
@@ -165,5 +188,42 @@
             </ul>       
         </div>        
     </nav>
+    
+    <style>
+        /* Responsive navbar layout */
+        .search-ai-section {
+            display: block;
+            width: 100%;
+        }
+
+        /* On medium devices and larger (768px and up) */
+        @media (min-width: 768px) {
+            .search-ai-section {
+                display: none;
+            }
+        }
+
+        /* On small devices (below 768px) */
+        @media (max-width: 767.98px) {
+            .search-ai-section {
+                display: block;
+                margin-top: 1rem;
+                width: 100%;
+            }
+            
+            .search-ai-section .d-flex {
+                width: 100%;
+                justify-content: flex-end;
+            }
+            
+            .search-ai-section .form-inline {
+                margin-right: 0;
+            }
+            
+            .search-ai-section .input-group {
+                min-width: 250px;
+            }
+        }
+    </style>
     
 @endif

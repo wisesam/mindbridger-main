@@ -4,7 +4,7 @@
 <div class='mt-0'>
 	@include('root.carousel')
 </div>
-<div class='mt-2'>
+{{-- <div class='mt-2'>
 	@include('announcement.small_list')
-</div>
+</div> --}}
 @endsection
