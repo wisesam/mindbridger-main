@@ -72,6 +72,20 @@
 html, body { height: 100%; }
 // End full-screen modal: Show the Book pages
 
+
+// for AI assistant dialog
+.modal-dialog.modal-fullscreen {
+  max-width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+.modal-content {
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+}
+
 </style>
 
 @php
@@ -100,14 +114,20 @@ html, body { height: 100%; }
 
   function goToPage(button) {
     // Read attributes
+    var idx = button.getAttribute('data-idx');
     var page  = button.getAttribute('data-page');   // single anchor page
     var start = button.getAttribute('data-start') || page;
     var end   = button.getAttribute('data-end')   || page;
     var rf    = button.getAttribute('data-rf');
     var rid   = button.getAttribute('data-rid');
+    var start_time   = button.getAttribute('data-start_time');
+    var end_time   = button.getAttribute('data-end_time');
+    var status   = button.getAttribute('data-status');
+
+console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", end, "RF:", rf, "RID:", rid, "Status:", status, "start_time", start_time, "end_time", end_time); // debugging
 
     // Keep values on the modal instance for the lifecycle
-    $('#fullscreenModal').data({ page: page, start: start, end: end, rf: rf, rid: rid });
+    $('#fullscreenModal').data({ idx:idx, page: page, start: start, end: end, rf: rf, rid: rid, status: status });
 
     $('#fullscreenModal')
       .off('shown.bs.modal.pdf hidden.bs.modal.pdf')
@@ -120,28 +140,104 @@ html, body { height: 100%; }
           (data.start === data.end)
             ? ('Page ' + data.start)
             : ('Pages ' + data.start + '–' + data.end);
-        
-        document.getElementById('fullscreenModalLabel').innerHTML +=
-            " <img src='{{ config('app.url','/wlibrary') }}/image/ai-assistant.png' class='zoom img-icon-pointer ml-2' alt='AI Assistant'>";
 
+        document.getElementById('fullscreenModalLabel').innerHTML +=
+            " <img src='{{ config('app.url','/wlibrary') }}/image/ai-assistant.png' " +
+            " class='zoom img-icon-pointer ml-2' alt='AI Assistant' " +
+            " data-toggle='modal' data-target='#aiModal' " +
+            " data-rid='{{ $book->rid }}' data-start='" + start +"' data-end='" + end + "'> ";
+        
       @if($historyTocMode)
         document.getElementById('fullscreenModalLabel').innerHTML +=
-            " <button id='startButton' class='btn btn-primary ml-2'>{{ __('Start Reading') }}</button>";
+            " <button id='startButton' type='button' class='btn btn-primary ml-2' onClick=section_status_change('in_progress')>{{ __('Start Reading') }}</button>";
         document.getElementById('fullscreenModalLabel').innerHTML +=
-            " <button id='finishButton' class='btn btn-warning' style='margin-left:10px;display:none;'>{{ __('Finish') }}</button>";
-      
-
-       <?php
+            " <button id='finishButton' type='button' class='btn btn-warning ml-2' style='margin-left:10px;' onClick=section_status_change('completed')>{{ __('Finish') }}</button>";
         
-       ?>
-      @endif
+        document.getElementById('fullscreenModalLabel').innerHTML +=
+            " <button id='resetButton' type='button' class='btn btn-danger ml-2' style='margin-left:10px;display:none;' onClick=section_status_change('none')>{{ __('Reset') }}</button>";
 
+        if (status == 'in_progress') {
+            let displayTime = start_time.slice(0, 16); 
+            document.getElementById('fullscreenModalLabel').innerHTML += " &nbsp; <span style='margin-left:10x;' class='small'>" + displayTime + " ~ </span>";
+        } else if (status == 'completed') {
+            let sTime = start_time.slice(0, 16); 
+            let eTime = end_time.slice(0, 16); 
+            document.getElementById('fullscreenModalLabel').innerHTML += " &nbsp; <span style='margin-left:10x;' class='small'>" + sTime + " ~ " + eTime + "</span>";
+        } 
+
+        // Button display according to the status of the section    
+        $(document).ready(function () {
+            if(status == '' || status =='none') {
+                $('#startButton').show();
+                $('#finishButton').hide();
+            } else if(status == 'in_progress') {
+                $('#startButton').hide();
+                $('#finishButton').show(); 
+            } else if(status == 'completed') {
+                $('#startButton').hide();
+                $('#finishButton').hide(); 
+                $('#resetButton').show(); 
+            }
+        });
+      @endif
       })
       .on('hidden.bs.modal.pdf', function () {
         document.getElementById('pdfIframe').src = 'about:blank'; // free resources
       })
       .modal('show');
   }
+
+// change the section's status of the reading history
+  function section_status_change(st) {
+    var data = $('#fullscreenModal').data();
+    if(st == 'none') {
+        if(!confirm("{{ __('Do you want to reset the section status?') }}")) {
+            return false;
+        }
+    }
+    $.ajax({
+        url: "{{ route('reading_history.section_set_status', ['book' => $book->id]) }}",
+        type: "POST",
+        data: {
+            _token: "{{ csrf_token() }}",
+            idx: data.idx,              // ToC index
+            status: st,          // New status
+        },
+        success: function (response) {
+            console.log("Status updated:", response);
+            if(st == 'completed') window.location.href = window.location.pathname; // don't have to reload the page
+            else {
+                window.location.href = window.location.pathname + "?idx=" + data.idx;
+            }
+        },
+        error: function (xhr) {
+            console.error(xhr.responseText);
+            alert("Error updating section status.");
+        }
+    });
+  }
+
+</script>
+
+<script>
+  // this is to reopne the full screen section reading window after changing the section reading status
+    window.addEventListener("load", function() {
+        // Parse URL params
+        let params = new URLSearchParams(window.location.search);
+        let idx = params.get("idx");
+
+        if (idx) {
+            // Find button with that idx
+            let btn = document.querySelector(`[data-idx="${idx}"]`);
+            if (btn) {
+                goToPage(btn);  // or btn.click()
+            }
+
+            // Optionally clear the param (so reload again won't repeat)
+            // history.replaceState(null, "", window.location.pathname);
+        }
+    });
+
 </script>
 
 <div class="row justify-content-center">
@@ -245,7 +341,9 @@ html, body { height: 100%; }
                                                 document.getElementById('finishReadingButton').style.display = 'inline';
                                                 document.getElementById('eshelf-checkbox').checked=true;
                                                 toggleEshelf(document.getElementById('eshelf-checkbox'));
-                                                location.reload();
+                      
+                                                window.location.href = window.location.pathname; // clear section window qeury 
+                                            
                                                 /* alert("Let's start reading!"); */
                                             } else {
                                                 console.warn("Unexpected response:", response);
@@ -281,7 +379,7 @@ html, body { height: 100%; }
                                                 console.log("Success:", response);
                                                 document.getElementById('finishReadingButton').style.display = 'none';
                                                 /* alert("Reading finished!"); */
-                                                location.reload();
+                                                window.location.href = window.location.pathname; // clear section window qeury 
                                             } else {
                                                 console.warn("Unexpected response:", response);
                                                 document.getElementById('finishReadingButton').style.display = 'inline';
@@ -312,7 +410,7 @@ html, body { height: 100%; }
                                                 console.log("Success:", response);
                                                 document.getElementById('resetReadingButton').style.display = 'none';
                                                 /* alert("Reading finished!"); */
-                                                location.reload();
+                                                window.location.href = window.location.pathname; // clear section window qeury 
                                             } else {
                                                 console.warn("Unexpected response:", response);
                                                 document.getElementById('resetReadingButton').style.display = 'inline';
@@ -482,7 +580,8 @@ html, body { height: 100%; }
                             <div class="accordion" id="tocAccordion">
                           @php
                             // Get ToC from old input or model
-                            $tocJson = old('auto_toc', $book->auto_toc ?? '[]');
+                            $tocJson = $tocOrigin ?? [];
+
                             $toc = is_array($tocJson) ? $tocJson : json_decode($tocJson, true) ?? [];
 
                             // Group: level 1 = chapters; attach following items with level > 1 as children until next level 1
@@ -490,31 +589,44 @@ html, body { height: 100%; }
                             $current = null;
 
                             foreach ($toc as $item) {
+                                
                                 $item = [
+                                    'idx' => $item['idx'] ?? 0,
                                     'title' => $item['title'] ?? 'Untitled',
-                                    'page'  => $item['page'] ?? null,   // legacy single page
+                                    'page'  => $item['page'] ?? ($item['start'] ?? null),   // legacy single page
                                     'start' => $item['start'] ?? ($item['page'] ?? null),
                                     'end'   => $item['end']   ?? ($item['page'] ?? null),
                                     'level' => $item['level'] ?? 1,
+                                    'status' => $item['status'] ?? '',
+                                    'start_time' => $item['start_time'] ?? '',
+                                    'end_time' => $item['end_time'] ?? '',
                                 ];
-
+                                
                                 if ($item['level'] <= 1) {
                                     if ($current) $chapters[] = $current;
 
                                     $current = [
+                                        'idx' =>    $item['idx'],
                                         'title'    => $item['title'],
-                                        'page'     => $item['page'],
+                                        'page'     => $item['page'] ?? ($item['start'] ?? null),
                                         'start'    => $item['start'],
                                         'end'      => $item['end'],
+                                        'status' => $item['status'] ?? '',
+                                        'start_time' => $item['start_time'] ?? '',
+                                        'end_time' => $item['end_time'] ?? '',
                                         'children' => [],
                                     ];
                                 } else {
                                     if (!$current) { // in case JSON starts with > level 1
                                         $current = [
+                                            'idx' => $item['idx'],
                                             'title'    => 'Chapter',
                                             'page'     => null,
                                             'start'    => null,
                                             'end'      => null,
+                                            'status' => $item['status'] ?? '',
+                                            'start_time' => $item['start_time'] ?? '',
+                                            'end_time' => $item['end_time'] ?? '',
                                             'children' => [],
                                         ];
                                     }
@@ -555,6 +667,9 @@ html, body { height: 100%; }
                                 $headingId  = "tocHeading{$idx}";
                                 $startPage  = $ch['start'] ?? $ch['page'];
                                 $endPage    = $ch['end'] ?? $ch['page'];
+                                $status    = $ch['status'] ?? '';
+                                $start_time  = $ch['start_time'] ?? '';
+                                $end_time    = $ch['end_time'] ?? '';
                                 $hasChildren = !empty($ch['children']);
                             @endphp
 
@@ -564,6 +679,7 @@ html, body { height: 100%; }
                                         {{-- If chapter has children, make title clickable to expand --}}
                                         @if($hasChildren)
                                             <button class="btn btn-link" type="button"  
+                                                    data-idx="{{ $ch['idx'] }}"
                                                     data-toggle="collapse"
                                                     data-target="#{{ $collapseId }}" 
                                                     aria-expanded="false" 
@@ -571,8 +687,12 @@ html, body { height: 100%; }
                                                     data-start="{{ $startPage }}"
                                                     data-end="{{ $endPage }}"
                                                     data-rf="{{ e($rfiles[0]) }}"
-                                                    data-rid="{{ e($book->rid) }}">
-                                                {{ $ch['title'] }}
+                                                    data-rid="{{ e($book->rid) }}"
+                                                    data-status="{{ $status }}"
+                                                    data-start_time="{{ $start_time }}"
+                                                    data-end_time="{{ $end_time }}">
+                                                
+                                                    {{ $ch['title'] }}
                                                 <span class="badge badge-secondary ml-2">
                                                     @if($startPage !== $endPage)
                                                         pp. {{ $startPage }}–{{ $endPage }}
@@ -599,10 +719,14 @@ html, body { height: 100%; }
                                         @if(!is_null($ch['page']))
                                             <button type="button"
                                                     class="btn btn-sm btn-primary ml-2"
+                                                    data-idx="{{ $ch['idx'] }}"
                                                     data-start="{{ $startPage }}"
                                                     data-end="{{ $endPage }}"
                                                     data-rf="{{ e($rfiles[0]) }}"
                                                     data-rid="{{ e($book->rid) }}"
+                                                    data-status="{{ $status }}"
+                                                    data-start_time="{{ $start_time }}"
+                                                    data-end_time="{{ $end_time }}"
                                                     onclick="goToPage(this)">
                                                 {{ __('Go to page') }}
                                             </button>
@@ -619,22 +743,33 @@ html, body { height: 100%; }
                                                     @php
                                                         $cStart = $child['start'] ?? $child['page'];
                                                         $cEnd   = $child['end'] ?? $child['page'];
+
+                                                        if($child['status'] == 'in_progress') {
+                                                            $badge = "<span class='badge badge-warning'>".__("Reading..")."</span>";
+                                                        } else if($child['status'] == 'completed') {
+                                                            $badge = "<span class='badge badge-success'>".__("Done :)")."</span>";
+                                                        }  else $badge =""; 
+
                                                     @endphp
                                                     <li class="list-group-item d-flex align-items-center justify-content-between">
                                                         <span>
                                                             @if(($child['level'] ?? 2) > 2)
                                                                 <span class="text-muted mr-2" style="display:inline-block; width: {{ (($child['level']-2)*14) }}px;"></span>
                                                             @endif
-                                                            {{ $child['title'] }}
+                                                            {!! $badge !!} {{ $child['title'] }}
                                                         </span>
 
                                                         @if(!is_null($child['page']))
                                                             <button type="button"
                                                                     class="btn btn-outline-secondary btn-sm"
+                                                                    data-idx="{{ $child['idx'] }}"
                                                                     data-start="{{ $cStart }}"
                                                                     data-end="{{ $cEnd }}"
                                                                     data-rf="{{ e($rfiles[0]) }}"
                                                                     data-rid="{{ e($book->rid) }}"
+                                                                    data-status="{{ $child['status'] }}"
+                                                                    data-start_time="{{ $child['start_time'] }}"
+                                                                    data-end_time="{{ $child['end_time'] }}"
                                                                     onclick="goToPage(this)">
                                                                 @if($cStart !== $cEnd)
                                                                     pp. {{ $cStart }}–{{ $cEnd }}
@@ -882,4 +1017,93 @@ html, body { height: 100%; }
     </div>
 </div>
 <br><br>
+
+<!-- AI Assistant Modal -->
+<div class="modal fade" id="aiModal" tabindex="-1" role="dialog" aria-labelledby="aiModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-fullscreen" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="aiModalLabel">AI Assistant Notes</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" id="aiModalBody">
+        <p class="text-muted">Loading description...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// AI Assistant
+$('#aiModal').on('show.bs.modal', function (event) {
+    let trigger = $(event.relatedTarget);
+    let bookId  = {{ $book->id }};
+    let start   = trigger.data('start');
+    let end     = trigger.data('end');
+
+    let $body = $('#aiModalBody');
+    $body.html("<p class='text-muted'>Fetching AI explanation...</p>");
+
+    $.ajax({
+        url: "{{ route('reading_history.section_ai', $book->id) }}",
+        type: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            start_page: start,
+            end_page: end
+        },
+        success: function(response) {
+            if (response.meta_data && response.meta_data.explanation) {
+                let explanation = "<div class='p-3'>" +
+                    "<h5 class='mb-3'><i class='fas fa-robot text-primary mr-2'></i>AI Explanation</h5>" +
+                    "<div class='border rounded p-3 bg-light mb-4'>" +
+                        "<p style='white-space: pre-wrap;'>" + response.meta_data.explanation + "</p>" +
+                    "</div>" +
+                "</div>";
+
+                // Build questions
+                let questionsHtml = "<h5>True/False Questions</h5><ol>";
+                response.meta_data.questions.forEach((q, i) => {
+                    questionsHtml += `
+                        <li class="mb-2">
+                            <span>${q.q}</span><br>
+                            <button class="btn btn-sm btn-outline-success mr-2" onclick="checkAnswer(${i}, true)">True</button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="checkAnswer(${i}, false)">False</button>
+                        </li>
+                    `;
+                });
+                questionsHtml += "</ol><div id='answerBox' class='alert alert-info mt-3' style='display:none;'></div>";
+
+                $body.html(explanation + questionsHtml);
+
+                // Save correct answers in window
+                window.correctAnswers = response.meta_data.questions.map(q => q.answer);
+            } else {
+                $body.html("<p class='text-danger'>No explanation found.</p>");
+            }
+        },
+                error: function() {
+            $body.html("<p class='text-danger'>Failed to load AI description.</p>");
+        }
+    });
+});
+
+
+function checkAnswer(index, choice) {
+    let correct = window.correctAnswers[index];
+    let box = document.getElementById("answerBox");
+
+    if (choice === correct) {
+        box.className = "alert alert-success mt-3";
+        box.innerText = "✅ Correct!";
+    } else {
+        box.className = "alert alert-danger mt-3";
+        box.innerText = "❌ Incorrect. Try again.";
+    }
+    box.style.display = "block";
+}
+</script>
+
 @endsection

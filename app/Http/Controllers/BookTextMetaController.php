@@ -64,6 +64,8 @@ class BookTextMetaController extends Controller
             ->pluck('text')
             ->implode("\n\n");
 
+        $locale = app()->getLocale();
+
         // Build prompt for OpenAI
         $prompt = <<<EOT
     You are a helpful assistant that extracts structured metadata from a book's text.
@@ -77,7 +79,7 @@ class BookTextMetaController extends Controller
     - theme
     - summary (7-10 sentences)
     
-    The output language should be {app()->getLocale()}
+    The output language should be {$locale}
     Respond ONLY with valid JSON.
 
     Excerpt:

@@ -48,6 +48,19 @@ class ReadingHistory extends Model
         return (self->status == $st) ? true : false;
     }
 
+      /**
+     * Check if user has any history with given status
+     */
+    public function status($st)
+    {
+        if($this->status == $st) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+
     /**
     * Check if user has started reading
     */
@@ -89,8 +102,9 @@ class ReadingHistory extends Model
         }
 
         // Extend each ToC entry
-        $readingToc = collect($bookToc)->map(function ($item) {
+        $readingToc = collect($bookToc)->map(function ($item, $index) {
             return [
+                'idx'        => $index,  // <-- add index here
                 'title'      => $item['title'] ?? null,
                 'page'       => $item['page'] ?? null,
                 'start'      => $item['start'] ?? null,
@@ -101,28 +115,19 @@ class ReadingHistory extends Model
                 'start_time' => null,
                 'end_time'   => null,
                 'status'     => 'none',
-        
-                // timestamps inside JSON
-                'created_at' => now()->toDateTimeString(),
-                'updated_at' => now()->toDateTimeString(),
             ];
-        })->toArray();
-    
+        })->values()->toArray();
+
         // Save to reading_history
-        $history = ReadingHistory::updateOrCreate(
+        return self::updateOrCreate(
             [
                 'inst'    => session('lib_inst'),
                 'user_id' => session('uid'),
                 'book_id' => $book->id,
             ],
             [
-                'historyData' => json_encode($readingToc),
+                'historyData' => $readingToc, // <- if you cast this, no json_encode needed
             ]
         );
-    
-        return response()->json([
-            'success' => true,
-            'data'    => $history,
-        ]);
     }
 }

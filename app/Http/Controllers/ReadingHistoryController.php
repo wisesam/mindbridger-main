@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -144,7 +145,7 @@ class ReadingHistoryController extends Controller
         );
 
         if($request->operation == 'create_history') {
-            $history->historyData = $history->create_reading_toc($book_id);
+            $history->create_reading_toc($book_id);
             $history->save();
         }
 
@@ -161,5 +162,125 @@ class ReadingHistoryController extends Controller
             ->where('book_id', $book_id)
             ->delete();
         return response()->json(['success' => $deleted, 'data' => null]);
+    }
+
+    public function section_set_status(Request $request, $book_id)
+    {
+        $validated = $request->validate([
+            'idx'  => 'required|integer',
+            'status' => 'required|string|in:none,in_progress,completed',
+        ]);
+
+        $history = ReadingHistory::where('inst', session('lib_inst'))
+            ->where('user_id', session('uid'))
+            ->where('book_id', $book_id)
+            ->first();
+
+        $historyData = $history->historyData ?? [];
+        if (is_string($historyData)) {
+            $historyData = json_decode($historyData, true);
+        }
+
+        // Update one section by index
+        if (isset($historyData[$validated['idx']])) {
+            $historyData[$validated['idx']]['status'] = $validated['status'];
+            if($validated['status'] == 'in_progress') {
+                $historyData[$validated['idx']]['start_time'] = now()->toDateTimeString();
+            } else if($validated['status'] == 'completed') {
+                $historyData[$validated['idx']]['end_time'] = now()->toDateTimeString();
+            } else if($validated['status'] == 'none') {
+                $historyData[$validated['idx']]['start_time'] = null;
+                $historyData[$validated['idx']]['end_time'] = null;
+            }
+            
+        } else {
+            return response()->json(['error' => 'Invalid index'], 400);
+        }
+
+        $history->historyData = $historyData;
+        $history->save();
+
+        return response()->json([
+            'success' => true,
+            'history' => $history,
+        ]);
+    }
+
+    public function section_ai_explain(Request $request, $book_id)
+    {
+        $start = intval($request->input('start_page'));
+        $end   = intval($request->input('end_page'));
+
+        // Find book text meta
+       
+        $meta = BookTextMeta::where('inst', session('lib_inst'))
+            ->where('book_id', $book_id)
+            ->first();
+
+        if (empty($meta)) {
+            return response()->json(['error' => 'No BookTextMeta found'], 404);
+        }
+
+        $pages = json_decode($meta->text, true);
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($pages)) {
+            return response()->json(['error' => 'Invalid JSON in BookTextMeta.text'], 400);
+        }
+
+        // Collect text between start and end
+        $sectionText = collect($pages)
+            ->filter(fn($p) => $p['page'] >= $start && $p['page'] <= $end)
+            ->pluck('text')
+            ->implode("\n\n");
+
+        if (!$sectionText) {
+            return response()->json(['error' => 'No text found in given range'], 400);
+        }
+
+        $locale = app()->getLocale();
+        $prompt = <<<EOT
+        You are a helpful assistant for students.
+
+        Given the following excerpt from a book:
+
+        {$sectionText}
+
+        1. Provide a clear explanation in {$locale} (7–10 sentences).  
+        2. Generate 5 True/False questions (with correct answers).  
+        3. Output **valid JSON** only, in this structure:
+
+        {
+        "explanation": "....",
+        "questions": [
+            {"q": "....?", "answer": true},
+            {"q": "....?", "answer": false},
+            ...
+        ]
+        }
+        EOT;
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . env('OPENAI_API_KEY'),
+        ])->post('https://api.openai.com/v1/chat/completions', [
+            'model' => 'gpt-4o-mini',
+            'messages' => [
+                ['role' => 'system', 'content' => "You are a book section explainer. Always respond in {$locale}."],
+                ['role' => 'user', 'content' => $prompt],
+            ],
+            'temperature' => 0.4,
+        ]);
+
+        $result = $response->json();
+        $content = $result['choices'][0]['message']['content'] ?? null;
+
+        $cleanJson = preg_replace('/^```json|```$/i', '', trim($content));
+        $data = json_decode(trim($cleanJson), true);
+
+        return response()->json([
+            'success'   => true,
+            'book_id'   => $book_id,
+            'start'     => $start,
+            'end'       => $end,
+            'meta_data' => $data
+        ]);
     }
 }
