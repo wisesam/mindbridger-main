@@ -26,6 +26,7 @@
 9. Create a symbolic link (for cover images)
    - Go to root of mindbridger (eg, c:\xampp\htdocs\mindbridger, /var/www/html/mindbridger)
    - (Windows CMD example)  mklink /D storage "c:\xampp\mindbridger-main\storage\app\public"
+   - (Window PowerShell example) New-Item -ItemType SymbolicLink -Path "storage" -Target "C:\xampp\mindbridger-main\storage\app\public"
    - (Linux, MacOS example) ln -s /var/www/mindbridger-main/storage/app/public storage
 10. Click Update button from http://localhost/mindbridger/vwmldbm
        
