@@ -36,7 +36,7 @@
                                 <button class="btn btn-outline-secondary" type="search" id="button-addon2">
                                     <img class="d-block" src="{{config('app.url','/mindbridger')}}/image/search_black.png?nocache=1"  width='100%' height='100%' />
                                 </button>
-                                <button class="btn btn-outline-dark ml-1" style="color:purple;" onClick="window.location.href='{{ route('book.asearch') }}'" type="button">
+                                <button class="btn btn-outline-dark ml-1" style="white-space: nowrap;color:purple;" onClick="window.location.href='{{ route('book.asearch') }}'" type="button">
                                     {{__("Advanced")}}
                                 </button>
                               </div>

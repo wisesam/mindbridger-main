@@ -108,7 +108,7 @@
                                     <th class="cover-col">{{__("Cover")}}</th>
                                     <th class="title-col">{{__("Title")}}</th>
                                     <th class="author-col">{{__("Author")}}</th>
-                                    <th class="type-col">{{__("E-Resource exist")}}</th>
+                                    <th class="type-col">{{__("e-Resource")}}</th>
                                     <th class="rtype-col">{{__("Type")}}</th>
                                     
                                     @if(\vwmldbm\code\is_code_usable('c_genre'))

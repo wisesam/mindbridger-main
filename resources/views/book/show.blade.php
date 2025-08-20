@@ -624,14 +624,15 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                     <!-- Favorite Checkbox with Heart Icon -->
                     <label style="cursor:pointer;" class="mb-0">
                         <input type="checkbox" id="favorite-checkbox" style="display:none;" onchange="toggleFavorite(this)">
-                        <i id="favorite-icon" class="far fa-heart zoom img-icon-pointer" style="cursor:pointer; font-size: 24px; color: #dc3545;"></i>
+                        <i id="favorite-icon" class="fa-heart zoom img-icon-pointer far" style="cursor:pointer; font-size: 24px; color: #dc3545;"></i>
                     </label>
                 </span>
                 <span class="action-icon-wrapper">
-                    <label style="cursor:pointer;">
-                        <input type="checkbox" id="eshelf-checkbox" style="display:none;" onchange="toggleEshelf(this)">
-                        <i id="eshelf-icon" class="fas fa-book-open zoom img-icon-pointer" style="cursor:pointer; font-size: 24px; color: #28a745;"></i>
-                    </label>
+                <label style="cursor:pointer;">
+                    <input type="checkbox" id="eshelf-checkbox" style="display:none;" onchange="toggleEshelf(this)">
+                    <i id="eshelf-icon" class="far fa-book-open zoom img-icon-pointer" 
+                        style="font-size: 24px; color:#28a745;"></i>
+                </label>
                 </span>
                 <button id="start-reading-btn" class="btn btn-success btn-sm ml-2" style="display: none;" onclick="showReadingStartModal()">
                     <i class="fas fa-play mr-1"></i>Start Reading
@@ -817,7 +818,7 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                             .done(function (response) {
                                 if (response.favorited) {
                                     isFavorited = true;
-                                    $('#favorite-icon').attr('src', '{{ config("app.url","/wlibrary") }}/image/button/heart-filled2.png');
+                                    $('#favorite-icon').removeClass('far').addClass('fas'); // filled
                                     $('#favorite-checkbox').prop('checked', true);
                                 }
                             });
@@ -825,38 +826,46 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                         $(document).ready(function () {
                             if (isFavorited) {
                                 $('#favorite-checkbox').prop('checked', true);
-                                $('#favorite-icon').attr('src', '{{ config("app.url","/wlibrary") }}/image/button/heart-filled2.png');
+                                $('#favorite-icon').removeClass('far').addClass('fas'); // filled
+                            } else {
+                                $('#favorite-checkbox').prop('checked', false);
+                                $('#favorite-icon').removeClass('fas').addClass('far'); // outline
                             }
                         });
 
                         // For My E-Shelf
                         $.get("{{ route('book.eshelf.check', ['book' => $book->id]) }}")
-                            .done(function (response) {
-                                if (response.isMyEshelf) {
-                                    isEshelfOn = true;
-                                    $('#eshelf-icon').attr('src', '{{ config("app.url","/wlibrary") }}/image/button/ebook-filled.png');
-                                    $('#eshelf-checkbox').prop('checked', true);
-                                }
-                            });
+                        .done(function (response) {
+                            if (response.isMyEshelf) {
+                                $('#eshelf-checkbox').prop('checked', true);
+                                $('#eshelf-icon').removeClass('far').addClass('fas');
+                            } else {
+                                $('#eshelf-checkbox').prop('checked', false);
+                                $('#eshelf-icon').removeClass('fas').addClass('far');
+                            }
+                        });
 
                         $(document).ready(function () {
                             if (isEshelfOn) {
                                 $('#eshelf-checkbox').prop('checked', true);
-                                $('#eshelf-icon').attr('src', '{{ config("app.url","/wlibrary") }}/image/button/ebook-filled.png');
+                                $('#eshelf-icon').removeClass('far').addClass('fas');
+                            } else {
+                                $('#eshelf-checkbox').prop('checked', false);
+                                $('#eshelf-icon').removeClass('fas').addClass('far');
                             }
                         });
 
                         function toggleFavorite(checkbox) {
                             let isChecked = checkbox.checked;
                             let icon = $('#favorite-icon');
-                            if (isChecked) { // try to add it as favorite
-                                icon.attr('src', '{{ config("app.url","/wlibrary") }}/image/button/heart-filled2.png');
+
+                            if (isChecked) { // add favorite
+                                icon.removeClass('far').addClass('fas'); // solid heart
                                 $.post("{{ route('book.favorite.store', ['book' => $book->id]) }}", {
                                     _token: '{{ csrf_token() }}'
                                 });
-
-                            } else { // try to remove favorite
-                                icon.attr('src', '{{ config("app.url","/wlibrary") }}/image/button/heart-empty2.png');
+                            } else { // remove favorite
+                                icon.removeClass('fas').addClass('far'); // outline heart
                                 $.ajax({
                                     url: "{{ route('book.favorite.remove', ['book' => $book->id]) }}",
                                     type: 'DELETE',
@@ -866,16 +875,14 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                         }
 
                         function toggleEshelf(checkbox) {
-                            let isChecked = checkbox.checked;
                             let icon = $('#eshelf-icon');
-                            if (isChecked) { // try to add it as my eshelf book
-                                icon.attr('src', '{{ config("app.url","/wlibrary") }}/image/button/ebook-filled.png');
+                            if (checkbox.checked) {
+                                $('#eshelf-icon').removeClass('far').addClass('fas');
                                 $.post("{{ route('book.eshelf.store', ['book' => $book->id]) }}", {
                                     _token: '{{ csrf_token() }}'
                                 });
-
-                            } else { // try to remove my eshelf book
-                                icon.attr('src', '{{ config("app.url","/wlibrary") }}/image/button/ebook-empty.png');
+                            } else {
+                                $('#eshelf-icon').removeClass('fas').addClass('far');
                                 $.ajax({
                                     url: "{{ route('book.eshelf.remove', ['book' => $book->id]) }}",
                                     type: 'DELETE',
@@ -1308,7 +1315,7 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                     
 
                     <div class="form-group row">
-                        <label for="e_resource_yn" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("E-Resource exist") }}</label>
+                        <label for="e_resource_yn" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("e-Resource") }}</label>
                         <div class="col-md-9">
                             <div class='form-control border-0'>                            
                                 <?PHP
