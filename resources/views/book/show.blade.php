@@ -410,6 +410,7 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
             " data-toggle='modal' data-target='#aiModal' " +
             " data-rid='{{ $book->rid }}' data-start='" + start +"' data-end='" + end + "'> ";
         
+            
       @if($historyTocMode)
         document.getElementById('fullscreenModalLabel').innerHTML +=
             " <button id='startButton' type='button' class='btn btn-primary ml-2' onClick=section_status_change('in_progress')>{{ __('Start Reading') }}</button>";
@@ -1474,8 +1475,19 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
+
       <div class="modal-body" id="aiModalBody">
         <p class="text-muted">Loading description...</p>
+      </div>
+
+      <!-- ✅ Centered Refresh Button -->
+      <div class="modal-footer d-flex justify-content-center">
+        <button id="refreshAiBtn" class="btn btn-sm btn-outline-primary">
+          ↻ Refresh
+        </button>
+        <button id="saveAiBtn" class="btn btn-sm btn-success" style='margin-left:10px;' disabled>
+            💾 Save
+        </button>
       </div>
     </div>
   </div>
@@ -1485,13 +1497,26 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
 // AI Assistant
 $('#aiModal').on('show.bs.modal', function (event) {
     let trigger = $(event.relatedTarget);
-    let bookId  = {{ $book->id }};
+    let $body   = $('#aiModalBody');
+
+    // Get start & end from trigger
     let start   = trigger.data('start');
     let end     = trigger.data('end');
 
-    let $body = $('#aiModalBody');
+    // Store them in modal for reuse
+    $(this).data('start', start);
+    $(this).data('end', end);
+
+    // ✅ If already loaded, skip reload
+    if ($body.data('loaded')) return;
+
     $body.html("<p class='text-muted'>Fetching AI explanation...</p>");
 
+    fetchAiData(start, end, $body);
+    console.log("A:",start,end);
+});
+
+function fetchAiData(start, end, $body) {
     $.ajax({
         url: "{{ route('reading_history.section_ai', $book->id) }}",
         type: 'POST',
@@ -1502,54 +1527,78 @@ $('#aiModal').on('show.bs.modal', function (event) {
         },
         success: function(response) {
             if (response.meta_data && response.meta_data.explanation) {
-                let explanation = "<div class='p-3'>" +
-                    "<h5 class='mb-3'><i class='fas fa-robot text-primary mr-2'></i>AI Explanation</h5>" +
-                    "<div class='border rounded p-3 bg-light mb-4'>" +
-                        "<p style='white-space: pre-wrap;'>" + response.meta_data.explanation + "</p>" +
-                    "</div>" +
-                "</div>";
+                let explanation = `
+                    <div class='p-3'>
+                        <h5 class='mb-3'>
+                            <i class='fas fa-robot text-primary mr-2'></i>AI Explanation
+                        </h5>
+                        <div class='border rounded p-3 bg-light mb-4'>
+                            <p style='white-space: pre-wrap;'>${response.meta_data.explanation}</p>
+                        </div>
+                    </div>
+                `;
 
-                // Build questions
                 let questionsHtml = "<h5>True/False Questions</h5><ol>";
                 response.meta_data.questions.forEach((q, i) => {
                     questionsHtml += `
-                        <li class="mb-2">
+                        <li class="mb-3">
                             <span>${q.q}</span><br>
                             <button class="btn btn-sm btn-outline-success mr-2" onclick="checkAnswer(${i}, true)">True</button>
                             <button class="btn btn-sm btn-outline-danger" onclick="checkAnswer(${i}, false)">False</button>
+                            <div id="answerBox-${i}" class="mt-2" style="display:none;"></div>
                         </li>
                     `;
                 });
-                questionsHtml += "</ol><div id='answerBox' class='alert alert-info mt-3' style='display:none;'></div>";
+                questionsHtml += "</ol>";
 
                 $body.html(explanation + questionsHtml);
 
-                // Save correct answers in window
+                // Save correct answers
                 window.correctAnswers = response.meta_data.questions.map(q => q.answer);
+
+                // Mark as loaded
+                $body.data('loaded', true);
             } else {
                 $body.html("<p class='text-danger'>No explanation found.</p>");
             }
         },
-                error: function() {
+        error: function() {
             $body.html("<p class='text-danger'>Failed to load AI description.</p>");
         }
     });
+}
+
+$('#refreshAiBtn').on('click', function() {
+    let $modal = $('#aiModal');
+    let $body  = $('#aiModalBody');
+
+    // Reset loaded flag
+    $body.removeData('loaded');
+
+    // Get saved start/end from modal
+    let start = $modal.data('start');
+    let end   = $modal.data('end');
+    console.log("B:",start,end);
+    // Reload content
+    $body.html("<p class='text-muted'>Refreshing AI explanation...</p>");
+    fetchAiData(start, end, $body);
 });
 
 
 function checkAnswer(index, choice) {
     let correct = window.correctAnswers[index];
-    let box = document.getElementById("answerBox");
+    let box = document.getElementById(`answerBox-${index}`);
 
     if (choice === correct) {
-        box.className = "alert alert-success mt-3";
+        box.className = "alert alert-success mt-2 p-2";
         box.innerText = "✅ Correct!";
     } else {
-        box.className = "alert alert-danger mt-3";
+        box.className = "alert alert-danger mt-2 p-2";
         box.innerText = "❌ Incorrect. Try again.";
     }
     box.style.display = "block";
 }
+
 </script>
 
 @endsection
