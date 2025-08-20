@@ -2,6 +2,14 @@
 if(!isset($numRentals)) {
     $numRentals=App\Models\Rental::num('RENTED',Auth::user()->id);
 }
+
+if(!isset($numBooks)) {
+    $numBooks=App\Models\Book::where('inst',$_SESSION['lib_inst'])->get()->count();
+}
+
+if(!isset($numCopies)) {
+    $numCopies=App\Models\Book_copy::where('inst',$_SESSION['lib_inst'])->get()->count();
+}
 ?>
 
 @extends('layouts.root')
@@ -15,6 +23,7 @@ if(!isset($numRentals)) {
                     <div class="card-body text-center p-4">
                         <div class="icon-wrapper mb-3">
                             <a href="{{config('app.url','/wlibrary')}}/book" class="text-decoration-none">
+                                <div class="rental-count">{{$numBooks}}/{{$numCopies}}</div>
                                 <img class="dashboard-icon" src="image/book.png?nocache=4" alt="Resources">
                             </a>
                         </div>
