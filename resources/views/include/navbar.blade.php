@@ -21,7 +21,7 @@
         
         <div class="d-flex justify-content-between align-items-center w-100">
             <div class="d-flex align-items-center logo-section">
-                <div style="width:145px;height:45px;">
+                <div style="width:150px;height:70px;">
                     <a href="{{config('app.url','/wlibrary')}}">
                         <img class="d-block" src="{{config('app.url','/wlibrary')}}/image/logo2.png?nocache=1"  width='100%' height='100%'>
                     </a>

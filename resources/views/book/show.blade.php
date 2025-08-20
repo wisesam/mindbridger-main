@@ -870,7 +870,7 @@ html, body { height: 100%; }
                     <input type='hidden' name="id" value='{{$book->id}}'>
                     <input type='hidden' name="del_file">                   
                     <div class="form-group row">
-                        <label for="title" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['title'] }}</label>
+                        <label for="title" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Title") }}</label>
 
                         <div class="col-md-9">
                             <div class='container border-0 mt-0'>{{ $book->title }}</div>
@@ -878,7 +878,7 @@ html, body { height: 100%; }
                     </div>
 
                     <div class="form-group row">
-                        <label for="author" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['author'] }}</label>
+                        <label for="author" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Author") }}</label>
 
                         <div class="col-md-9">
                             <div class='form-control border-0'>{{ $book->author }}</div>
@@ -1128,7 +1128,7 @@ html, body { height: 100%; }
                 <!-- End ToC Display: Accordion -->
 
                     <div class="form-group row">
-                        <label for="rtype" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['c_rtype'] }}</label>
+                        <label for="rtype" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Type") }}</label>
 
                         <div class="col-md-9">
                             <div class='form-control border-0'><?=\vwmldbm\code\get_c_name('code_c_rtype',$book->c_rtype)?></div>
@@ -1137,7 +1137,7 @@ html, body { height: 100%; }
 
                 @if(\vwmldbm\code\is_code_usable('code_c_genre'))    
                     <div class="form-group row">
-                        <label for="c_genre" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['c_genre'] }}</label>
+                        <label for="c_genre" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Genre") }}</label>
 
                         <div class="col-md-9">
                             <div class='form-control border-0'><?=\vwmldbm\code\get_c_name('code_c_genre',$book->c_genre)?></div>
@@ -1147,7 +1147,7 @@ html, body { height: 100%; }
 
                 @if(\vwmldbm\code\is_code_usable('code_c_grade'))
                     <div class="form-group row">
-                        <label for="c_grade" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['c_grade'] }}</label>
+                        <label for="c_grade" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Grade") }}</label>
 
                         <div class="col-md-9">
                             <div class='form-control border-0'><?=\vwmldbm\code\get_c_name('code_c_grade',$book->c_grade)?></div>
@@ -1157,7 +1157,7 @@ html, body { height: 100%; }
 
                 @if(\vwmldbm\code\is_code_usable('code_c_category'))
                     <div class="form-group row">
-                        <label for="c_category" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['c_category'] }}</label>
+                        <label for="c_category" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Category") }}</label>
 
                         <div class="col-md-9">
                             <div class='form-control border-0'><?=\vwmldbm\code\get_c_name('code_c_category',$book->c_category)?></div>
@@ -1167,7 +1167,7 @@ html, body { height: 100%; }
                 
                 @if(\vwmldbm\code\is_code_usable('code_c_category2'))
                     <div class="form-group row">
-                        <label for="c_category2" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['c_category2'] }}</label>
+                        <label for="c_category2" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Category2") }}</label>
 
                         <div class="col-md-9">
                             <div class='form-control border-0'><?=\vwmldbm\code\get_c_name('code_c_category2',$book->c_category2)?></div>
@@ -1176,7 +1176,7 @@ html, body { height: 100%; }
                 @endif
 
                     <div class="form-group row">
-                        <label for="c_lang" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['c_lang'] }}</label>
+                        <label for="c_lang" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Language") }}</label>
 
                         <div class="col-md-9">
                             <span class='form-control border-0'>
@@ -1187,7 +1187,7 @@ html, body { height: 100%; }
                     
 
                     <div class="form-group row">
-                        <label for="e_resource_yn" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['e_resource_yn'] }}</label>
+                        <label for="e_resource_yn" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("E-Resource exist") }}</label>
                         <div class="col-md-9">
                             <div class='form-control border-0'>                            
                                 <?PHP
@@ -1198,7 +1198,7 @@ html, body { height: 100%; }
                     </div>                                    
 
                     <div class="form-group row">
-                        <label for="desc" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['desc'] }}</label>
+                        <label for="desc" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Description") }}</label>
 
                         <div class="col-md-9">
                             <div class='form-control-static overflow-auto' style='max-height:600px;min-height:100px;'>
@@ -1208,7 +1208,7 @@ html, body { height: 100%; }
                     </div>
 
                     <div class="form-group row">
-                        <label for="publisher" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['publisher'] }}</label>
+                        <label for="publisher" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Publisher") }}</label>
 
                         <div class="col-md-9">
                             <div class='form-control border-0'>{{ $book->publisher }}</div>
@@ -1216,7 +1216,7 @@ html, body { height: 100%; }
                     </div>
                     
                     <div class="form-group row">
-                        <label for="url" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['url'] }}</label>
+                        <label for="publisher" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("URL") }}</label>
 
                         <div class="col-md-9">
                             <div class='form-control border-0'><a href='{{ $book->url }}' target='_blank'>{{ $book->url }}</a></div>
@@ -1224,7 +1224,7 @@ html, body { height: 100%; }
                     </div>
 
                     <div class="form-group row">
-                        <label for="pub_date" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['pub_date'] }}</label>
+                        <label for="pub_date" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Pub Date") }}</label>
 
                         <div class="col-md-9">
                             <div class='form-control border-0'>{{ $book->pub_date }}</div>
@@ -1232,7 +1232,7 @@ html, body { height: 100%; }
                     </div>
                     
                     <div class="form-group row">
-                        <label for="isbn" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['isbn'] }}</label>
+                        <label for="isbn" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("ISBN") }}</label>
 
                         <div class="col-md-9">
                             <div class='form-control border-0'>{{ $book->isbn }}</div>
@@ -1240,7 +1240,7 @@ html, body { height: 100%; }
                     </div>
 
                     <div class="form-group row">
-                        <label for="eisbn" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['eisbn'] }}</label>
+                        <label for="eisbn" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("eISBN") }}</label>
 
                         <div class="col-md-9">
                             <div class='form-control border-0'>{{ $book->eisbn }}</div>
@@ -1248,7 +1248,7 @@ html, body { height: 100%; }
                     </div>
 
                     <div class="form-group row">
-                        <label for="keywords" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['keywords'] }}</label>
+                        <label for="keywords" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Keywords") }}</label>
 
                         <div class="col-md-9">
                             <div class='form-control border-0'>{{ $book->keywords }}</div>                               
@@ -1256,7 +1256,7 @@ html, body { height: 100%; }
                     </div>
 
                     <div class="form-group row">
-                        <label for="price" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['price'] }}</label>
+                        <label for="price" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Price") }}</label>
 
                         <div class="col-md-9">
                             <div class='form-control border-0'>{{ $book->price }}</div>                               
@@ -1264,7 +1264,7 @@ html, body { height: 100%; }
                     </div>
 
                     <div class="form-group row">
-                        <label for="cover_image" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['cover_image'] }}</label>
+                        <label for="cover_image" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Cover Image") }}</label>
                         <div class="col-md-9">
                             @if($book->cover_image)
                                 <img onClick='open_cover_img(this)' style='cursor:pointer;' src='{{config('app.url','/nwlibrary')}}/storage/cover_images/{{$_SESSION['lib_inst']}}/{{$book->cover_image}}' height='200'>
@@ -1312,10 +1312,10 @@ html, body { height: 100%; }
         <table class="table table-striped table-responsive-md">
         <tr>
             <th> </th>
-            <th>{{$field_arr2["barcode"]}}</th>
-            <th>{{$field_arr2["call_no"]}}</th>
-            <th>{{$field_arr2["location"]}}</th>
-            <th>{{$field_arr2["c_rstatus"]}}</th>
+                                            <th>{{__("barcode")}}</th>
+                                <th>{{__("call_no")}}</th>
+                                <th>{{__("location")}}</th>
+                                <th>{{__("c_rstatus")}}</th>
         </tr>
         <?PHP $cnt=1; ?>
         @foreach($book_copy as $bc)                  

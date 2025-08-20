@@ -106,29 +106,29 @@
                             <thead class="table-header">
                                 <tr>
                                     <th class="cover-col">{{__("Cover")}}</th>
-                                    <th class="title-col">{{$field_arr["title"]}}</th>
-                                    <th class="author-col">{{$field_arr["author"]}}</th>
-                                    <th class="type-col">{{$field_arr["e_resource_yn"]}}</th>
-                                    <th class="rtype-col">{{$field_arr["c_rtype"]}}</th>
+                                    <th class="title-col">{{__("Title")}}</th>
+                                    <th class="author-col">{{__("Author")}}</th>
+                                    <th class="type-col">{{__("E-Resource exist")}}</th>
+                                    <th class="rtype-col">{{__("Type")}}</th>
                                     
                                     @if(\vwmldbm\code\is_code_usable('c_genre'))
-                                        <th class="genre-col">{{$field_arr["c_genre"]}}</th>
+                                        <th class="genre-col">{{__("Genre")}}</th>
                                     @endif
                                     
                                     @if(\vwmldbm\code\is_code_usable('c_grade'))
-                                        <th class="grade-col">{{$field_arr["c_grade"]}}</th>
+                                        <th class="grade-col">{{__("Grade")}}</th>
                                     @endif
 
                                     @if(\vwmldbm\code\is_code_usable('c_category'))
-                                        <th class="category-col">{{$field_arr["c_category"]}}</th>
+                                        <th class="category-col">{{__("Category")}}</th>
                                     @endif
 
                                     @if(\vwmldbm\code\is_code_usable('c_category2'))
-                                        <th class="category2-col">{{$field_arr["c_category2"]}}</th>
+                                        <th class="category2-col">{{__("Category2")}}</th>
                                     @endif
 
-                                    <th class="publisher-col">{{$field_arr["publisher"]}}</th>
-                                    <th class="date-col">{{$field_arr["pub_date"]}}</th>
+                                    <th class="publisher-col">{{__("Publisher")}}</th>
+                                    <th class="date-col">{{__("Pub Date")}}</th>
                                     <th class="copies-col">{{__("Copies")}}</th>
                                 </tr>
                             </thead>

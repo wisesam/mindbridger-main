@@ -19,7 +19,7 @@ if(!isset($numRentals)) {
                             </a>
                         </div>
                         <h5 class="card-title mb-2">{{__('Resources')}}</h5>
-                        <p class="card-text text-muted small">Browse our collection</p>
+                        <p class="card-text text-muted small">{{__('Browse our collection')}}</p>
                     </div>
                 </div>
             </div>
@@ -36,7 +36,7 @@ if(!isset($numRentals)) {
                             </a>
                         </div>
                         <h5 class="card-title mb-2">{{__('Rentals')}}</h5>
-                        <p class="card-text text-muted small">Your borrowed items</p>
+                        <p class="card-text text-muted small">{{__('Your borrowed items')}}</p>
                     </div>
                 </div>
             </div>
@@ -53,7 +53,7 @@ if(!isset($numRentals)) {
                             </a>
                         </div>
                         <h5 class="card-title mb-2">{{__('Favorites')}}</h5>
-                        <p class="card-text text-muted small">Your saved items</p>
+                        <p class="card-text text-muted small">{{__('Your saved items')}}</p>
                     </div>
                 </div>
             </div>
@@ -70,7 +70,7 @@ if(!isset($numRentals)) {
                             </a>
                         </div>
                         <h5 class="card-title mb-2">{{__('e-Shelf')}}</h5>
-                        <p class="card-text text-muted small">Your personal shelf</p>
+                        <p class="card-text text-muted small">{{__('Your personal shelf')}}</p>
                     </div>
                 </div>
             </div>
