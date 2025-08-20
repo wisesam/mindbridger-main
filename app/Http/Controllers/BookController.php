@@ -755,7 +755,7 @@ class BookController extends Controller
             $c_category_cnt=count($c_category);
             $c_category2_cnt=count($c_category2);
             
-            $evalTxt="\$books=\\App\\Book::where(\$search_condition)";
+            $evalTxt="\$books=\\App\\Models\\Book::where(\$search_condition)";
 
             // if everything is checked, we should not include it in where clause
             // Because the nature is books don't have to have the fields entered

@@ -22,8 +22,8 @@
         <div class="d-flex justify-content-between align-items-center w-100">
             <div class="d-flex align-items-center logo-section">
                 <div style="width:150px;height:70px;">
-                    <a href="{{config('app.url','/wlibrary')}}">
-                        <img class="d-block" src="{{config('app.url','/wlibrary')}}/image/logo2.png?nocache=1"  width='100%' height='100%'>
+                    <a href="{{config('app.url','/mindbridger')}}">
+                        <img class="d-block" src="{{config('app.url','/mindbridger')}}/image/logo2.png?nocache=1"  width='100%' height='100%'>
                     </a>
                 </div>
                 
@@ -33,14 +33,17 @@
                         <div class="input-group">    
                             <input class="form-control" type="search" name='search_word' placeholder="{{__("Search Resource")}}" value='{{$search_word}}' aria-label="Search">
                             <div class="input-group-append">
-                                <button class="btn btn-outline-secondary" type="button" id="button-addon2">
-                                    <img class="d-block" src="{{config('app.url','/wlibrary')}}/image/search_black.png?nocache=1"  width='100%' height='100%' />
+                                <button class="btn btn-outline-secondary" type="search" id="button-addon2">
+                                    <img class="d-block" src="{{config('app.url','/mindbridger')}}/image/search_black.png?nocache=1"  width='100%' height='100%' />
+                                </button>
+                                <button class="btn btn-outline-dark ml-1" style="color:purple;" onClick="window.location.href='{{ route('book.asearch') }}'" type="button">
+                                    {{__("Advanced")}}
                                 </button>
                               </div>
                         </div>
                     </form>
-                    <button class="btn btn-primary ml-2" onClick="window.location.href='{{config('app.url','/wlibrary')}}/recommend'" type="button" style="width: 38px; height: 38px; padding: 0; background: linear-gradient(135deg, #007bff, #0056b3); border: none; box-shadow: 0 2px 8px rgba(0,123,255,0.3);">
-                        <img class="d-block mx-auto" src="{{config('app.url','/wlibrary')}}/image/ai.png?nocache=4" width="30" height="30" alt="AI" style="filter: invert(1);" />
+                    <button class="btn btn-primary ml-2" onClick="window.location.href='{{config('app.url','/mindbridger')}}/recommend'" type="button" style="width: 38px; height: 38px; padding: 0; background: linear-gradient(135deg, #007bff, #0056b3); border: none; box-shadow: 0 2px 8px rgba(0,123,255,0.3);">
+                        <img class="d-block mx-auto" src="{{config('app.url','/mindbridger')}}/image/ai.png?nocache=4" width="30" height="30" alt="AI" style="filter: invert(1);" />
                     </button>
                 </div>
             </div>
@@ -106,7 +109,7 @@
                 </form>
                 {{-- 상세검색 버튼 --}}
                 {{-- <button class="btn btn-outline-dark ml-1" onClick="window.location.href='{{config('app.url')}}/asearch/'" type="button">{{__("Advanced")}}</button> --}}
-                <button class="btn btn-primary ml-2" onClick="window.location.href='{{config('app.url','/wlibrary')}}/recommend'" type="button" style="width: 38px; height: 38px; padding: 0; background: linear-gradient(135deg, #007bff, #0056b3); border: none; box-shadow: 0 2px 8px rgba(0,123,255,0.3);">
+                <button class="btn btn-primary ml-2" onClick="window.location.href='{{config('app.url','/mindbridger')}}/recommend'" type="button" style="width: 38px; height: 38px; padding: 0; background: linear-gradient(135deg, #007bff, #0056b3); border: none; box-shadow: 0 2px 8px rgba(0,123,255,0.3);">
                     <img class="d-block mx-auto" src="image/ai.png?nocache=4" width="30" height="30" alt="AI" style="filter: invert(1);" />
                 </button>
             </div>
@@ -116,16 +119,16 @@
             <!-- Links -->
             <ul class="navbar-nav">
                 <li class="nav-item">
-                    <a class="nav-link" href="{{config('app.url','/wlibrary')}}/">{{__('Home')}}</a>
+                    <a class="nav-link" href="{{config('app.url','/mindbridger')}}/">{{__('Home')}}</a>
                 </li>
                 
                 <li class="nav-item">
-                    <a class="nav-link" href="{{config('app.url','/wlibrary')}}/book" style="font-size: 125%; color: orange; font-weight: bold; line-height: 1; padding-top: 0.5rem;">{{__('Resources')}}</a>
+                    <a class="nav-link" href="{{config('app.url','/mindbridger')}}/book" style="font-size: 125%; color: orange; font-weight: bold; line-height: 1; padding-top: 0.5rem;">{{__('Resources')}}</a>
                 </li>
 
                @if(Auth::check() && !Auth::user()->isAdmin())
                 <li class="nav-item">
-                    <a class="nav-link" href="{{config('app.url','/wlibrary')}}/rental">{{__('Rentals')}}</a>
+                    <a class="nav-link" href="{{config('app.url','/mindbridger')}}/rental">{{__('Rentals')}}</a>
                 </li>
                 @if(false)
                 <li class="nav-item">
@@ -140,12 +143,12 @@
                         {{__("Library / Videos")}} 
                     </a>                  
                     <div class="dropdown-menu" aria-labelledby="navbarDropdownAbout">
-                        <a class="dropdown-item" href="{{config('app.url','/wlibrary')}}/about">{{__('About Library')}}</a>
+                        <a class="dropdown-item" href="{{config('app.url','/mindbridger')}}/about">{{__('About Library')}}</a>
                         <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" target='_blank' href="https://www.youtube.com/playlist?list=PLuAzRszLpwWr5-EbtEnwR43bzaiMwlSuy">{{__("Intro Videos")}}</a>
+                        <a class="dropdown-item disabled " target='_blank' style='color:grey'>{{__("Intro Videos")}}</a>
                         @auth
-                            @if(Auth::user()->isAdmin())
-                                <a class="dropdown-item" target='_blank' href="https://www.youtube.com/playlist?list=PLuAzRszLpwWqguLTm3r03IHkvl0d3Vdp3">{{__("Admin Tutorials")}}</a> 
+                            @if(false || Auth::user()->isAdmin())
+                                <a class="dropdown-item disabled " target='_blank' style='color:grey'>{{__("Admin Tutorials")}}</a> 
                             @endif    
                         @endauth
                     </div>
@@ -156,7 +159,7 @@
                         {{__("Announcement / BBS")}} 
                     </a>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                        <a class="dropdown-item" href="{{config('app.url','/wlibrary')}}/announcement">{{__("Announcement")}}</a>                        
+                        <a class="dropdown-item" href="{{config('app.url','/mindbridger')}}/announcement">{{__("Announcement")}}</a>                        
                     </div>
                 </li> -->
                 @auth
@@ -166,12 +169,12 @@
                             {{__('Admin')}} 
                         </a>
                         <div class="dropdown-menu" aria-labelledby="navbarDropdownAdmin">
-                            <a class="dropdown-item" href="{{config('app.url','/wlibrary')}}/users/list">{{__("Users")}} </a>
-                            <a class="dropdown-item" href="{{config('app.url','/wlibrary')}}/book">{{__("Resources")}}</a>                    
-                            <a class="dropdown-item" href="{{config('app.url','/wlibrary')}}/book_copy">{{__("Resource Copies")}}</a>                    
-                            <a class="dropdown-item" href="{{config('app.url','/wlibrary')}}/rental">{{__("Rentals")}}</a>                    
-                            <a class="dropdown-item" href="{{config('app.url','/wlibrary')}}/vwmldbm" target="_blank">VWMLDBM</a>                    
-                            <a class="dropdown-item" href="{{config('app.url','/wlibrary')}}/vwmldbm/batch" target="_blank">{{__("Batch Data")}}</a>                    
+                            <a class="dropdown-item" href="{{config('app.url','/mindbridger')}}/users/list">{{__("Users")}} </a>
+                            <a class="dropdown-item" href="{{config('app.url','/mindbridger')}}/book">{{__("Resources")}}</a>                    
+                            <a class="dropdown-item" href="{{config('app.url','/mindbridger')}}/book_copy">{{__("Resource Copies")}}</a>                    
+                            <a class="dropdown-item" href="{{config('app.url','/mindbridger')}}/rental">{{__("Rentals")}}</a>                    
+                            <a class="dropdown-item" href="{{config('app.url','/mindbridger')}}/vwmldbm" target="_blank">VWMLDBM</a>                    
+                            <a class="dropdown-item" href="{{config('app.url','/mindbridger')}}/vwmldbm/batch" target="_blank">{{__("Batch Data")}}</a>                    
                         </div>
                     </li>
                     @endif
@@ -181,7 +184,7 @@
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item">        
                     <?PHP            
-                        echo \wlibrary\code\print_lang(null,app()->getLocale()," class='form-control btn-outline-info nav-item' style='width:80px;'  onChange=\"window.location='".config('app.url','/wlibrary')."/locale/'+this.value;\"");
+                        echo \wlibrary\code\print_lang(null,app()->getLocale()," class='form-control btn-outline-info nav-item' style='width:80px;'  onChange=\"window.location='".config('app.url','/mindbridger')."/locale/'+this.value;\"");
                     ?>
                 </li>
             </ul>       

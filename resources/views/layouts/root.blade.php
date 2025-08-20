@@ -253,7 +253,7 @@
         </div>
 
         <div class="container text-center my-4">
-            Copyright &copy; 2014-<?=date ("Y") ;?>  www.wise4edu.com reserved by WISE Team
+            <?=date ("Y") ;?>  {{__("Mindbridger Open Source Project")}}
         </div>
     </div>
 
