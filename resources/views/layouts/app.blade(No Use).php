@@ -17,13 +17,13 @@ NOT IN USE
     <!-- Fonts -->
     <link rel="dns-prefetch" href="//fonts.gstatic.com">
     <link href="https://fonts.googleapis.com/css?family=Nunito" rel="stylesheet">
-    <link href="{{ auto_asset('/lib/bootstrap-4.4.1-dist/css/bootstrap.css') }}" rel="stylesheet">
+    <link href="{{ auto_asset('/lib/bootstrap-4.6.2-dist/css/bootstrap.css') }}" rel="stylesheet">
 
     <!-- Styles -->
     <link href="{{ auto_asset('lib/css/app.css') }}" rel="stylesheet">
     <script src="{{ auto_asset('/lib/js/popper.1.16.0.min.js') }}"></script>
     <script src="{{ auto_asset('/lib/jquery/jquery-3.4.1.min.js') }}"></script>
-    <script src="{{ auto_asset('/lib/bootstrap-4.4.1-dist/js/bootstrap.js') }}"></script>   
+    <script src="{{ auto_asset('/lib/bootstrap-4.6.2-dist/js/bootstrap.js') }}"></script>   
 </head>
 <body>
     <div id="app">

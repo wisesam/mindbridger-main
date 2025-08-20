@@ -235,7 +235,7 @@
                 <div class="card-header">{{ __('Resource Copy Information') }}</div>
                 <div class="card-body">
                     <div class="form-group row">
-                        <label for="book_name" class="col-md-3 col-form-label text-md-right">{{ $field_arr2['title'] }}</label>
+                                                    <label for="book_name" class="col-md-3 col-form-label text-md-right">{{ __("Title") }}</label>
                         <div class="col-md-7">
                             <span class='form-control' style='border:solid black 0px;'>{{ $book->title }}</span>
                         </div>

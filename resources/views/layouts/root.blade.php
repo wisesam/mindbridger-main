@@ -22,7 +22,7 @@
     <script src="{{ auto_asset('/lib/js/popper.1.16.0.min.js') }}"></script>
     <script src="{{ auto_asset('/lib/jquery/jquery-3.4.1.min.js') }}"></script>
     <script src="{{ auto_asset('/lib/jquery/ui/1.12.1/jquery-ui.min.js') }}"></script>
-    <script src="{{ auto_asset('/lib/bootstrap-4.4.1-dist/js/bootstrap.js') }}"></script>
+    <script src="{{ auto_asset('/lib/bootstrap-4.6.2-dist/js/bootstrap.js') }}"></script>
 
     <script src="{{ auto_asset('/lib/js/util.js') }}?v=20250810"></script>
 
@@ -32,9 +32,9 @@
     @endif
     
     @if(isset($frontHome))        
-        <link href="{{ auto_asset('/lib/bootstrap-4.4.1-dist/css/bootstrap.min.css?nocache') }}" rel="stylesheet">
+        <link href="{{ auto_asset('/lib/bootstrap-4.6.2-dist/css/bootstrap.min.css?nocache') }}" rel="stylesheet">
         <link href="{{ auto_asset('/lib/bootstrap-3.4.1/dist/css/bootstrap_carousel_only.css?nocache=7') }}" rel="stylesheet">
-    @else <link href="{{ auto_asset('/lib/bootstrap-4.4.1-dist/css/bootstrap.min.css') }}" rel="stylesheet">
+    @else <link href="{{ auto_asset('/lib/bootstrap-4.6.2-dist/css/bootstrap.min.css') }}" rel="stylesheet">
     @endif
 
     @if(isset($aboutPage))   
@@ -48,10 +48,19 @@
     <style>
         .dashboardbox {
             height: 100%;
-            border-radius: 10px;
+            border-radius: 16px;
             background: #ffffff;
-            border : 5px solid #65afc9;
-            padding: 2px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .dashboardbox:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            border-color: rgba(0, 123, 255, 0.2);
         }
 
         body {
@@ -103,22 +112,25 @@
             margin-top: 30px;
         }
 
-        .dashb {
-            display: flex;
-            flex-direction: row;
-            justify-content: space-between;
-            font-variant: small-caps;
-            align-self:flex-end;
-            align-items:flex-start;
-            padding-left: 5px;
-            padding-right:5px;
+        .nav-header {
+            width: 100%;
         }
 
-        .dashb_num{
-            align-self:center;
+        .dashb {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 1.5rem;
+            font-variant: normal;
+        }
+
+        .dashb_num {
             font-weight: bold;
-            font-size: 25px;
-            margin-top:5px;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
         }
 
         .dropdownb{
@@ -130,30 +142,117 @@
             transition: transform .5s;
             transform: scale(1.5);
         }
+
+        /* Modern dashboard card styles for backward compatibility */
+        .dashboard-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+        
+        .dashboard-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            border-color: rgba(0, 123, 255, 0.2);
+        }
+        
+        .icon-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .dashboard-icon {
+            width: 64px;
+            height: 64px;
+            object-fit: contain;
+            transition: transform 0.3s ease;
+            transform-origin: center;
+        }
+        
+        .dashboard-card:hover .dashboard-icon {
+            transform: scale(1.1);
+        }
+        
+        .user-count, .book-count, .rental-count, .reserve-count, .favorite-count, .eshelf-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+            z-index: 10;
+            transform: scale(1);
+            transition: transform 0.3s ease;
+        }
+        
+        .dashboard-card:hover .user-count,
+        .dashboard-card:hover .book-count,
+        .dashboard-card:hover .rental-count,
+        .dashboard-card:hover .reserve-count,
+        .dashboard-card:hover .favorite-count,
+        .dashboard-card:hover .eshelf-count {
+            transform: scale(1.1);
+        }
+        
+        .card-title {
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .card-text {
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        
+        .dashboard-card .card-body {
+            padding: 2rem 1.5rem;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-card .card-body {
+                padding: 1.5rem 1rem;
+            }
+            
+            .dashboard-icon {
+                width: 48px;
+                height: 48px;
+            }
+        }
     </style>
 </head>
 <body>
     <div>
-        <div class="container text-center mb-3 mt-3">
-            <?PHP
-                if(isset($about_hf->header)) echo $about_hf->header;
-                else echo "<div class='container text-center' style='color:red;font-style:italic;font-weight:bold;font-size:large;' display:'inline;'> WISE Library Beta System</div>";
-            ?>
-        </div> 
-
-        @include('include.navbar')        
-        <div class="container" style='width:100%;'>
-            @include('include.messages')
-            @yield('content')
+        <div class="sticky-top border-bottom bg-white">
+            <div class="container" style="margin-top: 0px;">
+                @include('include.navbar')        
+            </div>
         </div>
 
-        <div class="container text-center mb-3 mt-3">
+        <div class="container" style='width:100%; margin-top: 0px;'>
+            @include('include.messages')
+        </div>
+
+        @yield('content')
+
+        <div class="container text-center mt-0">
             <?PHP
                 if(isset($about_hf->footer)) echo $about_hf->footer;
             ?>
         </div>
 
-        <div class="container text-center mb-3 mt-4">
+        <div class="container text-center my-4">
             Copyright &copy; 2014-<?=date ("Y") ;?>  www.wise4edu.com reserved by WISE Team
         </div>
     </div>

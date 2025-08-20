@@ -36,7 +36,7 @@
                         </div>
 
                         <div class="form-group row">
-                            <label for="barcode" class="col-md-3 col-form-label text-md-right">{{ $field_arr2['barcode'] }}</label>
+                            <label for="barcode" class="col-md-3 col-form-label text-md-right">{{ __("Barcode") }}</label>
 
                             <div class="col-md-7">
                                 <input id="barcode" type="text" class="form-control @error('barcode') is-invalid @enderror" name="barcode" value="{{ $barcode }}" autofocus>
@@ -50,7 +50,7 @@
                         </div>
 
                         <div class="form-group row">
-                            <label for="call_no" class="col-md-3 col-form-label text-md-right">{{ $field_arr2['call_no'] }}</label>
+                            <label for="call_no" class="col-md-3 col-form-label text-md-right">{{ __("Call No") }}</label>
 
                             <div class="col-md-7">
                                 <input id="call_no" type="text" class="form-control @error('call_no') is-invalid @enderror" name="call_no" required value="{{ $call_no }}"  autofocus>
@@ -64,7 +64,7 @@
                         </div>
 
                         <div class="form-group row">
-                            <label for="location" class="col-md-3 col-form-label text-md-right">{{ $field_arr2['location'] }}</label>
+                            <label for="location" class="col-md-3 col-form-label text-md-right">{{ __("Location") }}</label>
 
                             <div class="col-md-7">
                                 <input id="location" type="text" class="form-control @error('location') is-invalid @enderror" name="location" value="{{ $location }}" autofocus>
@@ -78,7 +78,7 @@
                         </div>
 
                         <div class="form-group row">
-                            <label for="c_rstatus" class="col-md-3 col-form-label text-md-right">{{ $field_arr2['c_rstatus'] }}</label>
+                            <label for="c_rstatus" class="col-md-3 col-form-label text-md-right">{{ __("Status") }}</label>
 
                             <div class="col-md-7">
                                 <?PHP
@@ -93,7 +93,7 @@
                         </div>
                         
                         <div class="form-group row">
-                            <label for="comment" class="col-md-3 col-form-label text-md-right">{{ $field_arr2['comment'] }}</label>
+                            <label for="comment" class="col-md-3 col-form-label text-md-right">{{ __("comment") }}</label>
 
                             <div class="col-md-7">                            
                                 <textarea type="text" class="form-control @error('comment') is-invalid @enderror" name="comment" autofocus>{{$comment}}</textarea>

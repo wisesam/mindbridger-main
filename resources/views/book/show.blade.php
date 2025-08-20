@@ -32,11 +32,239 @@
 
 @extends('layouts.root')
 @section('content')
+<!-- FontAwesome CDN -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
 .img-icon-pointer {
     cursor:pointer;
     width:40px; 
     height:auto;
+}
+
+/* Action Icons Styling */
+.action-icon-wrapper {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 1rem;
+    height: 32px;
+}
+
+.action-icon-wrapper:first-child {
+    margin-left: 0;
+}
+
+.action-icon-wrapper i {
+    transition: all 0.3s ease;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.action-icon-wrapper i:hover {
+    transform: scale(1.1);
+    opacity: 0.8;
+}
+
+/* Share Popup Styles */
+.share-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(5px);
+}
+
+.share-popup {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow: hidden;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.share-popup-header {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.share-popup-header h5 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.3s ease;
+}
+
+.close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.share-popup-body {
+    padding: 2rem;
+}
+
+.share-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.share-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    background: white;
+    color: #495057;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.share-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    border-color: #007bff;
+}
+
+.share-facebook:hover {
+    background: #1877f2;
+    color: white;
+    border-color: #1877f2;
+}
+
+.share-twitter:hover {
+    background: #1da1f2;
+    color: white;
+    border-color: #1da1f2;
+}
+
+.share-linkedin:hover {
+    background: #0077b5;
+    color: white;
+    border-color: #0077b5;
+}
+
+.share-email:hover {
+    background: #6c757d;
+    color: white;
+    border-color: #6c757d;
+}
+
+.share-btn i {
+    font-size: 1.2rem;
+    width: 24px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.share-btn:hover i {
+    transform: scale(1.1);
+}
+
+.share-url-section {
+    border-top: 1px solid #e9ecef;
+    padding-top: 1.5rem;
+}
+
+.share-url-section label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.75rem;
+}
+
+.share-url-section .input-group {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.share-url-section .form-control {
+    border: none;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    background: #f8f9fa;
+}
+
+.share-url-section .btn {
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.share-url-section .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .share-popup {
+        width: 95%;
+        margin: 1rem;
+    }
+    
+    .share-popup-header {
+        padding: 1rem;
+    }
+    
+    .share-popup-body {
+        padding: 1.5rem;
+    }
+    
+    .share-options {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .share-btn {
+        padding: 0.75rem;
+        font-size: 0.9rem;
+    }
 }
 
 // full-screen modal: Show the Book pages
@@ -72,18 +300,53 @@
 html, body { height: 100%; }
 // End full-screen modal: Show the Book pages
 
-
-// for AI assistant dialog
-.modal-dialog.modal-fullscreen {
-  max-width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 0;
+/* Reading Progress Styles */
+#start-reading-btn, #finish-reading-btn, #reset-reading-btn {
+    transition: all 0.3s ease;
 }
-.modal-content {
-  height: 100%;
-  border: 0;
-  border-radius: 0;
+
+#start-reading-btn:hover, #finish-reading-btn:hover, #reset-reading-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Toast Notification Styles */
+.toast-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: white;
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    z-index: 10000;
+    display: none;
+    max-width: 300px;
+    border-left: 4px solid #007bff;
+}
+
+.toast-success {
+    border-left-color: #28a745;
+}
+
+.toast-warning {
+    border-left-color: #ffc107;
+}
+
+.toast-info {
+    border-left-color: #17a2b8;
+}
+
+.toast-error {
+    border-left-color: #dc3545;
+}
+
+/* Reading Time Info Styles */
+#reading-time-info {
+    background: #f8f9fa;
+    padding: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
 }
 
 </style>
@@ -245,32 +508,149 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
         <div class="card">
             <div class="card-header col-12">
             @if($isAdmin)
-                <span style='margin-left: 12px; display:inline'>
-                    <img src="{{config('app.url','/wlibrary')}}/image/button/set.png" class="zoom img-icon-pointer" onClick="window.location='{{config('app.url','/wlibrary')."/book/".$book->id}}/edit'">
+                <span class="action-icon-wrapper">
+                    <i class="fas fa-cog zoom img-icon-pointer" onClick="window.location='{{config('app.url','/wlibrary')."/book/".$book->id}}/edit'" style="cursor:pointer; font-size: 24px; color: #6c757d;"></i>
                 </span>
             @endif
-                <span style='margin-left: 12px; display:inline'>
-                    <img src="{{config('app.url','/wlibrary')}}/image/button/share.png" class="zoom img-icon-pointer" onClick="textToClipboard('<?=config('app.url','/wlibrary')."/inst/".session('inst_uname')."/book/".$book->id?>')">
+                <span class="action-icon-wrapper">
+                    <i class="fas fa-share-alt zoom img-icon-pointer" onClick="openSharePopup()" style="cursor:pointer; font-size: 24px; color: #6c757d;"></i>
                 </span>
                 <script>
-                     function textToClipboard (text) {                        
-                        navigator.clipboard.writeText(text)
-                            .then(() => { alert(`<?=__("The Resource URL was coppied to your clipboard!")?>`) })
-                            .catch((error) => { alert(`Copy failed! ${error}`) });	
+                     function openSharePopup() {
+                        const shareUrl = '<?=config('app.url','/wlibrary')."/inst/".session('inst_uname')."/book/".$book->id?>';
+                        const shareTitle = '<?=addslashes($book->title)?>';
+                        const shareText = '<?=addslashes($book->author)?> - <?=addslashes($book->title)?>';
+                        
+                        // Create share popup
+                        const popup = document.createElement('div');
+                        popup.className = 'share-popup-overlay';
+                        popup.innerHTML = `
+                            <div class="share-popup">
+                                <div class="share-popup-header">
+                                    <h5 class="mb-0">{{__("Share this resource")}}</h5>
+                                    <button type="button" class="close-btn" onclick="closeSharePopup()">&times;</button>
+                                </div>
+                                <div class="share-popup-body">
+                                    <div class="share-options">
+                                        <button class="share-btn share-facebook" onclick="shareToFacebook('${shareUrl}', '${shareTitle}')">
+                                            <i class="fab fa-facebook-f"></i>
+                                            Facebook
+                                        </button>
+                                        <button class="share-btn share-twitter" onclick="shareToTwitter('${shareUrl}', '${shareText}')">
+                                            <i class="fab fa-twitter"></i>
+                                            Twitter
+                                        </button>
+                                        <button class="share-btn share-linkedin" onclick="shareToLinkedIn('${shareUrl}', '${shareTitle}', '${shareText}')">
+                                            <i class="fab fa-linkedin-in"></i>
+                                            LinkedIn
+                                        </button>
+                                        <button class="share-btn share-email" onclick="shareToEmail('${shareUrl}', '${shareTitle}', '${shareText}')">
+                                            <i class="fas fa-envelope"></i>
+                                            Email
+                                        </button>
+                                    </div>
+                                    <div class="share-url-section">
+                                        <label for="share-url" class="form-label">{{__("Or copy the link")}}:</label>
+                                        <div class="input-group">
+                                            <input type="text" id="share-url" class="form-control" value="${shareUrl}" readonly>
+                                            <div class="input-group-append">
+                                                <button class="btn btn-outline-secondary" type="button" onclick="copyShareUrl()">
+                                                    {{__("Copy")}}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        
+                        document.body.appendChild(popup);
+                        document.body.style.overflow = 'hidden';
+                    }
+                    
+                    function closeSharePopup() {
+                        const popup = document.querySelector('.share-popup-overlay');
+                        if (popup) {
+                            popup.remove();
+                            document.body.style.overflow = 'auto';
+                        }
+                    }
+                    
+                    function shareToFacebook(url, title) {
+                        const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+                        window.open(shareUrl, '_blank', 'width=600,height=400');
+                    }
+                    
+                    function shareToTwitter(url, text) {
+                        const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+                        window.open(shareUrl, '_blank', 'width=600,height=400');
+                    }
+                    
+                    function shareToLinkedIn(url, title, text) {
+                        const shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
+                        window.open(shareUrl, '_blank', 'width=600,height=400');
+                    }
+                    
+                    function shareToEmail(url, title, text) {
+                        const subject = encodeURIComponent(title);
+                        const body = encodeURIComponent(`${text}\n\n${url}`);
+                        const mailtoUrl = `mailto:?subject=${subject}&body=${body}`;
+                        window.location.href = mailtoUrl;
+                    }
+                    
+                    function copyShareUrl() {
+                        const urlInput = document.getElementById('share-url');
+                        urlInput.select();
+                        urlInput.setSelectionRange(0, 99999);
+                        navigator.clipboard.writeText(urlInput.value)
+                            .then(() => {
+                                const copyBtn = urlInput.nextElementSibling.querySelector('button');
+                                const originalText = copyBtn.textContent;
+                                copyBtn.textContent = '{{__("Copied!")}}';
+                                copyBtn.classList.add('btn-success');
+                                setTimeout(() => {
+                                    copyBtn.textContent = originalText;
+                                    copyBtn.classList.remove('btn-success');
+                                }, 2000);
+                            })
+                            .catch((error) => {
+                                alert(`{{__("Copy failed!")}} ${error}`);
+                            });
                     }
                 </script>
 
             @if(Auth::check() && !$isAdmin)
-                <span style='margin-left: 12px; display:inline'>
+                <span class="action-icon-wrapper">
                     <!-- Favorite Checkbox with Heart Icon -->
-                    <label style="cursor:pointer;" class="ml-2 mb-0">
+                    <label style="cursor:pointer;" class="mb-0">
                         <input type="checkbox" id="favorite-checkbox" style="display:none;" onchange="toggleFavorite(this)">
-                        <img id="favorite-icon" src="{{ config('app.url','/wlibrary') }}/image/button/heart-empty2.png" class="zoom img-icon-pointer"/>
+                        <i id="favorite-icon" class="far fa-heart zoom img-icon-pointer" style="cursor:pointer; font-size: 24px; color: #dc3545;"></i>
                     </label>
-                    <label>
+                </span>
+                <span class="action-icon-wrapper">
+                    <label style="cursor:pointer;">
                         <input type="checkbox" id="eshelf-checkbox" style="display:none;" onchange="toggleEshelf(this)">
-                        <img id="eshelf-icon" src="{{ config('app.url','/wlibrary') }}/image/button/ebook-empty.png" class="zoom img-icon-pointer" style="margin-left:8px;"/>
+                        <i id="eshelf-icon" class="fas fa-book-open zoom img-icon-pointer" style="cursor:pointer; font-size: 24px; color: #28a745;"></i>
                     </label>
+                </span>
+                <button id="start-reading-btn" class="btn btn-success btn-sm ml-2" style="display: none;" onclick="showReadingStartModal()">
+                    <i class="fas fa-play mr-1"></i>Start Reading
+                </button>
+                <button id="finish-reading-btn" class="btn btn-warning btn-sm ml-2" style="display: none;" onclick="finishReading()">
+                    <i class="fas fa-stop mr-1"></i>Finish Reading
+                </button>
+                <button id="reset-reading-btn" class="btn btn-danger btn-sm ml-2" style="display: none;" onclick="showResetWarning()">
+                    <i class="fas fa-undo mr-1"></i>Reset
+                </button>
+                
+                <!-- Reading Time Information -->
+                <div id="reading-time-info" class="mt-2" style="display: none;">
+                    <small class="text-muted">
+                        <i class="fas fa-clock mr-1"></i>
+                        <span id="start-time-text"></span>
+                        <span id="end-time-text"></span>
+                    </small>
+                </div>
 
                     @if($isEresource)
                      <label>
@@ -506,7 +886,66 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                     </script>
                 </span>
             @endif
+        </div>
+        
+        <!-- Reading Start Modal -->
+        <div class="modal fade" id="readingStartModal" tabindex="-1" role="dialog" aria-labelledby="readingStartModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="readingStartModalLabel">
+                            <i class="fas fa-book-open text-success mr-2"></i>독서 시작
+                        </h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <p class="mb-0">
+                            <i class="fas fa-check-circle text-success" style="font-size: 3rem;"></i>
+                        </p>
+                        <h5 class="mt-3">e-shelf에 담겼습니다.</h5>
+                        <p class="text-muted">독서를 시작하시겠습니까?</p>
+                    </div>
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">아니오</button>
+                        <button type="button" class="btn btn-success" onclick="startReading()">
+                            <i class="fas fa-play mr-1"></i>네, 시작합니다
+                        </button>
+                    </div>
+                </div>
             </div>
+        </div>
+        
+        <!-- Reset Warning Modal -->
+        <div class="modal fade" id="resetWarningModal" tabindex="-1" role="dialog" aria-labelledby="resetWarningModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="resetWarningModalLabel">
+                            <i class="fas fa-exclamation-triangle text-warning mr-2"></i>경고
+                        </h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <p class="mb-0">
+                            <i class="fas fa-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+                        </p>
+                        <h5 class="mt-3 text-warning">All reading history will be deleted</h5>
+                        <p class="text-muted">모든 독서 기록이 삭제됩니다. 계속하시겠습니까?</p>
+                    </div>
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+                        <button type="button" class="btn btn-danger" onclick="resetReading()">
+                            <i class="fas fa-trash mr-1"></i>삭제
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
             <div class="card-body col-12">
                 <form method="POST" name='form1' id='pform' action="{{config('app.url','/wlibrary')."/book/".$book->id}}" enctype="multipart/form-data">
                     @csrf 
@@ -515,7 +954,7 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                     <input type='hidden' name="id" value='{{$book->id}}'>
                     <input type='hidden' name="del_file">                   
                     <div class="form-group row">
-                        <label for="title" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['title'] }}</label>
+                        <label for="title" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Title") }}</label>
 
                         <div class="col-md-9">
                             <div class='container border-0 mt-0'>{{ $book->title }}</div>
@@ -523,7 +962,7 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                     </div>
 
                     <div class="form-group row">
-                        <label for="author" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['author'] }}</label>
+                        <label for="author" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Author") }}</label>
 
                         <div class="col-md-9">
                             <div class='form-control border-0'>{{ $book->author }}</div>
@@ -810,7 +1249,7 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                 <!-- End ToC Display: Accordion -->
 
                     <div class="form-group row">
-                        <label for="rtype" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['c_rtype'] }}</label>
+                        <label for="rtype" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Type") }}</label>
 
                         <div class="col-md-9">
                             <div class='form-control border-0'><?=\vwmldbm\code\get_c_name('code_c_rtype',$book->c_rtype)?></div>
@@ -819,7 +1258,7 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
 
                 @if(\vwmldbm\code\is_code_usable('code_c_genre'))    
                     <div class="form-group row">
-                        <label for="c_genre" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['c_genre'] }}</label>
+                        <label for="c_genre" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Genre") }}</label>
 
                         <div class="col-md-9">
                             <div class='form-control border-0'><?=\vwmldbm\code\get_c_name('code_c_genre',$book->c_genre)?></div>
@@ -829,7 +1268,7 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
 
                 @if(\vwmldbm\code\is_code_usable('code_c_grade'))
                     <div class="form-group row">
-                        <label for="c_grade" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['c_grade'] }}</label>
+                        <label for="c_grade" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Grade") }}</label>
 
                         <div class="col-md-9">
                             <div class='form-control border-0'><?=\vwmldbm\code\get_c_name('code_c_grade',$book->c_grade)?></div>
@@ -839,7 +1278,7 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
 
                 @if(\vwmldbm\code\is_code_usable('code_c_category'))
                     <div class="form-group row">
-                        <label for="c_category" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['c_category'] }}</label>
+                        <label for="c_category" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Category") }}</label>
 
                         <div class="col-md-9">
                             <div class='form-control border-0'><?=\vwmldbm\code\get_c_name('code_c_category',$book->c_category)?></div>
@@ -849,7 +1288,7 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                 
                 @if(\vwmldbm\code\is_code_usable('code_c_category2'))
                     <div class="form-group row">
-                        <label for="c_category2" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['c_category2'] }}</label>
+                        <label for="c_category2" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Category2") }}</label>
 
                         <div class="col-md-9">
                             <div class='form-control border-0'><?=\vwmldbm\code\get_c_name('code_c_category2',$book->c_category2)?></div>
@@ -858,7 +1297,7 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                 @endif
 
                     <div class="form-group row">
-                        <label for="c_lang" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['c_lang'] }}</label>
+                        <label for="c_lang" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Language") }}</label>
 
                         <div class="col-md-9">
                             <span class='form-control border-0'>
@@ -869,7 +1308,7 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                     
 
                     <div class="form-group row">
-                        <label for="e_resource_yn" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['e_resource_yn'] }}</label>
+                        <label for="e_resource_yn" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("E-Resource exist") }}</label>
                         <div class="col-md-9">
                             <div class='form-control border-0'>                            
                                 <?PHP
@@ -880,7 +1319,7 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                     </div>                                    
 
                     <div class="form-group row">
-                        <label for="desc" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['desc'] }}</label>
+                        <label for="desc" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Description") }}</label>
 
                         <div class="col-md-9">
                             <div class='form-control-static overflow-auto' style='max-height:600px;min-height:100px;'>
@@ -890,7 +1329,7 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                     </div>
 
                     <div class="form-group row">
-                        <label for="publisher" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['publisher'] }}</label>
+                        <label for="publisher" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Publisher") }}</label>
 
                         <div class="col-md-9">
                             <div class='form-control border-0'>{{ $book->publisher }}</div>
@@ -898,7 +1337,7 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                     </div>
                     
                     <div class="form-group row">
-                        <label for="url" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['url'] }}</label>
+                        <label for="publisher" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("URL") }}</label>
 
                         <div class="col-md-9">
                             <div class='form-control border-0'><a href='{{ $book->url }}' target='_blank'>{{ $book->url }}</a></div>
@@ -906,7 +1345,7 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                     </div>
 
                     <div class="form-group row">
-                        <label for="pub_date" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['pub_date'] }}</label>
+                        <label for="pub_date" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Pub Date") }}</label>
 
                         <div class="col-md-9">
                             <div class='form-control border-0'>{{ $book->pub_date }}</div>
@@ -914,7 +1353,7 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                     </div>
                     
                     <div class="form-group row">
-                        <label for="isbn" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['isbn'] }}</label>
+                        <label for="isbn" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("ISBN") }}</label>
 
                         <div class="col-md-9">
                             <div class='form-control border-0'>{{ $book->isbn }}</div>
@@ -922,7 +1361,7 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                     </div>
 
                     <div class="form-group row">
-                        <label for="eisbn" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['eisbn'] }}</label>
+                        <label for="eisbn" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("eISBN") }}</label>
 
                         <div class="col-md-9">
                             <div class='form-control border-0'>{{ $book->eisbn }}</div>
@@ -930,7 +1369,7 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                     </div>
 
                     <div class="form-group row">
-                        <label for="keywords" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['keywords'] }}</label>
+                        <label for="keywords" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Keywords") }}</label>
 
                         <div class="col-md-9">
                             <div class='form-control border-0'>{{ $book->keywords }}</div>                               
@@ -938,7 +1377,7 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                     </div>
 
                     <div class="form-group row">
-                        <label for="price" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['price'] }}</label>
+                        <label for="price" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Price") }}</label>
 
                         <div class="col-md-9">
                             <div class='form-control border-0'>{{ $book->price }}</div>                               
@@ -946,7 +1385,7 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                     </div>
 
                     <div class="form-group row">
-                        <label for="cover_image" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ $field_arr['cover_image'] }}</label>
+                        <label for="cover_image" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Cover Image") }}</label>
                         <div class="col-md-9">
                             @if($book->cover_image)
                                 <img onClick='open_cover_img(this)' style='cursor:pointer;' src='{{config('app.url','/nwlibrary')}}/storage/cover_images/{{$_SESSION['lib_inst']}}/{{$book->cover_image}}' height='200'>
@@ -994,10 +1433,10 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
         <table class="table table-striped table-responsive-md">
         <tr>
             <th> </th>
-            <th>{{$field_arr2["barcode"]}}</th>
-            <th>{{$field_arr2["call_no"]}}</th>
-            <th>{{$field_arr2["location"]}}</th>
-            <th>{{$field_arr2["c_rstatus"]}}</th>
+                                            <th>{{__("barcode")}}</th>
+                                <th>{{__("call_no")}}</th>
+                                <th>{{__("location")}}</th>
+                                <th>{{__("c_rstatus")}}</th>
         </tr>
         <?PHP $cnt=1; ?>
         @foreach($book_copy as $bc)                  

@@ -1133,10 +1133,10 @@
     <table class="table table-striped">
       <tr>
         <th> </th>
-        <th>{{$field_arr2["barcode"]}}</th>
-        <th>{{$field_arr2["call_no"]}}</th>
-        <th>{{$field_arr2["location"]}}</th>
-        <th>{{$field_arr2["c_rstatus"]}}</th>
+                                        <th>{{__("barcode")}}</th>
+                                <th>{{__("call_no")}}</th>
+                                <th>{{__("location")}}</th>
+                                <th>{{__("c_rstatus")}}</th>
         <th>
             <button type='button' class='btn btn-outline-info' onClick="window.location='{{config('app.url','/wlibrary')}}/book_copy/create/{{$book->id}}'">
                     + 
