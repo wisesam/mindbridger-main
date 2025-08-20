@@ -319,7 +319,7 @@ class BookController extends Controller
                 $books=Book::where('inst',session('lib_inst'))
                     ->orderBy('id','desc')->paginate(10);    
                 
-                return redirect('/book/')->with('books',$books)->with('inst',$inst)->with('warning',__("This resource is not available!"));
+                return redirect('/book/')->with('books',$books)->with('inst',session('lib_inst'))->with('warning',__("This resource is not available!"));
             }
         }
         
