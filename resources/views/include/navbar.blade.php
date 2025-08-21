@@ -4,6 +4,25 @@
     if(!isset($search_target)) $search_target=null; // search
     $mode=Request::segment(2); 
 ?>
+<style>
+    @keyframes shake {
+        0% { transform: translate(1px, 1px) rotate(0deg); }
+        10% { transform: translate(-1px, -2px) rotate(-1deg); }
+        20% { transform: translate(-3px, 0px) rotate(1deg); }
+        30% { transform: translate(3px, 2px) rotate(0deg); }
+        40% { transform: translate(1px, -1px) rotate(1deg); }
+        50% { transform: translate(-1px, 2px) rotate(-1deg); }
+        60% { transform: translate(-3px, 1px) rotate(0deg); }
+        70% { transform: translate(3px, 1px) rotate(-1deg); }
+        80% { transform: translate(-1px, -1px) rotate(1deg); }
+        90% { transform: translate(1px, 2px) rotate(0deg); }
+        100% { transform: translate(1px, -2px) rotate(-1deg); }
+    }
+
+    .shake {
+        animation: shake 3s infinite; /* slowed down */
+    }
+</style>
 @if($mode!='choose_list')     
     <!-- <div class="container text-center" id='wlibrary_back_btt' style='display:none;'>
         <button type='button' class='btn btn-success'  onClick="window.history.back();">{{__("Go back")}}</button>
@@ -43,7 +62,7 @@
                         </div>
                     </form>
                     <button class="btn btn-primary ml-2" onClick="window.location.href='{{config('app.url','/mindbridger')}}/recommend'" type="button" style="width: 38px; height: 38px; padding: 0; background: linear-gradient(135deg, #007bff, #0056b3); border: none; box-shadow: 0 2px 8px rgba(0,123,255,0.3);">
-                        <img class="d-block mx-auto" src="{{config('app.url','/mindbridger')}}/image/ai.png?nocache=5" width="30" height="30" alt="AI" style="filter: invert(1);" />
+                        <img class="d-block mx-auto shake" src="{{config('app.url','/mindbridger')}}/image/ai.png?nocache=5" width="30" height="30" alt="AI" style="filter: invert(1);" />
                     </button>
                 </div>
             </div>
