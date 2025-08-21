@@ -133,7 +133,30 @@ class BookTextMetaController extends Controller
         ]);
     }
 
-    
+    public function get_meta(Request $request, $book_id)
+    {
+        // Find existing meta
+        $meta = BookTextMeta::where('book_id', $book_id)->where('inst',session('lib_inst'))->first();
+
+        if (empty($meta->meta)) {
+            // Return one message only
+            return response()->json([
+                'message' => __('Not Available')
+            ]);
+        }
+        
+        $data = json_decode($meta->meta, true);
+        return response()->json([
+            'title'      => $data['title'] ?? null,
+            'author'     => $data['author'] ?? null,
+            'genre'      => $data['genre'] ?? null,
+            'category'   => $data['category'] ?? null,
+            'difficulty' => $data['difficulty'] ?? null,
+            'theme'      => $data['theme'] ?? null,
+            'summary'    => $data['summary'] ?? null,
+        ]);
+    }
+
     /**
      * Display the specified resource.
      *

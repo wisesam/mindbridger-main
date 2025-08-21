@@ -695,6 +695,14 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                       </label>
                     @endif
 
+                    <label>
+                      <img src='{{ config('app.url','/mindbridger') }}/image/ai-assistant.png' 
+                        class='zoom img-icon-pointer ml-2' alt='AI Assistant' style='margine-left:10px;'
+                        data-toggle="modal"
+                        data-target="#metaModal"
+                        data-book-id="{{ $book->id }}" title="{{ __('Book Info (AI)') }}"> 
+                    </label>
+
                      <script>
                         let auto_toc_exist = false;
                         @if(!empty($book->auto_toc))
@@ -865,6 +873,12 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                                 $.post("{{ route('book.favorite.store', ['book' => $book->id]) }}", {
                                     _token: '{{ csrf_token() }}'
                                 });
+                                
+                                $('#favModal').modal('show');
+                                setTimeout(() => {
+                                    $('#favModal').modal('hide');
+                                }, 1000); // auto-hide after 2s
+
                             } else { // remove favorite
                                 icon.removeClass('fas').addClass('far'); // outline heart
                                 $.ajax({
@@ -872,6 +886,11 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                                     type: 'DELETE',
                                     data: { _token: '{{ csrf_token() }}' }
                                 });
+
+                                $('#favModalD').modal('show');
+                                setTimeout(() => {
+                                    $('#favModalD').modal('hide');
+                                }, 1000); // auto-hide after 2s
                             }
                         }
 
@@ -882,6 +901,10 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                                 $.post("{{ route('book.eshelf.store', ['book' => $book->id]) }}", {
                                     _token: '{{ csrf_token() }}'
                                 });
+                                $('#eshelfModal').modal('show');
+                                setTimeout(() => {
+                                    $('#eshelfModal').modal('hide');
+                                }, 1000); // auto-hide after 2s
                             } else {
                                 $('#eshelf-icon').removeClass('fas').addClass('far');
                                 $.ajax({
@@ -889,6 +912,10 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                                     type: 'DELETE',
                                     data: { _token: '{{ csrf_token() }}' }
                                 });
+                                $('#eshelfModalD').modal('show');
+                                setTimeout(() => {
+                                    $('#eshelfModalD').modal('hide');
+                                }, 1000); // auto-hide after 2s
                             }
                         }
                     </script>
@@ -896,35 +923,48 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
             @endif
         </div>
         
-        <!-- Reading Start Modal -->
-        <div class="modal fade" id="readingStartModal" tabindex="-1" role="dialog" aria-labelledby="readingStartModalLabel" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="readingStartModalLabel">
-                            <i class="fas fa-book-open text-success mr-2"></i>독서 시작
-                        </h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
+        <!-- Favorite Small Modal -->
+            <div class="modal fade" id="favModal" tabindex="-1" role="dialog" aria-hidden="true">
+                <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+                    <div class="modal-content text-center">
+                    <div class="modal-body">
+                        <p id='fav_small_p' class="mb-0 text-success">{{ __('Added to your favorite list') }}</p>
                     </div>
-                    <div class="modal-body text-center">
-                        <p class="mb-0">
-                            <i class="fas fa-check-circle text-success" style="font-size: 3rem;"></i>
-                        </p>
-                        <h5 class="mt-3">e-shelf에 담겼습니다.</h5>
-                        <p class="text-muted">독서를 시작하시겠습니까?</p>
-                    </div>
-                    <div class="modal-footer justify-content-center">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">아니오</button>
-                        <button type="button" class="btn btn-success" onclick="startReading()">
-                            <i class="fas fa-play mr-1"></i>네, 시작합니다
-                        </button>
                     </div>
                 </div>
             </div>
-        </div>
+
+            <div class="modal fade" id="favModalD" tabindex="-1" role="dialog" aria-hidden="true">
+                <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+                    <div class="modal-content text-center">
+                    <div class="modal-body">
+                        <p id='fav_small_p' class="mb-0 text-info">{{ __('Removed from your favorite list') }}</p>
+                    </div>
+                    </div>
+                </div>
+            </div>
         
+            <!-- Eshelf Small Modal -->
+            <div class="modal fade" id="eshelfModal" tabindex="-1" role="dialog" aria-hidden="true">
+                <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+                    <div class="modal-content text-center">
+                    <div class="modal-body">
+                        <p id='fav_small_p' class="mb-0 text-success">{{ __('Added to your e-Shelf list') }}</p>
+                    </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="eshelfModalD" tabindex="-1" role="dialog" aria-hidden="true">
+                <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+                    <div class="modal-content text-center">
+                    <div class="modal-body">
+                        <p id='fav_small_p' class="mb-0 text-info">{{ __('Removed from your e-Shelf list') }}</p>
+                    </div>
+                    </div>
+                </div>
+            </div>
+            
         <!-- Reset Warning Modal -->
         <div class="modal fade" id="resetWarningModal" tabindex="-1" role="dialog" aria-labelledby="resetWarningModalLabel" aria-hidden="true">
             <div class="modal-dialog" role="document">
@@ -1150,8 +1190,15 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                                             </button>
                                         @else
                                             {{-- No children: plain text title, no toggle --}}
+                                            <?php
+                                            if($ch['status'] == 'in_progress') {
+                                                $badge = "<span class='badge badge-warning'>".__("Reading..")."</span>";
+                                            } else if($ch['status'] == 'completed') {
+                                                $badge = "<span class='badge badge-success'>".__("Done :)")."</span>";
+                                            } else $badge ="";
+                                            ?>
                                             <span class="btn" style="pointer-events: none; cursor: default;">
-                                                {{ $ch['title'] }}
+                                                {!! $badge !!} {{ $ch['title'] }}
                                                 <span class="badge badge-secondary ml-2">
                                                     @if($startPage !== $endPage)
                                                         pp. {{ $startPage }}–{{ $endPage }}
@@ -1556,14 +1603,23 @@ function fetchAiData(start, end, $body) {
                 // Save correct answers
                 window.correctAnswers = response.meta_data.questions.map(q => q.answer);
 
+                // Enable Save button
+                $('#saveAiBtn').prop('disabled', false);
+
                 // Mark as loaded
                 $body.data('loaded', true);
             } else {
                 $body.html("<p class='text-danger'>No explanation found.</p>");
+                $('#saveAiBtn').prop('disabled', true);
             }
         },
-        error: function() {
-            $body.html("<p class='text-danger'>Failed to load AI description.</p>");
+        error: function(xhr) {
+            if (xhr.status === 404) {
+                $body.html("<p class='text-danger'>PDF Text is not available :(</p>");
+            } else {
+                $body.html("<p class='text-danger'>Failed to load AI description.</p>");
+            }
+            $('#saveAiBtn').prop('disabled', true);
         }
     });
 }
@@ -1601,4 +1657,75 @@ function checkAnswer(index, choice) {
 
 </script>
 
+
+
+<!-- Book Meta Modal -->
+<div class="modal fade" id="metaModal" tabindex="-1" role="dialog" aria-labelledby="metaModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="metaModalLabel">{{__("Book Information (AI)")}}</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+      <div class="modal-body" id="metaModalBody">
+        <p class="text-muted">Loading meta info...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+$('#metaModal').on('show.bs.modal', function (event) {
+    let trigger = $(event.relatedTarget);
+    let bookId  = trigger.data('book-id');
+    let $body   = $('#metaModalBody');
+
+    $body.html("<p class='text-muted'>Fetching book meta...</p>");
+
+    $.ajax({
+        url: "{{ route('get_meta', ':id') }}".replace(':id', bookId),
+        type: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}'
+        },
+        success: function(response) {
+            if (response.message) {
+                // Show big centered message
+                $('#metaModalBody').html(`
+                    <div class="alert alert-warning text-center">
+                        ${response.message}
+                    </div>
+                `);
+                return;
+            }
+            console.log(response);
+            let metaHtml = `
+            <ul class="list-group text-left">
+                <li class="list-group-item"><strong>Title:</strong> ${response.title || '-'}</li>
+                <li class="list-group-item"><strong>Author:</strong> ${response.author || '-'}</li>
+                <li class="list-group-item"><strong>Genre:</strong> ${response.genre || '-'}</li>
+                <li class="list-group-item"><strong>Category:</strong> ${response.category || '-'}</li>
+                <li class="list-group-item"><strong>Difficulty:</strong> ${response.difficulty || '-'}</li>
+                <li class="list-group-item"><strong>Theme:</strong> ${response.theme || '-'}</li>
+            </ul>
+            <div class="mt-3">
+                <h6>Summary</h6>
+                <p style="white-space: pre-wrap;">${response.summary || '-'}</p>
+            </div>
+            `;
+            $('#metaModalBody').html(metaHtml);
+        },
+        error: function(xhr) {
+            if (xhr.status === 404) {
+                $('#metaModalBody').html("<p class='text-danger'>No meta data found for this book.</p>");
+            } else {
+                $('#metaModalBody').html("<p class='text-danger'>Failed to load meta data.</p>");
+            }
+        }
+    });
+});
+</script>
 @endsection

@@ -114,6 +114,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('reading_history/{book}/section/ai', [ReadingHistoryController::class, 'section_ai_explain'])->name('reading_history.section_ai');
 });
 
+Route::post('book/{book}/get_meta', [BookTextMetaController::class, 'get_meta'])->name('get_meta');
 
 // cache clear by url [SJH]
 Route::get('/clear-cache', function() {
