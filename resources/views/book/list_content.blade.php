@@ -138,8 +138,8 @@
                                     <th class="category2-col">{{__("Category2")}}</th>
                                 @endif
 
-                                <th class="publisher-col">{{__("Publisher")}}</th>
-                                <th class="date-col">{{__("Pub Date")}}</th>
+                                <!-- <th class="publisher-col">{{__("Publisher")}}</th>
+                                <th class="date-col">{{__("Pub Date")}}</th> -->
                                     <th class="copies-col">{{__("Copies")}}</th>
                                     
                                     @if(Auth::check() && Auth::user()->isAdmin()) 
@@ -260,7 +260,7 @@
                                     </td>
                                 @endif
 
-                                    <td class="publisher-cell">                        
+                                    <!-- <td class="publisher-cell">                        
                                         <?
                                         if(isset($search_target) && $search_target=='i_publisher')
                                             echo \wlibrary\code\highlight($b->publisher,$search_word_arr);
@@ -278,7 +278,7 @@
                                         @else
                                             <span class="text-muted">-</span>
                                         @endif
-                                    </td>
+                                    </td> -->
                                     
                                     <td class="copies-cell">
                                         <?php
