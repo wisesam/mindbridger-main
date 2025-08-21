@@ -554,7 +554,7 @@
                                 @endphp
                                 <span class="mb-2">
                                     <button id="btn-auto_toc_js" class="btn btn-primary"
-                                        data-pdf-url="{{ $pdfUrl }}">1. Meta Data from PDF 
+                                        data-pdf-url="{{ $pdfUrl }}">{{__("1. Meta Data from PDF")}} 
                                     </button>
 
                                     <script>

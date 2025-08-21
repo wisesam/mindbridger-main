@@ -108,13 +108,13 @@ class BookAIAdvisorController extends Controller
                 ? "that are LEGALLY FREE to read/download online and include a valid official free URL for each"
                 : "that may be paid or free (prefer widely available titles) and include a relevant public URL for each if possible";
 
-            $prompt = "Recommend {$needed} e-books {$freePromptPart} for a {$gradeTxt} student, age {$age}, interested in {$interest} in {$locale} language..
-     
+            $prompt = "Recommend {$needed} e-books {$freePromptPart} for a {$gradeTxt} student, age {$age}, interested in {$interest} in {$locale} language.
+    
     Respond ONLY with a raw JSON array (no prose, no backticks). Each object must have:
     - title (string)
     - author (string)
-    - reason (string; 12–25 words)
-    - url (string; if free-only, must be a direct official/free reading page)
+    - reason (string; 12–25 words) in {$locale} language
+    - url (string; if free-only, must be a direct official/free reading page. Make sure it is a valid URL!)
     ";
 
             try {

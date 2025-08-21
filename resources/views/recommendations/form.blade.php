@@ -28,7 +28,7 @@
                                 {{ __("Age") }}
                             </label>
                             <input type="number" class="form-control form-control-lg" name="age" id="age" 
-                                   placeholder="Enter your age" min="1" max="120" required>
+                                   placeholder="{{__("Enter your age")}}" min="1" max="120" required>
                             <div class="form-text text-muted">
                                 <small>{{ __("This helps us recommend age-appropriate books") }}</small>
                             </div>
@@ -40,7 +40,7 @@
                                 {{ __("Grade") }}
                             </label>
                             <input type="text" class="form-control form-control-lg" name="grade" id="grade" 
-                                   placeholder="e.g., 3rd grade, high school, college">
+                                   placeholder="{{__("e.g., 3rd grade, high school, college")}}">
                             <div class="form-text text-muted">
                                 <small>{{ __("Your current or preferred grade level") }}</small>
                             </div>
@@ -52,7 +52,7 @@
                                 {{ __("Interest Area") }}
                             </label>
                             <input type="text" class="form-control form-control-lg" name="interest" id="interest" 
-                                   placeholder="e.g., science, fantasy, history, mystery" required>
+                                   placeholder="{{__("e.g., science, fantasy, history, mystery")}}" required>
                             <div class="form-text text-muted">
                                 <small>{{ __("What topics or genres interest you most?") }}</small>
                             </div>

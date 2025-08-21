@@ -1750,9 +1750,9 @@ $('#metaModal').on('show.bs.modal', function (event) {
         },
         error: function(xhr) {
             if (xhr.status === 404) {
-                $('#metaModalBody').html("<p class='text-danger'>No meta data found for this book.</p>");
+                $('#metaModalBody').html("<p class='text-danger'>{{__("No meta data found for this book.")}}</p>");
             } else {
-                $('#metaModalBody').html("<p class='text-danger'>Failed to load meta data.</p>");
+                $('#metaModalBody').html("<p class='text-danger'>{{__("Failed to load meta data.")}}</p>");
             }
         }
     });
