@@ -958,42 +958,13 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
             <div class="modal fade" id="eshelfModalD" tabindex="-1" role="dialog" aria-hidden="true">
                 <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
                     <div class="modal-content text-center">
-                    <div class="modal-body">
-                        <p id='fav_small_p' class="mb-0 text-info">{{ __('Removed from your e-Shelf list') }}</p>
-                    </div>
+                        <div class="modal-body">
+                            <p id='fav_small_p' class="mb-0 text-info">{{ __('Removed from your e-Shelf list') }}</p>
+                        </div>
                     </div>
                 </div>
             </div>
             
-        <!-- Reset Warning Modal -->
-        <div class="modal fade" id="resetWarningModal" tabindex="-1" role="dialog" aria-labelledby="resetWarningModalLabel" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="resetWarningModalLabel">
-                            <i class="fas fa-exclamation-triangle text-warning mr-2"></i>경고
-                        </h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body text-center">
-                        <p class="mb-0">
-                            <i class="fas fa-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
-                        </p>
-                        <h5 class="mt-3 text-warning">All reading history will be deleted</h5>
-                        <p class="text-muted">모든 독서 기록이 삭제됩니다. 계속하시겠습니까?</p>
-                    </div>
-                    <div class="modal-footer justify-content-center">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
-                        <button type="button" class="btn btn-danger" onclick="resetReading()">
-                            <i class="fas fa-trash mr-1"></i>삭제
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-            </div>
             <div class="card-body col-12">
                 <form method="POST" name='form1' id='pform' action="{{config('app.url','/mindbridger')."/book/".$book->id}}" enctype="multipart/form-data">
                     @csrf 
@@ -1132,8 +1103,8 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                                 <div class="modal-content">
                                     <div class="modal-header py-2">
                                         <h5 class="modal-title" id="fullscreenModalLabel">Document Viewer</h5>
-                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                        <span aria-hidden="true">&times;</span>
+                                        <button type="button " class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true"'>&times; </span>
                                         </button>
                                     </div>
 
@@ -1518,8 +1489,12 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="aiModalLabel">AI Assistant Notes</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
+        <button type="button" 
+                class="btn btn-warning rounded-circle" 
+                style="font-size: 1rem; padding: 0.25rem 0.5rem;" 
+                data-dismiss="modal" 
+                aria-label="Close">
+        {{ __("Close") }}
         </button>
       </div>
 
@@ -1530,10 +1505,14 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
       <!-- ✅ Centered Refresh Button -->
       <div class="modal-footer d-flex justify-content-center">
         <button id="refreshAiBtn" class="btn btn-sm btn-outline-primary">
-          ↻ Refresh
+          ↻ {{_("Refresh") }}
         </button>
-        <button id="saveAiBtn" class="btn btn-sm btn-success" style='margin-left:10px;' disabled>
-            💾 Save
+        <button id="saveAiBtn" class="btn btn-sm btn-success" style="margin-left:10px;" disabled>
+            💾 {{__("Save")}}
+        </button>
+
+        <button type="button" class="btn btn-sm btn-warning" data-dismiss="modal" style="margin-left:10px;">
+            {{__("Close")}}
         </button>
       </div>
     </div>
