@@ -42,7 +42,7 @@
             <div class="d-flex align-items-center logo-section">
                 <div style="width:150px;height:70px;">
                     <a href="{{config('app.url','/mindbridger')}}">
-                        <img class="d-block" src="{{config('app.url','/mindbridger')}}/image/logo2.png?nocache=1"  width='100%' height='100%'>
+                        <img class="d-block" src="{{config('app.url','/mindbridger')}}/image/logo2.png?nocache=7"  width='100%' height='100%'>
                     </a>
                 </div>
                 
@@ -53,7 +53,7 @@
                             <input class="form-control" type="search" name='search_word' placeholder="{{__("Search Resource")}}" value='{{$search_word}}' aria-label="Search">
                             <div class="input-group-append">
                                 <button class="btn btn-outline-secondary" type="search" id="button-addon2">
-                                    <img class="d-block" src="{{config('app.url','/mindbridger')}}/image/search_black.png?nocache=1"  width='100%' height='100%' />
+                                    <img class="d-block" src="{{config('app.url','/mindbridger')}}/image/search_black.png?nocache=7"  width='100%' height='100%' />
                                 </button>
                                 <button class="btn btn-outline-dark ml-1" style="white-space: nowrap;color:purple;" onClick="window.location.href='{{ route('book.asearch') }}'" type="button">
                                     {{__("Advanced")}}
@@ -62,7 +62,7 @@
                         </div>
                     </form>
                     <button class="btn btn-primary ml-2" onClick="window.location.href='{{config('app.url','/mindbridger')}}/recommend'" type="button" style="width: 38px; height: 38px; padding: 0; background: linear-gradient(135deg, #007bff, #0056b3); border: none; box-shadow: 0 2px 8px rgba(0,123,255,0.3);">
-                        <img class="d-block mx-auto shake" src="{{config('app.url','/mindbridger')}}/image/ai.png?nocache=5" width="30" height="30" alt="AI" style="filter: invert(1);" />
+                        <img class="d-block mx-auto shake" src="{{config('app.url','/mindbridger')}}/image/ai.png?nocache=7" width="30" height="30" alt="AI" style="filter: invert(1);" />
                     </button>
                 </div>
             </div>
@@ -83,7 +83,7 @@
                         <input class="form-control" type="search" name='search_word' placeholder="{{__("Search Resource")}}" value='{{$search_word}}' aria-label="Search">
                         <div class="input-group-append">
                             <button class="btn btn-outline-secondary" type="search" id="button-addon2">
-                                <img class="d-block" src="{{config('app.url','/mindbridger')}}/image/search_black.png?nocache=1"  width='100%' height='100%' />
+                                <img class="d-block" src="{{config('app.url','/mindbridger')}}/image/search_black.png?nocache=7"  width='100%' height='100%' />
                             </button>
                           </div>
                     </div>
@@ -91,7 +91,7 @@
                 {{-- Detailed Button --}}
                 {{-- <button class="btn btn-outline-dark ml-1" onClick="window.location.href='{{config('app.url')}}/asearch/'" type="button">{{__("Advanced")}}</button> --}}
                 <button class="btn btn-primary ml-2" onClick="window.location.href='{{config('app.url','/mindbridger')}}/recommend'" type="button" style="width: 38px; height: 38px; padding: 0; background: linear-gradient(135deg, #007bff, #0056b3); border: none; box-shadow: 0 2px 8px rgba(0,123,255,0.3);">
-                    <img class="d-block mx-auto" src="{{config('app.url','/mindbridger')}}/image/ai.png?nocache=5" width="30" height="30" alt="AI" style="filter: invert(1);" />
+                    <img class="d-block mx-auto" src="{{config('app.url','/mindbridger')}}/image/ai.png?nocache=7" width="30" height="30" alt="AI" style="filter: invert(1);" />
                 </button>
             </div>
         </div>
