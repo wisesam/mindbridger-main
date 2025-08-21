@@ -69,44 +69,6 @@
 
             <!-- Right side elements grouped together -->
             <div class="d-flex align-items-center">
-                
-
-                <!-- Login buttons -->
-                <div class="d-flex align-items-center" style="margin-left: 1rem;">
-                    @guest                   
-                        @if(config('app.multi_inst',''))
-                            @if(session()->has('lib_inst'))
-                                <a class="btn btn-outline-warning btn-sm" href="{{route('login')}}" style="height: 38px; padding: 0.375rem 0.75rem;">{{__('Login')}}</a>
-                            @endif
-                            <a class="btn btn-outline-warning btn-sm ml-2" href="{{route('login_clear')}}" style="height: 38px; padding: 0.375rem 0.75rem;">{{__('Inst')}}</a>
-                        @else
-                            <a class="btn btn-outline-warning btn-sm" href="{{route('login')}}" style="height: 38px; padding: 0.375rem 0.75rem;">{{__('Login')}}</a>
-                        @endif         
-                    @else 
-                        <div class="dropdown">
-                            <a id="navbarDropdown2" class="btn btn-outline-info btn-sm dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre style="height: 38px; padding: 0.375rem 0.75rem;">
-                                {{ Auth::user()->name }} <span class="caret"></span>
-                            </a>
-
-                            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown2">
-                                <a class="btn btn-outline-info btn-sm dropdown-toggle" href="{{ auto_url(route('users.edit', Auth::user()->id),[], false) }}">
-                                    {{ __('My Profile') }}
-                                </a>
-
-                                <a class="btn btn-outline-info btn-sm dropdown-toggle" href="{{ auto_url('logout') }}"
-                                    onclick="event.preventDefault();
-                                                document.getElementById('logout-form').submit();">
-                                    {{ __('Logout') }}
-                                </a>
-
-                                <form id="logout-form" action="{{ auto_url('logout') }}" method="POST" style="display: none;">
-                                    @csrf
-                                </form>
-                            </div>
-                        </div>
-                    @endguest
-                </div>
-
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar" style="margin-left: 1rem;">
                     <span class="navbar-toggler-icon"></span>
                 </button>
@@ -142,7 +104,7 @@
                 </li>
                 
                 <li class="nav-item">
-                    <a class="nav-link" href="{{config('app.url','/mindbridger')}}/book" style="font-size: 125%; color: orange; font-weight: bold; line-height: 1; padding-top: 0.5rem;">{{__('Resources')}}</a>
+                    <a class="nav-link" href="{{config('app.url','/mindbridger')}}/book">{{__('Resources')}}</a>
                 </li>
 
                @if(Auth::check() && !Auth::user()->isAdmin())
@@ -198,13 +160,62 @@
                     </li>
                     @endif
                 @endauth 
-            </ul>
 
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item">        
-                    <?PHP            
-                        echo \wlibrary\code\print_lang(null,app()->getLocale()," class='form-control btn-outline-info nav-item' style='width:80px;'  onChange=\"window.location='".config('app.url','/mindbridger')."/locale/'+this.value;\"");
-                    ?>
+                <!-- Login/Auth Section -->
+                <li class="nav-item">
+                    <hr class="my-2">
+                </li>
+                
+                @guest                   
+                    @if(config('app.multi_inst',''))
+                        @if(session()->has('lib_inst'))
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{route('login')}}">{{__('Login')}}</a>
+                            </li>
+                        @endif
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{route('login_clear')}}">{{__('Inst')}}</a>
+                        </li>
+                    @else
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{route('login')}}">{{__('Login')}}</a>
+                        </li>
+                    @endif         
+                @else 
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown2" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            {{ Auth::user()->name }}
+                        </a>
+
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown2">
+                            <a class="dropdown-item" href="{{ auto_url(route('users.edit', Auth::user()->id),[], false) }}">
+                                {{ __('My Profile') }}
+                            </a>
+
+                            <a class="dropdown-item" href="{{ auto_url('logout') }}"
+                                onclick="event.preventDefault();
+                                            document.getElementById('logout-form').submit();">
+                                {{ __('Logout') }}
+                            </a>
+
+                            <form id="logout-form" action="{{ auto_url('logout') }}" method="POST" style="display: none;">
+                                @csrf
+                            </form>
+                        </div>
+                    </li>
+                @endauth
+
+                <!-- Language Selector -->
+                <li class="nav-item">
+                    <hr class="my-2">
+                    <div class="px-3">
+                        <label class="text-muted small mb-2">{{ __('Language') }}</label>
+                        <div class="d-flex">
+                            <?PHP            
+                                echo \wlibrary\code\print_lang(null,app()->getLocale()," class='form-control form-control-sm' style='width:80px; font-size: 0.9rem;'  onChange=\"window.location='".config('app.url','/mindbridger')."/locale/'+this.value;\"");
+                            ?>
+                        </div>
+                    </div>
                 </li>
             </ul>       
         </div>        
@@ -244,6 +255,53 @@
             .search-ai-section .input-group {
                 min-width: 250px;
             }
+        }
+
+        /* Simple navbar improvements */
+        .navbar-nav .nav-link {
+            padding: 0.5rem 1rem;
+            transition: all 0.2s ease;
+            border-radius: 6px;
+            margin: 0.25rem 0.5rem;
+        }
+
+        .navbar-nav .nav-link:hover {
+            color: #007bff;
+            background-color: #f8f9fa;
+            transform: translateX(3px);
+        }
+
+        /* Login button emphasis */
+        .navbar-nav .nav-link[href*="login"],
+        .navbar-nav .nav-link[href*="login_clear"] {
+            color: #ff6b35 !important;
+            font-weight: 600;
+        }
+
+        .navbar-nav .nav-link[href*="login"]:hover,
+        .navbar-nav .nav-link[href*="login_clear"]:hover {
+            color: #e55a2b !important;
+            transform: translateX(3px);
+        }
+
+        .navbar-nav hr {
+            border-color: #e9ecef;
+            margin: 0.5rem 1rem;
+        }
+
+        .navbar-nav .dropdown-menu {
+            border: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+
+        .navbar-nav .dropdown-item {
+            padding: 0.5rem 1rem;
+            transition: background-color 0.2s ease;
+        }
+
+        .navbar-nav .dropdown-item:hover {
+            background-color: #f8f9fa;
         }
     </style>
     
