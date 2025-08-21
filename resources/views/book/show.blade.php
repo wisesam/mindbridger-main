@@ -43,7 +43,6 @@
 
 /* Action Icons Styling */
 .action-icon-wrapper {
-    display: inline-flex;
     align-items: center;
     margin-left: 1rem;
     height: 32px;
@@ -349,6 +348,24 @@ html, body { height: 100%; }
     border: 1px solid #e9ecef;
 }
 
+/* Book Content Styles */
+.book-content-wrapper {
+    background: white;
+    overflow: hidden;
+}
+
+.book-header {
+    padding: 1rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.book-body {
+    background: white;
+    padding: 2rem;
+}
+
+
+
 </style>
 
 @php
@@ -504,10 +521,11 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
 
 </script>
 
-<div class="row justify-content-center">
-    <div class="container col-12 mt-0">
-        <div class="card">
-            <div class="card-header col-12 d-flex justify-content-start">
+<div class="container mt-0">
+    <div class="row">
+        <div class="col-12">
+                    <div class="book-content-wrapper">
+            <div class="book-header d-flex justify-content-start align-items-center">
             @if($isAdmin)
                 <span class="action-icon-wrapper">
                     <i class="fas fa-cog zoom img-icon-pointer" onClick="window.location='{{config('app.url','/mindbridger')."/book/".$book->id}}/edit'" style="cursor:pointer; font-size: 24px; color: #6c757d;"></i>
@@ -631,7 +649,7 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                 <span class="action-icon-wrapper">
                 <label style="cursor:pointer;">
                         <input type="checkbox" id="eshelf-checkbox" style="display:none;" onchange="toggleEshelf(this)">
-                    <i id="eshelf-icon" class="far fa-book-open zoom img-icon-pointer" 
+                    <i id="eshelf-icon" class="far fa-bookmark zoom img-icon-pointer" 
                         style="font-size: 24px; color:#28a745;"></i>
                 </label>
                 </span>
@@ -896,32 +914,33 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
 
                             function toggleEshelf(checkbox) {
                                 let icon = $('#eshelf-icon');
-                            if (checkbox.checked) {
-                                $('#eshelf-icon').removeClass('far').addClass('fas');
+                                
+                                if (checkbox.checked) { // add to e-shelf
+                                    icon.removeClass('far fa-bookmark').addClass('fas fa-bookmark'); // solid bookmark
                                     $.post("{{ route('book.eshelf.store', ['book' => $book->id]) }}", {
                                         _token: '{{ csrf_token() }}'
                                     });
-                                $('#eshelfModal').modal('show');
-                                setTimeout(() => {
-                                    $('#eshelfModal').modal('hide');
-                                }, 1000); // auto-hide after 2s
-                            } else {
-                                $('#eshelf-icon').removeClass('fas').addClass('far');
+                                    $('#eshelfModal').modal('show');
+                                    setTimeout(() => {
+                                        $('#eshelfModal').modal('hide');
+                                    }, 1000);
+                                } else { // remove from e-shelf
+                                    icon.removeClass('fas fa-bookmark').addClass('far fa-bookmark'); // outline bookmark
                                     $.ajax({
                                         url: "{{ route('book.eshelf.remove', ['book' => $book->id]) }}",
                                         type: 'DELETE',
                                         data: { _token: '{{ csrf_token() }}' }
                                     });
-                                $('#eshelfModalD').modal('show');
-                                setTimeout(() => {
-                                    $('#eshelfModalD').modal('hide');
-                                }, 1000); // auto-hide after 2s
+                                    $('#eshelfModalD').modal('show');
+                                    setTimeout(() => {
+                                        $('#eshelfModalD').modal('hide');
+                                    }, 1000);
                                 }
                             }
                     </script>
                 </span>
             @endif
-        </div>
+            </div>
         
         <!-- Favorite Small Modal -->
             <div class="modal fade" id="favModal" tabindex="-1" role="dialog" aria-hidden="true">
@@ -994,7 +1013,7 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
             </div>
         </div>
             </div>
-            <div class="card-body col-12">
+            <div class="book-body">
                 <form method="POST" name='form1' id='pform' action="{{config('app.url','/mindbridger')."/book/".$book->id}}" enctype="multipart/form-data">
                     @csrf 
                     <input type='hidden' name='_method' value='PUT'>
@@ -1484,14 +1503,15 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
         </div>
     </div>
 
-    <div class="container col-12"> 
+    <div class="row mt-4">
+        <div class="col-12">
         <table class="table table-striped table-responsive-md">
         <tr>
             <th> </th>
-                                            <th>{{__("barcode")}}</th>
-                                <th>{{__("call_no")}}</th>
-                                <th>{{__("location")}}</th>
-                                <th>{{__("c_rstatus")}}</th>
+                    <th>{{__("barcode")}}</th>
+                    <th>{{__("call_no")}}</th>
+                    <th>{{__("location")}}</th>
+                    <th>{{__("c_rstatus")}}</th>
         </tr>
         <?PHP $cnt=1; ?>
         @foreach($book_copy as $bc)                  
@@ -1508,6 +1528,7 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
             </tr>
         @endforeach
         </table>
+        </div>
     </div>
 </div>
 <br><br>
