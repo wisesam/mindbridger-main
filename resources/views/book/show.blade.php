@@ -630,7 +630,7 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                 </span>
                 <span class="action-icon-wrapper">
                 <label style="cursor:pointer;">
-                    <input type="checkbox" id="eshelf-checkbox" style="display:none;" onchange="toggleEshelf(this)">
+                        <input type="checkbox" id="eshelf-checkbox" style="display:none;" onchange="toggleEshelf(this)">
                     <i id="eshelf-icon" class="far fa-book-open zoom img-icon-pointer" 
                         style="font-size: 24px; color:#28a745;"></i>
                 </label>
@@ -820,60 +820,60 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                     </script>
                     @endif                    
                     <script>
-                        let isFavorited = false;
-                        let isEshelfOn = false;
+                            let isFavorited = false;
+                            let isEshelfOn = false;
 
-                        $.get("{{ route('book.favorite.check', ['book' => $book->id]) }}")
-                            .done(function (response) {
-                                if (response.favorited) {
-                                    isFavorited = true;
+                            $.get("{{ route('book.favorite.check', ['book' => $book->id]) }}")
+                                .done(function (response) {
+                                    if (response.favorited) {
+                                        isFavorited = true;
                                     $('#favorite-icon').removeClass('far').addClass('fas'); // filled
-                                    $('#favorite-checkbox').prop('checked', true);
-                                }
-                            });
+                                        $('#favorite-checkbox').prop('checked', true);
+                                    }
+                                });
 
-                        $(document).ready(function () {
-                            if (isFavorited) {
-                                $('#favorite-checkbox').prop('checked', true);
+                            $(document).ready(function () {
+                                if (isFavorited) {
+                                    $('#favorite-checkbox').prop('checked', true);
                                 $('#favorite-icon').removeClass('far').addClass('fas'); // filled
                             } else {
                                 $('#favorite-checkbox').prop('checked', false);
                                 $('#favorite-icon').removeClass('fas').addClass('far'); // outline
-                            }
-                        });
+                                }
+                            });
 
-                        // For My E-Shelf
-                        $.get("{{ route('book.eshelf.check', ['book' => $book->id]) }}")
-                        .done(function (response) {
-                            if (response.isMyEshelf) {
-                                $('#eshelf-checkbox').prop('checked', true);
+                            // For My E-Shelf
+                            $.get("{{ route('book.eshelf.check', ['book' => $book->id]) }}")
+                                .done(function (response) {
+                                    if (response.isMyEshelf) {
+                                        $('#eshelf-checkbox').prop('checked', true);
                                 $('#eshelf-icon').removeClass('far').addClass('fas');
                             } else {
                                 $('#eshelf-checkbox').prop('checked', false);
                                 $('#eshelf-icon').removeClass('fas').addClass('far');
-                            }
-                        });
+                                    }
+                                });
 
-                        $(document).ready(function () {
-                            if (isEshelfOn) {
-                                $('#eshelf-checkbox').prop('checked', true);
+                            $(document).ready(function () {
+                                if (isEshelfOn) {
+                                    $('#eshelf-checkbox').prop('checked', true);
                                 $('#eshelf-icon').removeClass('far').addClass('fas');
                             } else {
                                 $('#eshelf-checkbox').prop('checked', false);
                                 $('#eshelf-icon').removeClass('fas').addClass('far');
-                            }
-                        });
+                                }
+                            });
 
-                        function toggleFavorite(checkbox) {
-                            let isChecked = checkbox.checked;
-                            let icon = $('#favorite-icon');
+                            function toggleFavorite(checkbox) {
+                                let isChecked = checkbox.checked;
+                                let icon = $('#favorite-icon');
 
                             if (isChecked) { // add favorite
                                 icon.removeClass('far').addClass('fas'); // solid heart
-                                $.post("{{ route('book.favorite.store', ['book' => $book->id]) }}", {
-                                    _token: '{{ csrf_token() }}'
-                                });
-                                
+                                    $.post("{{ route('book.favorite.store', ['book' => $book->id]) }}", {
+                                        _token: '{{ csrf_token() }}'
+                                    });
+
                                 $('#favModal').modal('show');
                                 setTimeout(() => {
                                     $('#favModal').modal('hide');
@@ -881,43 +881,43 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
 
                             } else { // remove favorite
                                 icon.removeClass('fas').addClass('far'); // outline heart
-                                $.ajax({
-                                    url: "{{ route('book.favorite.remove', ['book' => $book->id]) }}",
-                                    type: 'DELETE',
-                                    data: { _token: '{{ csrf_token() }}' }
-                                });
+                                    $.ajax({
+                                        url: "{{ route('book.favorite.remove', ['book' => $book->id]) }}",
+                                        type: 'DELETE',
+                                        data: { _token: '{{ csrf_token() }}' }
+                                    });
 
                                 $('#favModalD').modal('show');
                                 setTimeout(() => {
                                     $('#favModalD').modal('hide');
                                 }, 1000); // auto-hide after 2s
+                                }
                             }
-                        }
 
-                        function toggleEshelf(checkbox) {
-                            let icon = $('#eshelf-icon');
+                            function toggleEshelf(checkbox) {
+                                let icon = $('#eshelf-icon');
                             if (checkbox.checked) {
                                 $('#eshelf-icon').removeClass('far').addClass('fas');
-                                $.post("{{ route('book.eshelf.store', ['book' => $book->id]) }}", {
-                                    _token: '{{ csrf_token() }}'
-                                });
+                                    $.post("{{ route('book.eshelf.store', ['book' => $book->id]) }}", {
+                                        _token: '{{ csrf_token() }}'
+                                    });
                                 $('#eshelfModal').modal('show');
                                 setTimeout(() => {
                                     $('#eshelfModal').modal('hide');
                                 }, 1000); // auto-hide after 2s
                             } else {
                                 $('#eshelf-icon').removeClass('fas').addClass('far');
-                                $.ajax({
-                                    url: "{{ route('book.eshelf.remove', ['book' => $book->id]) }}",
-                                    type: 'DELETE',
-                                    data: { _token: '{{ csrf_token() }}' }
-                                });
+                                    $.ajax({
+                                        url: "{{ route('book.eshelf.remove', ['book' => $book->id]) }}",
+                                        type: 'DELETE',
+                                        data: { _token: '{{ csrf_token() }}' }
+                                    });
                                 $('#eshelfModalD').modal('show');
                                 setTimeout(() => {
                                     $('#eshelfModalD').modal('hide');
                                 }, 1000); // auto-hide after 2s
+                                }
                             }
-                        }
                     </script>
                 </span>
             @endif
@@ -993,7 +993,7 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                 </div>
             </div>
         </div>
-    </div>
+            </div>
             <div class="card-body col-12">
                 <form method="POST" name='form1' id='pform' action="{{config('app.url','/mindbridger')."/book/".$book->id}}" enctype="multipart/form-data">
                     @csrf 
@@ -1065,65 +1065,65 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
 
                         <div class="col-md-9">
                             <div class="accordion" id="tocAccordion">
-                          @php
-                            // Get ToC from old input or model
+                            @php
+                        // Get ToC from old input or model
                             $tocJson = $tocOrigin ?? [];
 
-                            $toc = is_array($tocJson) ? $tocJson : json_decode($tocJson, true) ?? [];
+                        $toc = is_array($tocJson) ? $tocJson : json_decode($tocJson, true) ?? [];
 
-                            // Group: level 1 = chapters; attach following items with level > 1 as children until next level 1
-                            $chapters = [];
-                            $current = null;
+                        // Group: level 1 = chapters; attach following items with level > 1 as children until next level 1
+                        $chapters = [];
+                        $current = null;
 
-                            foreach ($toc as $item) {
+                        foreach ($toc as $item) {
                                 
-                                $item = [
+                            $item = [
                                     'idx' => $item['idx'] ?? 0,
-                                    'title' => $item['title'] ?? 'Untitled',
+                                'title' => $item['title'] ?? 'Untitled',
                                     'page'  => $item['page'] ?? ($item['start'] ?? null),   // legacy single page
-                                    'start' => $item['start'] ?? ($item['page'] ?? null),
-                                    'end'   => $item['end']   ?? ($item['page'] ?? null),
-                                    'level' => $item['level'] ?? 1,
+                                'start' => $item['start'] ?? ($item['page'] ?? null),
+                                'end'   => $item['end']   ?? ($item['page'] ?? null),
+                                'level' => $item['level'] ?? 1,
                                     'status' => $item['status'] ?? '',
                                     'start_time' => $item['start_time'] ?? '',
                                     'end_time' => $item['end_time'] ?? '',
-                                ];
-                                
-                                if ($item['level'] <= 1) {
-                                    if ($current) $chapters[] = $current;
+                            ];
 
-                                    $current = [
+                            if ($item['level'] <= 1) {
+                                if ($current) $chapters[] = $current;
+
+                                $current = [
                                         'idx' =>    $item['idx'],
-                                        'title'    => $item['title'],
+                                    'title'    => $item['title'],
                                         'page'     => $item['page'] ?? ($item['start'] ?? null),
-                                        'start'    => $item['start'],
-                                        'end'      => $item['end'],
+                                    'start'    => $item['start'],
+                                    'end'      => $item['end'],
                                         'status' => $item['status'] ?? '',
                                         'start_time' => $item['start_time'] ?? '',
                                         'end_time' => $item['end_time'] ?? '',
-                                        'children' => [],
-                                    ];
-                                } else {
-                                    if (!$current) { // in case JSON starts with > level 1
-                                        $current = [
+                                    'children' => [],
+                                ];
+                            } else {
+                                if (!$current) { // in case JSON starts with > level 1
+                                    $current = [
                                             'idx' => $item['idx'],
-                                            'title'    => 'Chapter',
-                                            'page'     => null,
-                                            'start'    => null,
-                                            'end'      => null,
+                                        'title'    => 'Chapter',
+                                        'page'     => null,
+                                        'start'    => null,
+                                        'end'      => null,
                                             'status' => $item['status'] ?? '',
                                             'start_time' => $item['start_time'] ?? '',
                                             'end_time' => $item['end_time'] ?? '',
-                                            'children' => [],
-                                        ];
-                                    }
-                                    $current['children'][] = $item;
+                                        'children' => [],
+                                    ];
                                 }
+                                $current['children'][] = $item;
                             }
-                            if ($current) $chapters[] = $current;
-                          @endphp
+                        }
+                        if ($current) $chapters[] = $current;
+                        @endphp
 
-                        </div>
+                            </div>
                             
                         <!-- Fullscreen Modal: For the ranges of book -->
                         <div class="modal fade edge-to-edge" id="fullscreenModal" tabindex="-1" role="dialog"
@@ -1148,21 +1148,21 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                         <!-- End Fullscreen Modal: For the ranges of book -->
 
                         <div id="tocAccordion">
-                        @foreach($chapters as $idx => $ch)
-                            @php
-                                $collapseId = "tocCollapse{$idx}";
-                                $headingId  = "tocHeading{$idx}";
-                                $startPage  = $ch['start'] ?? $ch['page'];
-                                $endPage    = $ch['end'] ?? $ch['page'];
+                    @foreach($chapters as $idx => $ch)
+                        @php
+                            $collapseId = "tocCollapse{$idx}";
+                            $headingId  = "tocHeading{$idx}";
+                            $startPage  = $ch['start'] ?? $ch['page'];
+                            $endPage    = $ch['end'] ?? $ch['page'];
                                 $status    = $ch['status'] ?? '';
                                 $start_time  = $ch['start_time'] ?? '';
                                 $end_time    = $ch['end_time'] ?? '';
                                 $hasChildren = !empty($ch['children']);
-                            @endphp
+                        @endphp
 
-                            <div class="card">
-                                <div class="card-header" id="{{ $headingId }}">
-                                    <h5 class="mb-0 d-flex align-items-center justify-content-between">     
+                        <div class="card">
+                        <div class="card-header" id="{{ $headingId }}">
+                            <h5 class="mb-0 d-flex align-items-center justify-content-between">                      
                                         {{-- If chapter has children, make title clickable to expand --}}
                                         @if($hasChildren)
                                             <button class="btn btn-link" type="button"  
@@ -1171,23 +1171,23 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                                                     data-target="#{{ $collapseId }}" 
                                                     aria-expanded="false" 
                                                     aria-controls="{{ $collapseId }}"
-                                                    data-start="{{ $startPage }}"
-                                                    data-end="{{ $endPage }}"
-                                                    data-rf="{{ e($rfiles[0]) }}"
-                                                    data-rid="{{ e($book->rid) }}"
+                                data-start="{{ $startPage }}"
+                                data-end="{{ $endPage }}"
+                                data-rf="{{ e($rfiles[0]) }}"
+                                data-rid="{{ e($book->rid) }}"
                                                     data-status="{{ $status }}"
                                                     data-start_time="{{ $start_time }}"
                                                     data-end_time="{{ $end_time }}">
-                                                
-                                                    {{ $ch['title'] }}
-                                                <span class="badge badge-secondary ml-2">
-                                                    @if($startPage !== $endPage)
-                                                        pp. {{ $startPage }}–{{ $endPage }}
-                                                    @else
-                                                        p. {{ $startPage }}
-                                                    @endif
-                                                </span>
-                                            </button>
+
+                                {{ $ch['title'] }}
+                                <span class="badge badge-secondary ml-2">
+                                    @if($startPage !== $endPage)
+                                    pp. {{ $startPage }}–{{ $endPage }}
+                                    @else
+                                    p. {{ $startPage }}
+                                    @endif
+                                </span>
+                            </button>
                                         @else
                                             {{-- No children: plain text title, no toggle --}}
                                             <?php
@@ -1210,31 +1210,31 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                                         @endif
 
                                         {{-- Go to page button always available --}}
-                                        @if(!is_null($ch['page']))
-                                            <button type="button"
-                                                    class="btn btn-sm btn-primary ml-2"
+                            @if(!is_null($ch['page']))
+                                <button type="button"
+                                        class="btn btn-sm btn-primary ml-2"
                                                     data-idx="{{ $ch['idx'] }}"
-                                                    data-start="{{ $startPage }}"
-                                                    data-end="{{ $endPage }}"
-                                                    data-rf="{{ e($rfiles[0]) }}"
-                                                    data-rid="{{ e($book->rid) }}"
+                                        data-start="{{ $startPage }}"
+                                        data-end="{{ $endPage }}"
+                                        data-rf="{{ e($rfiles[0]) }}"
+                                        data-rid="{{ e($book->rid) }}"
                                                     data-status="{{ $status }}"
                                                     data-start_time="{{ $start_time }}"
                                                     data-end_time="{{ $end_time }}"
-                                                    onclick="goToPage(this)">
-                                                {{ __('Go to page') }}
-                                            </button>
-                                        @endif
-                                    </h5>
-                                </div>
+                                        onclick="goToPage(this)">
+                                {{ __('Go to page') }}
+                                </button>
+                            @endif
+                            </h5>
+                        </div>
 
                                 {{-- Only render collapsible body if children exist --}}
                                 @if($hasChildren)
-                                    <div id="{{ $collapseId }}" class="collapse" aria-labelledby="{{ $headingId }}" data-parent="#tocAccordion">
-                                        <div class="card-body p-0">
-                                            <ul class="list-group list-group-flush">
-                                                @foreach($ch['children'] as $child)
-                                                    @php
+                        <div id="{{ $collapseId }}" class="collapse" aria-labelledby="{{ $headingId }}" data-parent="#tocAccordion">
+                            <div class="card-body p-0">
+                                <ul class="list-group list-group-flush">
+                                @foreach($ch['children'] as $child)
+                                    @php
                                                         $cStart = $child['start'] ?? $child['page'];
                                                         $cEnd   = $child['end'] ?? $child['page'];
 
@@ -1244,44 +1244,44 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                                                             $badge = "<span class='badge badge-success'>".__("Done :)")."</span>";
                                                         }  else $badge =""; 
 
-                                                    @endphp
-                                                    <li class="list-group-item d-flex align-items-center justify-content-between">
-                                                        <span>
-                                                            @if(($child['level'] ?? 2) > 2)
-                                                                <span class="text-muted mr-2" style="display:inline-block; width: {{ (($child['level']-2)*14) }}px;"></span>
-                                                            @endif
+                                    @endphp
+                                    <li class="list-group-item d-flex align-items-center justify-content-between">
+                                    <span>
+                                        @if(($child['level'] ?? 2) > 2)
+                                        <span class="text-muted mr-2" style="display:inline-block; width: {{ (($child['level']-2)*14) }}px;"></span>
+                                        @endif
                                                             {!! $badge !!} {{ $child['title'] }}
-                                                        </span>
+                                    </span>
 
-                                                        @if(!is_null($child['page']))
-                                                            <button type="button"
+                                    @if(!is_null($child['page']))
+                                        <button type="button"
                                                                     class="btn btn-outline-secondary btn-sm"
                                                                     data-idx="{{ $child['idx'] }}"
-                                                                    data-start="{{ $cStart }}"
-                                                                    data-end="{{ $cEnd }}"
-                                                                    data-rf="{{ e($rfiles[0]) }}"
-                                                                    data-rid="{{ e($book->rid) }}"
+                                                data-start="{{ $cStart }}"
+                                                data-end="{{ $cEnd }}"
+                                                data-rf="{{ e($rfiles[0]) }}"
+                                                data-rid="{{ e($book->rid) }}"
                                                                     data-status="{{ $child['status'] }}"
                                                                     data-start_time="{{ $child['start_time'] }}"
                                                                     data-end_time="{{ $child['end_time'] }}"
-                                                                    onclick="goToPage(this)">
-                                                                @if($cStart !== $cEnd)
-                                                                    pp. {{ $cStart }}–{{ $cEnd }}
-                                                                @else
-                                                                    p. {{ $cStart }}
-                                                                @endif
-                                                            </button>
-                                                        @endif
-                                                    </li>
-                                                @endforeach
-                                            </ul>
-                                        </div>
-                                    </div>
-                                @endif
+                                                onclick="goToPage(this)">
+                                        @if($cStart !== $cEnd)
+                                            pp. {{ $cStart }}–{{ $cEnd }}
+                                        @else
+                                            p. {{ $cStart }}
+                                        @endif
+                                        </button>
+                                    @endif
+                                    </li>
+                                @endforeach
+                                </ul>
                             </div>
-                        @endforeach
+                        </div>
+                                @endif
+                        </div>
+                    @endforeach
                     </div>
-                </div>
+                        </div>
                 <script>
                     $(document).ready(function () {
                         @if($historyTocMode)
@@ -1292,15 +1292,15 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                         @endif
                     });
                 </script>
-            </div>
-                @else
-                    <div class="form-group row">
-                        <label for="rtype" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Table of Contents") }}</label>
-                        <div class="col-md-9">
-                            {{ __("No Table of Contents available.") }}
-                        </div>
                     </div>
-                @endif
+                    @else
+                        <div class="form-group row">
+                            <label for="rtype" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Table of Contents") }}</label>
+                            <div class="col-md-9">
+                                {{ __("No Table of Contents available.") }}
+                            </div>
+                        </div>
+                    @endif
                 <!-- End ToC Display: Accordion -->
 
                     <div class="form-group row">
