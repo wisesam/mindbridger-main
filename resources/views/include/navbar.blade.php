@@ -62,7 +62,7 @@
                         </div>
                     </form>
                     <button class="btn btn-primary ml-2" onClick="window.location.href='{{config('app.url','/mindbridger')}}/recommend'" type="button" style="width: 38px; height: 38px; padding: 0; background: linear-gradient(135deg, #007bff, #0056b3); border: none; box-shadow: 0 2px 8px rgba(0,123,255,0.3);">
-                        <img class="d-block mx-auto shake" src="{{config('app.url','/mindbridger')}}/image/ai.png?nocache=7" width="30" height="30" alt="AI" style="filter: invert(1);" />
+                        <img class="d-block mx-auto" src="{{config('app.url','/mindbridger')}}/image/ai.png?nocache=7" width="30" height="30" alt="AI" style="filter: invert(1);" />
                     </button>
                 </div>
             </div>
