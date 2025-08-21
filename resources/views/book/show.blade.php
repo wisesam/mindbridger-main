@@ -405,7 +405,7 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
             : ('Pages ' + data.start + '–' + data.end);
 
         document.getElementById('fullscreenModalLabel').innerHTML +=
-            " <img src='{{ config('app.url','/wlibrary') }}/image/ai-assistant.png' " +
+            " <img src='{{ config('app.url','/mindbridger') }}/image/ai-assistant.png' " +
             " class='zoom img-icon-pointer ml-2' alt='AI Assistant' " +
             " data-toggle='modal' data-target='#aiModal' " +
             " data-rid='{{ $book->rid }}' data-start='" + start +"' data-end='" + end + "'> ";
@@ -507,10 +507,10 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
 <div class="row justify-content-center">
     <div class="container col-12 mt-0">
         <div class="card">
-            <div class="card-header col-12">
+            <div class="card-header col-12 d-flex justify-content-start">
             @if($isAdmin)
                 <span class="action-icon-wrapper">
-                    <i class="fas fa-cog zoom img-icon-pointer" onClick="window.location='{{config('app.url','/wlibrary')."/book/".$book->id}}/edit'" style="cursor:pointer; font-size: 24px; color: #6c757d;"></i>
+                    <i class="fas fa-cog zoom img-icon-pointer" onClick="window.location='{{config('app.url','/mindbridger')."/book/".$book->id}}/edit'" style="cursor:pointer; font-size: 24px; color: #6c757d;"></i>
                 </span>
             @endif
                 <span class="action-icon-wrapper">
@@ -518,7 +518,7 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                 </span>
                 <script>
                      function openSharePopup() {
-                        const shareUrl = '<?=config('app.url','/wlibrary')."/inst/".session('inst_uname')."/book/".$book->id?>';
+                        const shareUrl = '<?=config('app.url','/mindbridger')."/inst/".session('inst_uname')."/book/".$book->id?>';
                         const shareTitle = '<?=addslashes($book->title)?>';
                         const shareText = '<?=addslashes($book->author)?> - <?=addslashes($book->title)?>';
                         
@@ -995,7 +995,7 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
         </div>
     </div>
             <div class="card-body col-12">
-                <form method="POST" name='form1' id='pform' action="{{config('app.url','/wlibrary')."/book/".$book->id}}" enctype="multipart/form-data">
+                <form method="POST" name='form1' id='pform' action="{{config('app.url','/mindbridger')."/book/".$book->id}}" enctype="multipart/form-data">
                     @csrf 
                     <input type='hidden' name='_method' value='PUT'>
                     <input type='hidden' name="progress_up_flag">                   
