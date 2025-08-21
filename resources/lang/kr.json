@@ -151,5 +151,19 @@
     "Library Super Admin": "도서관 슈퍼 관리자",
     "Add Resource": "자료 추가",
     "Not Available": "현재 사용 불가",
-    "Language": "언어"
+    "Close": "닫기",
+    "Save": "저장",
+    "Refresh": "새로고침",
+    "Age": "나이",
+    "Finish": "끝내기",
+    "Interest Area": "관심 분야",
+    "Free E-books Only": "무료 E-books 만",
+    "AI Book Advisor": "AI 책 추천",
+    "Get Recommendations": "추천 받기",
+    "AI Assistant Notes": "AI 어시스턴트 노트",
+    "Go to page": "이동",
+    "True": "참",
+    "False": "거짓",
+    "True/False Questions": "참/거짓 문제",
+    "AI explanation": "AI 설명"
 }

@@ -1539,7 +1539,7 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
   <div class="modal-dialog modal-dialog-centered modal-fullscreen" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="aiModalLabel">AI Assistant Notes</h5>
+        <h5 class="modal-title" id="aiModalLabel">{{__("AI Assistant Notes")}}</h5>
         <button type="button" 
                 class="btn btn-warning rounded-circle" 
                 style="font-size: 1rem; padding: 0.25rem 0.5rem;" 
@@ -1587,7 +1587,7 @@ $('#aiModal').on('show.bs.modal', function (event) {
     // ✅ If already loaded, skip reload
     if ($body.data('loaded')) return;
 
-    $body.html("<p class='text-muted'>Fetching AI explanation...</p>");
+    $body.html("<p class='text-muted'>Fetching {{__("AI explanation")}}...</p>");
 
     fetchAiData(start, end, $body);
     console.log("A:",start,end);
@@ -1607,7 +1607,7 @@ function fetchAiData(start, end, $body) {
                 let explanation = `
                     <div class='p-3'>
                         <h5 class='mb-3'>
-                            <i class='fas fa-robot text-primary mr-2'></i>AI Explanation
+                            <i class='fas fa-robot text-primary mr-2'></i>{{__("AI explanation")}}
                         </h5>
                         <div class='border rounded p-3 bg-light mb-4'>
                             <p style='white-space: pre-wrap;'>${response.meta_data.explanation}</p>
@@ -1615,13 +1615,13 @@ function fetchAiData(start, end, $body) {
                     </div>
                 `;
 
-                let questionsHtml = "<h5>True/False Questions</h5><ol>";
+                let questionsHtml = "<h5>{{__("True/False Questions")}}</h5><ol>";
                 response.meta_data.questions.forEach((q, i) => {
                     questionsHtml += `
                         <li class="mb-3">
                             <span>${q.q}</span><br>
-                            <button class="btn btn-sm btn-outline-success mr-2" onclick="checkAnswer(${i}, true)">True</button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="checkAnswer(${i}, false)">False</button>
+                            <button class="btn btn-sm btn-outline-success mr-2" onclick="checkAnswer(${i}, true)">{{__("True")}}</button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="checkAnswer(${i}, false)">{{__("False")}}</button>
                             <div id="answerBox-${i}" class="mt-2" style="display:none;"></div>
                         </li>
                     `;
@@ -1666,7 +1666,7 @@ $('#refreshAiBtn').on('click', function() {
     let end   = $modal.data('end');
     console.log("B:",start,end);
     // Reload content
-    $body.html("<p class='text-muted'>Refreshing AI explanation...</p>");
+    $body.html("<p class='text-muted'>Refreshing {{__("AI explanation")}}...</p>");
     fetchAiData(start, end, $body);
 });
 
