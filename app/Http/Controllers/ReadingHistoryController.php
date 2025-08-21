@@ -246,7 +246,8 @@ class ReadingHistoryController extends Controller
 
         1. Provide a clear explanation in {$locale} (7–10 sentences).  
         2. Generate 5 True/False questions (with correct answers).  
-        3. Output **valid JSON** only, in this structure:
+        3. Focus on the main story only (There could be before and after chuncked text). 
+        4. Output **valid JSON** only, in this structure:
 
         {
         "explanation": "....",
