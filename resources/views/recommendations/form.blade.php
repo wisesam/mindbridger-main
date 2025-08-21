@@ -28,7 +28,7 @@
                                 {{ __("Age") }}
                             </label>
                             <input type="number" class="form-control form-control-lg" name="age" id="age" 
-                                   placeholder="Enter your age" min="1" max="120">
+                                   placeholder="Enter your age" min="1" max="120" required>
                             <div class="form-text text-muted">
                                 <small>{{ __("This helps us recommend age-appropriate books") }}</small>
                             </div>
@@ -59,14 +59,12 @@
                         </div>
 
                         <div class="form-check mb-4 p-3 bg-light rounded">
-                            <input type="checkbox" class="form-check-input" name="free" id="free">
+                            <input type="hidden" name="free" value="0">
+                            <input type="checkbox" class="form-check-input" name="free" id="free" value="1">
                             <label class="form-check-label fw-bold text-dark" for="free">
                                 <i class="fas fa-gift me-2 text-success"></i>
                                 {{ __("Free E-books Only") }}
                             </label>
-                            <div class="form-text text-muted ms-4 mt-2">
-                                <small>{{ __("Check this if you prefer free digital books") }}</small>
-                            </div>
                         </div>
 
                         <div class="text-center">

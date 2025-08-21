@@ -103,4 +103,41 @@ class Book extends Model
 
         return $res[0]->cnt;
     }
+
+
+    // accessor for the show URL
+    public function getShowUrlAttribute()
+    {
+        return route('book.show', ['book' => $this->id]);
+    }
+
+    // Scope for per-user visibility + current inst
+    public function scopeVisibleTo(Builder $q, $user = null): Builder
+    {
+        $user = $user ?? Auth::user();
+
+        $q->where('inst', session('lib_inst'));
+
+        if (!$user) {
+            // Guest: hide books with hide_from_guest_yn=Y OR hide_yn=Y
+            return $q->where(function ($q) {
+                $q->where(function ($sub) {
+                    $sub->where('hide_from_guest_yn', '<>', 'Y')
+                        ->orWhereNull('hide_from_guest_yn');
+                })->where(function ($sub) {
+                    $sub->where('hide_yn', '<>', 'Y')
+                        ->orWhereNull('hide_yn');
+                });
+            });
+        }
+
+        if (method_exists($user, 'isAdmin') && !$user->isAdmin()) {
+            return $q->where(function ($sub) {
+                $sub->where('hide_yn', '<>', 'Y')
+                    ->orWhereNull('hide_yn');
+            });
+        }
+
+        return $q; // Admin sees all
+    }
 }
