@@ -69,7 +69,7 @@
                 </div>
                 <div class="col-md-4 text-end">
                     @if(Auth::check() && Auth::user()->isAdmin() && !isset($no_add_btt)) 
-                    <button type='button' class='btn btn-primary btn-lg' onClick="window.location='{{config('app.url','/wlibrary')}}/book/create'">
+                    <button type='button' class='btn btn-primary btn-lg' onClick="window.location='{{config('app.url','/mindbridger')}}/book/create'">
                         <i class="fas fa-plus me-2"></i>{{__("Add Resource")}}
                     </button>
                     @endif
@@ -153,7 +153,7 @@
                                 <tr class="resource-row">
                                     <td class="cover-cell">
                                         @if($b->cover_image) 
-                                            <img onClick="open_cover_img(this)" class="cover-image" src='{{config('app.url','/wlibrary')}}/storage/cover_images/{{$_SESSION['lib_inst']}}/{{$b->cover_image}}' alt="Book Cover">
+                                            <img onClick="open_cover_img(this)" class="cover-image" src='{{config('app.url','/mindbridger')}}/storage/cover_images/{{$_SESSION['lib_inst']}}/{{$b->cover_image}}' alt="Book Cover">
                                         @else
                                             <div class="no-cover-placeholder">
                                                 <i class="fas fa-book text-muted"></i>
@@ -162,7 +162,7 @@
                                     </td>
                                     
                                     <td class="title-cell">
-                                        <a href="{{config('app.url','/wlibrary')}}/book/{{$b->id}}" class="resource-link">
+                                        <a href="{{config('app.url','/mindbridger')}}/book/{{$b->id}}" class="resource-link">
                                             <?
                                             if(isset($search_target) && $search_target=='i_title')
                                                 echo \wlibrary\code\highlight($b->title,$search_word_arr);
@@ -289,14 +289,14 @@
 
                                     @if(Auth::check() && Auth::user()->isAdmin()) 
                                     <td class="action-cell">
-                                        <a href="{{config('app.url','/wlibrary')}}/book/{{$b->id}}/edit" class="action-link">
+                                        <a href="{{config('app.url','/mindbridger')}}/book/{{$b->id}}/edit" class="action-link">
                                             <i class="fas fa-edit text-primary"></i>
                                         </a>
                                     </td>
                                     <td class="action-cell">
-                                        @if(!$copy_num)
+                                        @if(empty($copy_num))
                                         <a href="javascript:confirm_delete('{{$b->title}}','{{$b->id}}');" class="action-link">
-                                            <i class="fas fa-trash text-danger"></i>
+                                            <i class="fas fa-trash text-danger"> <img src="{{config('app.url','/mindbridger')}}/image/button/del_bw.png" class="zoom"></i>
                                         </a>                        
                                         @endif
                                     </td>
@@ -324,7 +324,7 @@
                 <script>
                     function confirm_delete(title,id) {
                         if(confirm("Are you sure you want to delete \""+title+"\" ?")) {
-                            document.getElementById('bcDelForm').action="{{config('app.url','/wlibrary')}}/book/"+id;
+                            document.getElementById('bcDelForm').action="{{config('app.url','/mindbridger')}}/book/"+id;
                             document.getElementById('bcDelForm').submit();
                         }
                     }
