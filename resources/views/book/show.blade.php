@@ -654,13 +654,13 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                 </label>
                 </span>
                 <button id="start-reading-btn" class="btn btn-success btn-sm ml-2" style="display: none;" onclick="showReadingStartModal()">
-                    <i class="fas fa-play mr-1"></i>Start Reading
+                    <i class="fas fa-play mr-1"></i>{{ __('Start Reading') }}
                 </button>
                 <button id="finish-reading-btn" class="btn btn-warning btn-sm ml-2" style="display: none;" onclick="finishReading()">
-                    <i class="fas fa-stop mr-1"></i>Finish Reading
+                    <i class="fas fa-stop mr-1"></i>{{ __('Finish') }}
                 </button>
                 <button id="reset-reading-btn" class="btn btn-danger btn-sm ml-2" style="display: none;" onclick="showResetWarning()">
-                    <i class="fas fa-undo mr-1"></i>Reset
+                    <i class="fas fa-undo mr-1"></i>{{ __('Reset') }}
                 </button>
                 
                 <!-- Reading Time Information -->
@@ -1000,7 +1000,7 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                         <p class="mb-0">
                             <i class="fas fa-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
                         </p>
-                        <h5 class="mt-3 text-warning">All reading history will be deleted</h5>
+                        <h5 class="mt-3 text-warning">{{__("All reading history will be deleted")}}</h5>
                         <p class="text-muted">모든 독서 기록이 삭제됩니다. 계속하시겠습니까?</p>
                     </div>
                     <div class="modal-footer justify-content-center">

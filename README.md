@@ -4,6 +4,7 @@
   - Apache Web Server 2.4.* +
   - MariaDB(MySQL) 10.4.* +
   - PHP 8.0.2 +
+  - Laravel 9.52.18
 
 ##  First thing to do is installing web/admin program:
 ### https://github.com/wisesam/mindbridger.git
@@ -36,36 +37,6 @@
 ## Server Side Rendering and Minimun Libraries
 - to make it lightweighted to even run fron old smartphones, no webpack, vite were used.
 
-
-flowchart TD
-    U[사용자 디바이스<br>(웹/모바일 브라우저)] -->|HTTP/HTTPS| FE[프론트엔드<br>(Bootstrap4.6.2, pdf.js)]
-    FE -->|REST API| BE[백엔드<br>(Laravel9, PHP8.2)]
-    BE --> DB[(MariaDB/MySQL)]
-    BE --> FS[(파일 스토리지)]
-    BE --> AI[생성형 AI API<br>(ChatGPT 등)]
-    
-    subgraph Hosting
-        BE
-        DB
-        FS
-    end
-    
-    subgraph External
-        AI
-    end
-
-
 ## About Laravel
-
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-## License
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).

@@ -37,7 +37,6 @@
 							</a>
 						</div>
 						<h5 class="card-title mb-2">{{__("Users")}}</h5>
-						<p class="card-text text-muted small">Manage user accounts</p>
 					</div>
 				</div>
 			</div>
@@ -84,7 +83,6 @@
 							</a>
 						</div>
 						<h5 class="card-title mb-2">{{__("Rentals")}}</h5>
-						<p class="card-text text-muted small">Currently rented items</p>
 					</div>
 				</div>
 			</div>
@@ -99,7 +97,6 @@
 							<img class="dashboard-icon" src="{{config('app.url','/wlibrary')}}/image/reserve1.png?nocache=1" alt="Reserves">
 						</div>
 						<h5 class="card-title mb-2">{{__("Reserves")}}</h5>
-						<p class="card-text text-muted small">Reserved items</p>
 					</div>
 				</div>
 			</div>

@@ -71,17 +71,17 @@
         <div class="col-md-12 col-lg-12">
             <div class="card">
                 <div class="card-header">{{ __('Edit Book') }}
-                    &nbsp; <img style='cursor:pointer;' src="{{config('app.url','/wlibrary')}}/image/button/doc2.png" class="zoom" onClick="window.location='{{config('app.url','/wlibrary')."/book/".$book->id}}'">
+                    &nbsp; <img style='cursor:pointer;' src="{{config('app.url','/mindbridger')}}/image/button/doc2.png" class="zoom" onClick="window.location='{{config('app.url','/mindbridger')."/book/".$book->id}}'">
                 </div>
                 <div class="card-body">
-                    <form method="POST" name='editForm' id='pform' action="{{config('app.url','/wlibrary')."/book/".$book->id}}" enctype="multipart/form-data">
+                    <form method="POST" name='editForm' id='pform' action="{{config('app.url','/mindbridger')."/book/".$book->id}}" enctype="multipart/form-data">
                         @csrf 
                         <input type='hidden' name='_method' value='PUT'>
                         <input type='hidden' name="progress_up_flag">                   
                         <input type='hidden' name="id" value='{{$book->id}}'>                   
                         <input type='hidden' name="del_file">                   
                         <div class="form-group row">
-                            <label for="title" class="col-md-3 col-form-label text-md-right">{{ $field_arr['title'] }}</label>
+                            <label for="title" class="col-md-3 col-form-label text-md-right">{{ __("Title") }}</label>
 
                             <div class="col-md-7">
                                 <input id="title" type="text" class="form-control @error('title') is-invalid @enderror" name="title" value="{{ $book->title }}" required autocomplete="{{ old('title') }}" autofocus>
@@ -94,7 +94,7 @@
                         </div>
 
                         <div class="form-group row">
-                            <label for="author" class="col-md-3 col-form-label text-md-right">{{ $field_arr['author'] }}</label>
+                            <label for="author" class="col-md-3 col-form-label text-md-right">{{ __("Author") }}</label>
 
                             <div class="col-md-7">
                                 <input id="author" type="text" class="form-control @error('author') is-invalid @enderror" name="author" value="{{ $book->author }}" autocomplete="{{ old('author') }}" autofocus>
@@ -108,7 +108,7 @@
                         </div>
 
                         <div class="form-group row">
-                            <label for="rtype" class="col-md-3 col-form-label text-md-right">{{ $field_arr['c_rtype'] }}</label>
+                            <label for="rtype" class="col-md-3 col-form-label text-md-right">{{ __("Resource Type") }}</label>
 
                             <div class="col-md-7">
                                 <?PHP
@@ -124,7 +124,7 @@
                     
                     @if(\vwmldbm\code\is_code_usable('code_c_genre'))
                         <div class="form-group row">
-                            <label for="code_c_genre" class="col-md-3 col-form-label text-md-right">{{ $field_arr['c_genre'] }}</label>
+                            <label for="code_c_genre" class="col-md-3 col-form-label text-md-right">{{ __("Genre") }}</label>
 
                             <div class="col-md-7">
                                 <?PHP                                  
@@ -141,7 +141,7 @@
 
                     @if(\vwmldbm\code\is_code_usable('code_c_grade'))    
                         <div class="form-group row">
-                            <label for="code_c_grade" class="col-md-3 col-form-label text-md-right">{{ $field_arr['c_grade'] }}</label>
+                            <label for="code_c_grade" class="col-md-3 col-form-label text-md-right">{{ __("Grade") }}</label>
 
                             <div class="col-md-7">
                                 <?PHP                                 
@@ -158,7 +158,7 @@
 
                     @if(\vwmldbm\code\is_code_usable('code_c_category'))
                         <div class="form-group row">
-                            <label for="code_c_category" class="col-md-3 col-form-label text-md-right">{{ $field_arr['c_category'] }}</label>
+                            <label for="code_c_category" class="col-md-3 col-form-label text-md-right">{{ __("Category") }}</label>
 
                             <div class="col-md-7">
                                 <?PHP                                  
@@ -175,7 +175,7 @@
                     
                     @if(\vwmldbm\code\is_code_usable('code_c_category2'))
                         <div class="form-group row">
-                            <label for="code_c_category2" class="col-md-3 col-form-label text-md-right">{{ $field_arr['c_category2'] }}</label>
+                            <label for="code_c_category2" class="col-md-3 col-form-label text-md-right">{{ __("Category2") }}</label>
 
                             <div class="col-md-7">
                                 <?PHP                                  
@@ -191,7 +191,7 @@
                     @endif
 
                         <div class="form-group row">
-                            <label for="c_lang" class="col-md-3 col-form-label text-md-right">{{ $field_arr['c_lang'] }}</label>
+                            <label for="c_lang" class="col-md-3 col-form-label text-md-right">{{ __("Language") }}</label>
 
                             <div class="col-md-7">
                                 <?PHP                                  
@@ -206,7 +206,7 @@
                         </div>
 
                         <div class="form-group row">
-                            <label for="hide_yn" class="col-md-3 col-form-label text-md-right">{{ $field_arr['hide_yn'] }}</label>
+                            <label for="hide_yn" class="col-md-3 col-form-label text-md-right">{{ __("Hide")}}</label>
 
                             <div class="col-md-7">
                                 <span class='form-control border-0'>
@@ -223,7 +223,7 @@
                         </div>
 
                         <div class="form-group row">
-                            <label for="hide_from_guest_yn" class="col-md-3 col-form-label text-md-right">{{ $field_arr['hide_from_guest_yn'] }}</label>
+                            <label for="hide_from_guest_yn" class="col-md-3 col-form-label text-md-right">{{ __("Hide from Guest") }}</label>
 
                             <div class="col-md-7">
                                 <span class='form-control border-0'>
@@ -240,7 +240,7 @@
                         </div>
 
                         <div class="form-group row">
-                            <label for="e_resource_yn" class="col-md-3 col-form-label text-md-right">{{ $field_arr['e_resource_yn'] }}</label>
+                            <label for="e_resource_yn" class="col-md-3 col-form-label text-md-right">{{ __("e-Resource") }}</label>
 
                             <div class="col-md-7">
                                 <span class='form-control border-0'>                            
@@ -301,7 +301,7 @@
                                     function progress_upload(mode) {
                                         var f=document.getElementById('pform');                                        
                                         if(f.filesToUpload.value=='') { // no file upload
-                                            document.getElementById('pform').action="{{config('app.url','/wlibrary')."/book/".$book->id}}"; // reset the action. Double check.
+                                            document.getElementById('pform').action="{{config('app.url','/mindbridger')."/book/".$book->id}}"; // reset the action. Double check.
                                             return;
                                         }                                        
                                         f.operation.value="Modify";
@@ -330,7 +330,7 @@
                                                 var percentVal = '100%';
                                                 bar.width(percentVal)
                                                 percent.html(percentVal);
-                                                f.action="{{config('app.url','/wlibrary')."/book/".$book->id}}"; // reset the action. Double check.
+                                                f.action="{{config('app.url','/mindbridger')."/book/".$book->id}}"; // reset the action. Double check.
                                                 f.filesToUpload.value='';
                                             },
 
@@ -340,7 +340,7 @@
                                                     console.log(xhr.responseText);
                                                     if(xhr.responseText!='MOD_SUCCESS') return;
                                                     //document.getElementById('output_image').innerHTML=xhr.responseText;
-                                                    f.action="{{config('app.url','/wlibrary')."/book/".$book->id}}"; // reset the action. Double check.
+                                                    f.action="{{config('app.url','/mindbridger')."/book/".$book->id}}"; // reset the action. Double check.
                                                     f.progress_up_flag.value='Y';
                                                     if(mode=='HANDLE_COVER_IMG_TOO') {                                                        
                                                         var f_name = document.getElementById('cover_image').files[0];
@@ -730,7 +730,7 @@
                                                     alert("{{__('No Meta Info found!')}}");
                                                 }
                                             } catch (e) {
-                                                alert('Failed to generate Auto Meta Info: ' + e.message);
+                                                alert('{{__("Failed to generate Auto Meta Info")}}: ' + e.message);
                                             } finally {
                                                 btn.disabled = false;
                                                 btn.innerHTML = orig;
@@ -765,7 +765,7 @@
                         </div>
                     @endif
                         <div class="form-group row">
-                            <label for="rdonly_pdf_yn" class="col-md-3 col-form-label text-md-right">{{ $field_arr['rdonly_pdf_yn'] }}</label>
+                            <label for="rdonly_pdf_yn" class="col-md-3 col-form-label text-md-right">{{ __("Readonly PDF") }}</label>
 
                             <div class="col-md-7">
                                 <span class='form-control border-0'>
@@ -782,7 +782,7 @@
                         </div>
                         
                         <div class="form-group row">
-                            <label for="rdonly_video_yn" class="col-md-3 col-form-label text-md-right">{{ $field_arr['rdonly_video_yn'] }}</label>
+                            <label for="rdonly_video_yn" class="col-md-3 col-form-label text-md-right">{{ __("Readonly Video") }}</label>
 
                             <div class="col-md-7">
                                 <span class='form-control border-0'>
@@ -799,7 +799,7 @@
                         </div>
 
                         <div class="form-group row">
-                            <label for="e_res_af_login_yn" class="col-md-3 col-form-label text-md-right">{{ $field_arr['e_res_af_login_yn'] }}</label>
+                            <label for="e_res_af_login_yn" class="col-md-3 col-form-label text-md-right">{{ __("e-Resource after login") }}</label>
 
                             <div class="col-md-7">
                                 <span class='form-control border-0'>
@@ -816,7 +816,7 @@
                         </div>
 
                         <div class="form-group row">
-                            <label for="desc" class="col-md-3 col-form-label text-md-right">{{ $field_arr['desc'] }}</label>
+                            <label for="desc" class="col-md-3 col-form-label text-md-right">{{ __("Description") }}</label>
 
                             <div class="col-md-7">
                                 <textarea id="desc"  class="form-control @error('desc') is-invalid @enderror" name="desc" autocomplete="{{ old('desc') }}" autofocus>
@@ -831,7 +831,7 @@
                         </div>
 
                         <div class="form-group row">
-                            <label for="url" class="col-md-3 col-form-label text-md-right">{{ $field_arr['url'] }}</label>
+                            <label for="url" class="col-md-3 col-form-label text-md-right">{{  __("URL") }}</label>
 
                             <div class="col-md-7">
                                 <input id="url" type="text" class="form-control @error('url') is-invalid @enderror" name="url" value="{{ $book->url }}">
@@ -845,7 +845,7 @@
                         </div>
 
                         <div class="form-group row">
-                            <label for="publisher" class="col-md-3 col-form-label text-md-right">{{ $field_arr['publisher'] }}</label>
+                            <label for="publisher" class="col-md-3 col-form-label text-md-right">{{ __("Publisher") }}</label>
 
                             <div class="col-md-7">
                                 <input id="publisher" type="text" class="form-control @error('publisher') is-invalid @enderror" name="publisher" value="{{ $book->publisher }}" autocomplete="{{ old('publisher') }}" autofocus>
@@ -859,7 +859,7 @@
                         </div>
                         
                         <div class="form-group row">
-                            <label for="pub_date" class="col-md-3 col-form-label text-md-right">{{ $field_arr['pub_date'] }}</label>
+                            <label for="pub_date" class="col-md-3 col-form-label text-md-right">{{ __("Published Date") }}</label>
 
                             <div class="col-md-7">
                                 <?PHP
@@ -885,7 +885,7 @@
                         </div>
                         
                         <div class="form-group row">
-                            <label for="isbn" class="col-md-3 col-form-label text-md-right">{{ $field_arr['isbn'] }}</label>
+                            <label for="isbn" class="col-md-3 col-form-label text-md-right">{{ __("ISBN")  }}</label>
 
                             <div class="col-md-7">
                                 <input id="isbn" type="text" class="form-control @error('isbn') is-invalid @enderror" name="isbn" value="{{ $book->isbn }}" autocomplete="{{ old('isbn') }}" autofocus>
@@ -899,7 +899,7 @@
                         </div>
 
                         <div class="form-group row">
-                            <label for="eisbn" class="col-md-3 col-form-label text-md-right">{{ $field_arr['eisbn'] }}</label>
+                            <label for="eisbn" class="col-md-3 col-form-label text-md-right">{{ __("eISBN") }}</label>
 
                             <div class="col-md-7">
                                 <input id="eisbn" type="text" class="form-control @error('eisbn') is-invalid @enderror" name="eisbn" value="{{ $book->eisbn }}" autocomplete="{{ old('eisbn') }}" autofocus>
@@ -913,7 +913,7 @@
                         </div>
 
                         <div class="form-group row">
-                            <label for="keywords" class="col-md-3 col-form-label text-md-right">{{ $field_arr['keywords'] }}</label>
+                            <label for="keywords" class="col-md-3 col-form-label text-md-right">{{ __("Keywords") }}</label>
 
                             <div class="col-md-7">
                                 <input id="keywords" type="text" class="form-control @error('keywords') is-invalid @enderror" name="keywords" value="{{ $book->keywords }}" autocomplete="{{ old('Keywords') }}" autofocus>
@@ -927,7 +927,7 @@
                         </div>
 
                         <div class="form-group row">
-                            <label for="price" class="col-md-3 col-form-label text-md-right">{{ $field_arr['price'] }}</label>
+                            <label for="price" class="col-md-3 col-form-label text-md-right">{{ __("Price") }}</label>
 
                             <div class="col-md-7">
                                 <input id="price" type="text" class="form-control @error('price') is-invalid @enderror" name="price" value="{{ $book->price }}" autocomplete="{{ old('price') }}" autofocus>
@@ -942,7 +942,7 @@
 
 
                         <div class="form-group row">
-                            <label for="cover_image" class="col-md-3 col-form-label text-md-right">{{ $field_arr['cover_image'] }}</label>
+                            <label for="cover_image" class="col-md-3 col-form-label text-md-right">{{ __("Cover Image") }}</label>
                             <div class="col-md-7">
                                 @if(!$book->cover_image)
                                     <input id="cover_image" type="file" class="form-file @error('cover_image') is-invalid @enderror" name="cover_image" value="{{ old('cover_image') }}" autofocus  onChange='check_file(this)'>
@@ -996,7 +996,7 @@
                                     {{ __('Submit') }}
                                 </button>
                                 &nbsp; 
-                                <button type="button" class="btn btn-success" onClick="window.location='{{config('app.url','/wlibrary')}}/book'">
+                                <button type="button" class="btn btn-success" onClick="window.location='{{config('app.url','/mindbridger')}}/book'">
                                     {{ __('List') }}
                                 </button>
                             </div>
@@ -1138,7 +1138,7 @@
                                 <th>{{__("location")}}</th>
                                 <th>{{__("c_rstatus")}}</th>
         <th>
-            <button type='button' class='btn btn-outline-info' onClick="window.location='{{config('app.url','/wlibrary')}}/book_copy/create/{{$book->id}}'">
+            <button type='button' class='btn btn-outline-info' onClick="window.location='{{config('app.url','/mindbridger')}}/book_copy/create/{{$book->id}}'">
                     + 
             </button>           
         </th>
@@ -1156,8 +1156,8 @@
                 ?>
             </td>
             <td>
-                <a href="{{config('app.url','/wlibrary')}}/book_copy/{{$bc['id']}}/edit">
-                    <img src="{{config('app.url','/wlibrary')}}/image/button/mod_bw.png" class="zoom">
+                <a href="{{config('app.url','/mindbridger')}}/book_copy/{{$bc['id']}}/edit">
+                    <img src="{{config('app.url','/mindbridger')}}/image/button/mod_bw.png" class="zoom">
                 </a>
             </td>
         </tr>
