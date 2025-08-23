@@ -16,6 +16,7 @@ function show_list_old_files($book,$perm,$rid){
 		if($val) {
             $video_down_enabled=true;
 			if($perm['R']=='Y') {
+				if(empty($rfiles[$key])) continue;
                 $fpath=config('app.root')."/storage/app/ebook/{$_SESSION['lib_inst']}/{$book->rid}/{$rfiles[$key]}";
                 if(file_exists($fpath))
                     $fsize=\wlibrary\code\format_fsize(filesize($fpath),'MB',1)."MB";
@@ -96,6 +97,7 @@ function show_list_videos($book,$perm,$rid){
 	$rfiles=explode(';',$book->rfiles);
 	foreach($files as $key =>$val){
 		if($val) {
+			if(empty($rfiles[$key])) continue;
             $fpath=config('app.root')."/storage/app/ebook/{$_SESSION['lib_inst']}/{$book->rid}/{$rfiles[$key]}";
             if(file_exists($fpath)) {
 			    $fsize=\wlibrary\code\format_fsize(filesize($fpath),'MB',1)."MB";
@@ -152,7 +154,7 @@ function edit_list_old_files($book,$perm,$rid){
 		if($val) {
 			if($perm['R']=='Y') {
 				$fext = strtolower(substr($val,-3,3)); 
-                
+                if(empty($rfiles[$key])) continue;
                 $fpath=config('app.root')."/storage/app/ebook/{$_SESSION['lib_inst']}/{$book->rid}/{$rfiles[$key]}";
                 if(file_exists($fpath)) {
                     $fsize=\wlibrary\code\format_fsize(filesize($fpath),'MB',1)."MB";
