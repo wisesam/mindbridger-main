@@ -212,8 +212,8 @@ class ReadingHistoryController extends Controller
         $end   = intval($request->input('end_page'));
 
         // Find book text meta
-       
-        $meta = BookTextMeta::where('inst', session('lib_inst'))
+        $inst = session('lib_inst') ?? 1;
+        $meta = BookTextMeta::where('inst', $inst)
             ->where('book_id', $book_id)
             ->first();
 
