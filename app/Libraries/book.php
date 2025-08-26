@@ -10,15 +10,18 @@ class Book {
 	// public static $GRADE_CONFIRMED=30;
 	// public static $CANCELED=90;
 	
-	public function __construct($id=null,$rid=null){
+	public function __construct($id=null,$rid=null,$inst=null){ // if id is set then load data from db
         $conn=$GLOBALS['conn'];
         $DTB_PRE=$GLOBALS['DTB_PRE'];		
 		$this->TB__NAME=self::$TB;
-        
+		
         if($id) {
-            $sql = "select * from $DTB_PRE"."_".self::$TB." where inst=".$_SESSION['lib_inst']." and id='$id'";	
+            // $sql = "select * from $DTB_PRE"."_".self::$TB." where inst='$inst' and id='$id'";	
+            $sql = "select * from $DTB_PRE"."_".self::$TB." where id='$id'"; // mindbridger
         } else if($rid) {
-            $sql = "select * from $DTB_PRE"."_".self::$TB." where inst=".$_SESSION['lib_inst']." and rid='$rid'";	
+			if(empty($inst)) $inst = $_SESSION['lib_inst'];
+			if(empty($inst)) die("Error: Institution is not set!<br>");  
+            $sql = "select * from $DTB_PRE"."_".self::$TB." where inst='$inst' and rid='$rid'";	
         } else {
 			echo "Warning: Book id or rid is not set!<br>";
 			return; // if no id or rid then return
@@ -28,6 +31,8 @@ class Book {
         if($res) $rs=mysqli_fetch_array($res);
 
 		$this->inst=$rs['inst'];
+		$_SESSION['lib_inst'] = $rs['inst']; // set session variable if not set
+
 		$this->id=$rs['id'];
 				
 		if(!$rs['rid']) {

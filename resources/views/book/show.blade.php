@@ -28,6 +28,14 @@
         $tocOrigin = $readingHistory->historyData;
         $historyTocMode = true;
     }
+
+
+// book share link: In multi-inst mode, inst_uname is needed
+    $bookShareLink = config('app.url','/mindbridger').'/book/'.$book->id; // default
+
+    if(config('app.multi_inst') && !empty(config('app.inst_uname'))) {
+        $bookShareLink = config('app.url','/mindbridger').'/book/inst/'.config('app.inst_uname').'/{$book->id}';
+    }  
 ?>
 
 @extends('layouts.root')
@@ -536,7 +544,7 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                 </span>
                 <script>
                      function openSharePopup() {
-                        const shareUrl = '<?=config('app.url','/mindbridger')."/inst/".session('inst_uname')."/book/".$book->id?>';
+                        const shareUrl = '<?=$bookShareLink?>';
                         const shareTitle = '<?=addslashes($book->title)?>';
                         const shareText = '<?=addslashes($book->author)?> - <?=addslashes($book->title)?>';
                         
