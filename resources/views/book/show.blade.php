@@ -1312,7 +1312,7 @@ console.log("Go to page:", "idx", idx, "Page:", page, "Start:", start, "End:", e
                         </div>
                 <script>
                     $(document).ready(function () {
-                        @if($historyTocMode)
+                        @if(true || $historyTocMode)
                             // Expand all accordion panels
                             $('#tocAccordion .collapse').each(function () {
                                 $(this).collapse('show');
