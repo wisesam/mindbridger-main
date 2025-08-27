@@ -291,6 +291,12 @@ class BookController extends Controller
             session(['inst_uname' => $theInst->inst_uname]);
         } 
 
+		// for pdf file access by guest. [TBR] To be refactored later 
+		$_SESSION['inst'] = session('lib_inst');
+		$_SESSION['app.root'] = config('app.root');
+		$_SESSION['app.root2'] = config('app.root2');
+		$_SESSION['app.url'] = config('app.url');
+		
         $book=Book::where('inst',session('lib_inst'))
             ->where('id',$id)->first();
 
