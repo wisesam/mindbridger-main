@@ -45,7 +45,7 @@ class Book extends Migration
             $table->Char('hide_yn',1)->nullable()->nullable()->default('N');;
             $table->Char('hide_from_guest_yn',1)->nullable()->nullable()->default('N');;
             $table->Char('e_res_af_login_yn',1)->nullable()->default('Y');
-            $table->Text('desc')->nullable();
+            $table->longText('desc')->nullable();
             $table->Text('url')->nullable();
 
             $table->foreign(['inst','c_rtype'])
