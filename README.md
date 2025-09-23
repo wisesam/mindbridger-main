@@ -11,12 +11,11 @@
    - https://github.com/wisesam/mindbridger-main.git
    - 디렉토리 권한 조정이 필요할 수 있음 (Linux와 MacOS):
      - 예: chown -R apache mindbridger-main, chgrp -R apache mindbridger-main
- -  composer install
+2. composer install
 2. 웹/관리자 프로그램 설치 https://github.com/wisesam/mindbridger.git
 3. cp .env.example .env  (수정 필요)
 4. cp config/app(default).php config/app.php (수정 필요)
 5. cp config/database(default).php config/database.php (수정 필요)
-6.
 7. php artisan key:generate (.env 업데이트)
 8. DB 마이그레이션 (도서관 관련 테이블 설치)
    - php artisan migrate
