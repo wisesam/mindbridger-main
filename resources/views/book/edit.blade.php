@@ -57,11 +57,11 @@
 <!-- end pdf.js -->
 
 <script src="{{ auto_asset('/lib/jquery/jquery.form.min.js') }}"></script>
-<script src="{{ auto_asset('/lib/ckeditor_4c/ckeditor.js') }}"></script>
+<script src="{{ auto_asset('/lib/ckeditor_4.22.1Full/ckeditor.js') }}"></script>
 <script>
     $(document).ready(function() {
         CKEDITOR.replace( 'desc',{
-            customConfig: '{{config('app.url')}}/lib/ckeditor_4c/config_gen.js'
+            customConfig: '{{config('app.url')}}/lib/ckeditor_4.22.1Full/config_gen.js?nocache=<?=time()?>'
         });
     });
 </script>

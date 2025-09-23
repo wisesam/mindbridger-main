@@ -28,7 +28,9 @@ return new class extends Migration
                     ->default('none');
             
                 $table->json('historyData')->nullable();
+                $table->json('historyDataBackup')->nullable();
                 $table->json('evaluationData')->nullable();
+                $table->json('evaluationDataBackup')->nullable();
             
                 $table->timestamps();
             
