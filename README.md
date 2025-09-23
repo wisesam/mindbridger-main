@@ -7,18 +7,16 @@
   - PHP 8.0.2 +
   - Laravel 9.52.18
 
-## 가장 먼저 해야 할 일은 웹/관리자 프로그램 설치입니다:
-### https://github.com/wisesam/mindbridger.git
-
-## 이제 MindBridger 메인 Laravel 프로그램을 설치할 수 있습니다
 1. 메인 Laravel 저장소 (백엔드 + 프론트엔드)
    - https://github.com/wisesam/mindbridger-main.git
    - 디렉토리 권한 조정이 필요할 수 있음 (Linux와 MacOS):
      - 예: chown -R apache mindbridger-main, chgrp -R apache mindbridger-main
+ -  composer install
+2. 웹/관리자 프로그램 설치 https://github.com/wisesam/mindbridger.git
 3. cp .env.example .env  (수정 필요)
 4. cp config/app(default).php config/app.php (수정 필요)
 5. cp config/database(default).php config/database.php (수정 필요)
-6. composer install
+6.
 7. php artisan key:generate (.env 업데이트)
 8. DB 마이그레이션 (도서관 관련 테이블 설치)
    - php artisan migrate
