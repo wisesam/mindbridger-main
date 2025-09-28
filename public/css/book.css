@@ -1,0 +1,330 @@
+/* Book.show ReadingHistory.show */
+
+.img-icon-pointer {
+    cursor:pointer;
+    width:40px; 
+    height:auto;
+}
+
+/* Action Icons Styling */
+.action-icon-wrapper {
+    align-items: center;
+    margin-left: 1rem;
+    height: 32px;
+}
+
+.action-icon-wrapper:first-child {
+    margin-left: 0;
+}
+
+.action-icon-wrapper i {
+    transition: all 0.3s ease;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.action-icon-wrapper i:hover {
+    transform: scale(1.1);
+    opacity: 0.8;
+}
+
+/* Share Popup Styles */
+.share-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(5px);
+}
+
+.share-popup {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow: hidden;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.share-popup-header {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.share-popup-header h5 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.3s ease;
+}
+
+.close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.share-popup-body {
+    padding: 2rem;
+}
+
+.share-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.share-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    background: white;
+    color: #495057;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.share-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    border-color: #007bff;
+}
+
+.share-facebook:hover {
+    background: #1877f2;
+    color: white;
+    border-color: #1877f2;
+}
+
+.share-twitter:hover {
+    background: #1da1f2;
+    color: white;
+    border-color: #1da1f2;
+}
+
+.share-linkedin:hover {
+    background: #0077b5;
+    color: white;
+    border-color: #0077b5;
+}
+
+.share-email:hover {
+    background: #6c757d;
+    color: white;
+    border-color: #6c757d;
+}
+
+.share-btn i {
+    font-size: 1.2rem;
+    width: 24px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.share-btn:hover i {
+    transform: scale(1.1);
+}
+
+.share-url-section {
+    border-top: 1px solid #e9ecef;
+    padding-top: 1.5rem;
+}
+
+.share-url-section label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.75rem;
+}
+
+.share-url-section .input-group {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.share-url-section .form-control {
+    border: none;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    background: #f8f9fa;
+}
+
+.share-url-section .btn {
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.share-url-section .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .share-popup {
+        width: 95%;
+        margin: 1rem;
+    }
+    
+    .share-popup-header {
+        padding: 1rem;
+    }
+    
+    .share-popup-body {
+        padding: 1.5rem;
+    }
+    
+    .share-options {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .share-btn {
+        padding: 0.75rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* full-screen modal: Show the Book pages */
+/* Remove Bootstrap’s scrollbar-compensation padding on the modal element */
+.edge-to-edge {
+padding: 0 !important;
+}
+
+/* Make the dialog truly full screen */
+.modal-fullscreen {
+width: 100vw;         /* full viewport width */
+max-width: 100vw;     /* override BS4 max-width */
+height: 100vh;        /* full viewport height */
+margin: 0;            /* remove BS4 default .5rem margin */
+}
+
+/* Make the content fill the viewport */
+.modal-fullscreen .modal-content {
+height: 100vh;
+border: 0;
+border-radius: 0;
+display: flex;
+flex-direction: column;
+}
+
+/* Let the body scroll independently if content overflows */
+.modal-fullscreen .modal-body {
+flex: 1 1 auto;
+overflow: auto;
+}
+
+/* (Optional) ensure full-height baseline */
+html, body { height: 100%; }
+// End full-screen modal: Show the Book pages
+
+/* Reading Progress Styles */
+#start-reading-btn, #finish-reading-btn, #reset-reading-btn {
+    transition: all 0.3s ease;
+}
+
+#start-reading-btn:hover, #finish-reading-btn:hover, #reset-reading-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Toast Notification Styles */
+.toast-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: white;
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    z-index: 10000;
+    display: none;
+    max-width: 300px;
+    border-left: 4px solid #007bff;
+}
+
+.toast-success {
+    border-left-color: #28a745;
+}
+
+.toast-warning {
+    border-left-color: #ffc107;
+}
+
+.toast-info {
+    border-left-color: #17a2b8;
+}
+
+.toast-error {
+    border-left-color: #dc3545;
+}
+
+/* Reading Time Info Styles */
+#reading-time-info {
+    background: #f8f9fa;
+    padding: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+/* Book Content Styles */
+.book-content-wrapper {
+    background: white;
+    overflow: hidden;
+}
+
+.book-header {
+    padding: 1rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.book-body {
+    background: white;
+    padding: 2rem;
+}

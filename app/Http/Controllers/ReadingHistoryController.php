@@ -15,6 +15,7 @@ require_once(config('app.root2')."/vwmldbm/config.php");
 require_once(config('app.root2')."/vwmldbm/lib/code.php");
 require_once(config('app.root')."/app/Libraries/code.php");
 require_once(config('app.root')."/app/Libraries/book.php");
+require_once(config('app.root')."/app/Helpers/bookViewHelpers.php");
 
 class ReadingHistoryController extends Controller
 {
@@ -284,4 +285,90 @@ class ReadingHistoryController extends Controller
             'meta_data' => $data
         ]);
     }
+
+    public function show($id, Request $request) {
+        // --- Institution/session setup (same as BookController) ---
+        if (session()->has('lib_inst')) {
+            $theInst = new \vwmldbm\code\Inst_var(null, session('lib_inst'));
+        } elseif (!Auth::check()) {
+            if (config('app.multi_inst', '')) { // multi-inst mode
+                if (!session()->has('lib_inst')) {
+                    return view('auth.inst'); // user must select institution
+                }
+            } else {
+                session(['lib_inst' => config('app.inst', 1)]);
+            }
+        } elseif (session()->has('lib_inst')) {
+            $theInst = new \vwmldbm\code\Inst_var(null, session('lib_inst'));
+            session(['inst_uname' => $theInst->inst_uname]);
+        }
+
+        // --- Make available for legacy libs (pdf.js etc.) ---
+        $_SESSION['inst']     = session('lib_inst');
+        $_SESSION['app.root'] = config('app.root');
+        $_SESSION['app.root2'] = config('app.root2');
+        $_SESSION['app.url']  = config('app.url');
+
+        // --- Find the book ---
+        $book = Book::where('inst', session('lib_inst'))
+            ->where('id', $id)
+            ->first();
+
+        if (!$book) {
+            return redirect('/book/')->with('warning', __("The resource does not exist!"));
+        }
+
+        // --- Find reading history for this user/book ---
+        $readingHistory = ReadingHistory::where('inst', session('lib_inst'))
+            ->where('user_id', session('uid'))
+            ->where('book_id', $book->id)
+            ->first();
+
+        // If the user clicked a "start reading" action
+        if ($request->input('reading_action') === "START_READING") {
+            $readingHistory = ReadingHistory::firstOrCreate(
+                [
+                    'inst'    => session('lib_inst'),
+                    'user_id' => session('uid'),
+                    'book_id' => $book->id,
+                ],
+                [
+                    'status'     => ReadingHistory::STATUS_INPROGRESS,
+                    'start_time' => now(),
+                ]
+            );
+        }
+
+        // --- Decode book ToC and match with history data ---
+        $toc = [];
+        if (!empty($book->auto_toc)) {
+            $toc = is_array($book->auto_toc) ? $book->auto_toc : json_decode($book->auto_toc, true);
+        }
+
+        $historyData = $readingHistory ? $readingHistory->historyData : [];
+        if (is_string($historyData)) {
+            $historyData = json_decode($historyData, true);
+        }
+        $sections = [];
+        foreach ($toc as $idx => $section) {
+            $sectionHistory = $historyData[$idx] ?? null;
+            $sections[] = [
+                'idx'        => $idx,
+                'title'      => $section['title'] ?? 'Untitled',
+                'start'      => $section['start'] ?? null,
+                'end'        => $section['end'] ?? null,
+                'level'      => $section['level'] ?? 1,
+                'start_time' => $sectionHistory['start_time'] ?? null,
+                'end_time'   => $sectionHistory['end_time'] ?? null,
+                'status'     => $sectionHistory['status'] ?? ReadingHistory::STATUS_NONE,
+            ];
+        }
+
+        // --- Return view ---
+        return view('reading_history.show')
+            ->with('book', $book)
+            ->with('readingHistory', $readingHistory)
+            ->with('sections', $sections);
+    }
+
 }

@@ -111,8 +111,14 @@ Route::middleware(['auth'])->group(function () {
     Route::post('reading_history/{book}/section/status', [ReadingHistoryController::class, 'section_set_status'])->name('reading_history.section_set_status');
 
 });
+
 // AI Book section Operation Routes
 Route::post('reading_history/{book}/section/ai', [ReadingHistoryController::class, 'section_ai_explain'])->name('reading_history.section_ai');
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/reading_history/{book}', [ReadingHistoryController::class, 'show'])
+        ->name('reading.history.show');
+});
 
 Route::post('book/{book}/get_meta', [BookTextMetaController::class, 'get_meta'])->name('get_meta');
 
