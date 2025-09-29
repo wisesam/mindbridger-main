@@ -10,7 +10,7 @@ function print_lang($field_name=null, $c=null, $fevent=null) {
     $mn_sel=null;
 
     if($c=='kr') $kr_sel=" selected";
-    else if($c=='mn') $mn_sel=" selected";
+    else if($c=='ar') $mn_sel=" selected";
     else if($c=='cn') $cn_sel=" selected";
     else $en_sel=" selected";
 
@@ -19,7 +19,7 @@ function print_lang($field_name=null, $c=null, $fevent=null) {
         <option value='en' $en_sel>EN</option>
         <option value='cn' $cn_sel>CN</option>
         <option value='kr' $kr_sel>KR</option>
-        <option value='mn' $mn_sel>MN</option>
+        <option value='ar' $mn_sel>AR</option>
     </select>";
     return $rval;
 }
