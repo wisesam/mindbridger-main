@@ -1,19 +1,9 @@
 <?php
-    // Pre-loading the code values for performance
-    $field_arr=array();
-    \vwmldbm\code\get_field_name_all('book',$field_arr);
-
-    $field_arr2=array();
-    \vwmldbm\code\get_field_name_all('book_copy',$field_arr2);
-
-    $c_rstatus_arr=array();
-    \vwmldbm\code\get_code_name_all($c_rstatus_arr,'code_c_rstatus');
-    
+    $isAdmin = (Auth::check() && Auth::user()->isAdmin()) ? true : false;
     $perm['R'] ='Y'; // Read permission
-	$isAdmin = (Auth::check() && Auth::user()->isAdmin()) ? true : false;
     $isEresource = ($book->files ? true : false);
-
- // if the normal user logged in, and has reading history use it otherwise use book's auto_toc
+    
+    // if the normal user logged in, and has reading history use it otherwise use book's auto_toc
     $tocOrigin = null; // ToC(Table of Contents) from either book or reading history
     $bookTocMode = false;
     $historyTocMode = false;
@@ -23,15 +13,10 @@
             $tocOrigin = $book->auto_toc;
             $bookTocMode = true;
         } 
-    } 
-
-
-// book share link: In multi-inst mode, inst_uname is needed
-    $bookShareLink = config('app.url','/mindbridger').'/book/'.$book->id; // default
-
-    if(config('app.multi_inst') && !empty(config('app.inst_uname'))) {
-        $bookShareLink = config('app.url','/mindbridger').'/book/inst/'.config('app.inst_uname').'/{$book->id}';
-    }  
+    } else if(Auth::check() && !$isAdmin && !empty($readingHistory->historyData)) { // normal user with reading history
+        $tocOrigin = $readingHistory->historyData;
+        $historyTocMode = true;
+    }
 ?>
 
 @extends('layouts.root')
@@ -41,6 +26,124 @@
 
 <!-- Book Show CSS -->
 <link rel="stylesheet" href="{{ auto_asset('css/book.css') }}">
+
+<style>
+.reading-title {
+    font-family: 'Georgia', 'Times New Roman', serif; /* elegant serif font */
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #333;
+
+    background-color: #fff8dc;     /* light golden background */
+    border: 2px solid #c9a600;     /* dark yellow frame */
+    border-radius: 8px;            /* rounded corners */
+    padding: 12px 20px;
+
+    display: inline-block;         /* shrink frame around text */
+    margin: 0 auto;                /* center horizontally */
+    box-shadow: 2px 2px 6px rgba(0,0,0,0.2); /* subtle shadow */
+}
+
+</style>
+
+<style>
+/* For summary button and modal */
+/* Olive button */
+.btn-olive {
+  background-color: #6b8e23; /* olive drab */
+  border-color: #6b8e23;
+  color: #fff;
+}
+.btn-olive:hover,
+.btn-olive:focus {
+  background-color: #5f801f;
+  border-color: #5f801f;
+  color: #fff;
+}
+
+/* Bottom sheet inside the fullscreen modal */
+#summarySheetBackdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.35);
+  display: none;
+  z-index: 1059; /* just under the sheet itself */
+}
+
+#summarySheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 50vh;       /* half the fullscreen modal */
+  max-height: 65vh;   /* safety cap */
+  background: #fff;
+  border-top-left-radius: 14px;
+  border-top-right-radius: 14px;
+  box-shadow: 0 -8px 24px rgba(0,0,0,.25);
+  transform: translateY(100%);
+  transition: transform .28s ease;
+  z-index: 1060; /* above iframe/body inside modal */
+  display: flex;
+  flex-direction: column;
+}
+
+#summarySheet.show {
+  transform: translateY(0);
+}
+
+#summarySheet .sheet-handle {
+  width: 48px;
+  height: 5px;
+  border-radius: 999px;
+  background: #ddd;
+  margin: 10px auto 6px;
+}
+
+#summarySheetHeader {
+  padding: 6px 14px 8px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#summarySheetBody {
+  padding: 12px 14px;
+  overflow: auto;
+}
+
+#summaryText {
+  width: 100%;
+  min-height: 28vh;
+  resize: vertical;
+}
+
+#summarySheetFooter {
+  padding: 10px 14px 14px;
+  border-top: 1px solid #f1f1f1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* for summary
+/* Bootstrap 4-safe custom badge color */
+.badge.badge-olive {
+  background-color: #6b8e23 !important;
+  color: #fff !important;
+  /* Optional: ensure it's visually like other badges */
+  border: none !important;
+}
+
+/* If the badge is ever a link */
+a.badge.badge-olive:hover,
+a.badge.badge-olive:focus {
+  color: #fff !important;
+}
+
+
+</style>
 
 
 @php
@@ -103,6 +206,45 @@
             " data-rid='{{ $book->rid }}' data-start='" + start +"' data-end='" + end + "'> ";
         
             
+      @if($historyTocMode)
+        document.getElementById('fullscreenModalLabel').innerHTML +=
+            " <button id='startButton' type='button' class='btn btn-primary ml-2' onClick=section_status_change('in_progress')>{{ __('Start Reading') }}</button>";
+        document.getElementById('fullscreenModalLabel').innerHTML +=
+            " <button id='finishButton' type='button' class='btn btn-warning ml-2' style='margin-left:10px;' onClick=section_status_change('completed')>{{ __('Finish') }}</button>";
+        
+        document.getElementById('fullscreenModalLabel').innerHTML +=
+            " <button id='resetButton' type='button' class='btn btn-danger ml-2' style='margin-left:10px;display:none;' onClick=section_status_change('none')>{{ __('Reset') }}</button>";
+
+        if (status == 'in_progress') {
+            let displayTime = start_time.slice(0, 16); 
+            document.getElementById('fullscreenModalLabel').innerHTML += " &nbsp; <span style='margin-left:10x;' class='small'>" + displayTime + " ~ </span>";
+        } else if (status == 'completed') {
+            let sTime = start_time.slice(0, 16); 
+            let eTime = end_time.slice(0, 16); 
+            document.getElementById('fullscreenModalLabel').innerHTML += " &nbsp; <span style='margin-left:10x;' class='small'>" + sTime + " ~ " + eTime + "</span>";
+        } 
+
+        // Button display according to the status of the section    
+        $(document).ready(function () {
+            if(status == '' || status =='none') {
+                $('#startButton').show();
+                $('#finishButton').hide();
+            } else if(status == 'in_progress') {
+                $('#startButton').hide();
+                $('#finishButton').show(); 
+            } else if(status == 'completed') {
+                $('#startButton').hide();
+                $('#finishButton').hide(); 
+                $('#resetButton').show(); 
+            }
+        });
+
+        document.getElementById('fullscreenModalLabel').innerHTML +=
+            " <button id='openSummaryBtn' type='button' class='btn btn-olive btn-sm ml-2' onclick='openSummarySheet()'>" +
+            "   <i class=\"fas fa-pen mr-1\"></i>{{ __('Write Summary') }}" +
+            " </button>";
+
+      @endif
       })
       .on('hidden.bs.modal.pdf', function () {
         document.getElementById('pdfIframe').src = 'about:blank'; // free resources
@@ -113,6 +255,11 @@
 // change the section's status of the reading history
   function section_status_change(st) {
     var data = $('#fullscreenModal').data();
+    if(st == 'none') {
+        if(!confirm("{{ __('Do you want to reset the section status?') }}")) {
+            return false;
+        }
+    }
     $.ajax({
         url: "{{ route('reading_history.section_set_status', ['book' => $book->id]) }}",
         type: "POST",
@@ -134,7 +281,6 @@
         }
     });
   }
-
 </script>
 
 <script>
@@ -155,7 +301,152 @@
             // history.replaceState(null, "", window.location.pathname);
         }
     });
+</script>
 
+<script>
+  // For summary bottom sheet
+  // Open the sheet: pulls current start/end from the fullscreenModal data set in goToPage()
+  function openSummarySheet() {
+    const $modal = $('#fullscreenModal');
+    const data   = $modal.data() || {};
+    const start  = data.start || data.page || '';
+    const end    = data.end   || data.page || '';
+    const rid    = data.rid;
+
+    // label
+    const rangeText = (String(start) === String(end)) ? ('p. ' + start) : ('pp. ' + start + '–' + end);
+    document.getElementById('summaryPageRange').textContent = rangeText;
+
+    const key = summaryKey(rid, start, end);
+    const cached = summaryCache.get(key);
+
+    // If we have a cached draft (dirty or not), use it and don't fetch (unless marked stale and not dirty)
+    if (cached) {
+      $('#summaryText').val(cached.text || '');
+      // If stale but not dirty, refresh from server in the background and only replace if user hasn't typed meanwhile.
+      if (cached.stale && !cached.dirty) {
+        const token = Date.now().toString();
+        $('#summaryText').data('fetch-token', token);
+
+        $.get("{{ route('reading_history.section_summary.get', ['book' => $book->id]) }}", { start, end })
+          .done(function(res){
+            const txt = (res && typeof res.summary === 'string') ? res.summary : '';
+            const current = summaryCache.get(key) || { text:'', dirty:false, stale:false };
+            // Only update if still not dirty and token matches (user didn't type)
+            if (!current.dirty && $('#summaryText').data('fetch-token') === token) {
+              summaryCache.set(key, { text: txt, dirty: false, stale: false });
+              $('#summaryText').val(txt);
+            }
+          })
+          .always(function(){
+            $('#summaryText').removeData('fetch-token');
+          });
+      }
+
+      showSummarySheetUI();
+      return;
+    }
+
+    // No cache: set empty while fetching first time
+    $('#summaryText').val('');
+    const token = Date.now().toString();
+    $('#summaryText').data('fetch-token', token);
+
+    $.get("{{ route('reading_history.section_summary.get', ['book' => $book->id]) }}", { start, end })
+      .done(function(res){
+        const txt = (res && typeof res.summary === 'string') ? res.summary : '';
+        // set as fresh (not dirty, not stale)
+        summaryCache.set(key, { text: txt, dirty: false, stale: false });
+        // only write if same request
+        if ($('#summaryText').data('fetch-token') === token) {
+          $('#summaryText').val(txt);
+        }
+      })
+      .fail(function(){
+        summaryCache.set(key, { text: '', dirty: false, stale: false });
+      })
+      .always(function(){
+        $('#summaryText').removeData('fetch-token');
+      });
+
+    showSummarySheetUI();
+
+    function showSummarySheetUI() {
+      document.getElementById('summarySheetBackdrop').style.display = 'block';
+      document.getElementById('summarySheet').classList.add('show');
+      document.getElementById('summarySheet').setAttribute('aria-hidden', 'false');
+      setTimeout(() => document.getElementById('summaryText').focus(), 120);
+    }
+  }
+
+  function closeSummarySheet() {
+    document.getElementById('summarySheet').classList.remove('show');
+    document.getElementById('summarySheet').setAttribute('aria-hidden', 'true');
+    document.getElementById('summarySheetBackdrop').style.display = 'none';
+    // NOTE: we DO NOT clear textarea here; cache already holds the current text (dirty)
+  }
+
+  // Simple draft saver (front-end only). Wire to your API later.
+  function saveSummaryDraft() {
+    var $modal = $('#fullscreenModal');
+    var data = $modal.data() || {};
+    var start = data.start || data.page || '';
+    var end   = data.end   || data.page || '';
+    var text  = $('#summaryText').val().trim();
+
+    $.post("{{ route('reading_history.section_summary.store', ['book' => $book->id]) }}", {
+        _token: "{{ csrf_token() }}",
+        start: start,
+        end: end,
+        summary: text
+    }).done(function(res){
+        // toast/feedback here...
+        closeSummarySheet();
+    }).fail(function(xhr){
+        alert('Failed to save summary: ' + (xhr.responseJSON?.error || xhr.statusText));
+    });
+  }
+
+
+  // Optional helper if you want per-section caching
+  function summaryCacheKey(rid, start, end) {
+    return 'summary:' + (rid || 'rid') + ':' + (start || 's') + '-' + (end || 'e');
+  }
+
+  // Ensure sheet closes when the fullscreen modal closes
+  $('#fullscreenModal').on('hidden.bs.modal', function () {
+    closeSummarySheet();
+  });
+
+
+  // Per-section cache: key => { text: string, stale: boolean }
+  const summaryCache = new Map();
+  function summaryKey(rid, start, end) {
+    return `${rid || 'rid'}:${start || 's'}-${end || 'e'}`;
+  }
+  
+
+    // Attach once
+  $(document).ready(function () {
+    $('#summaryText').on('input', function () {
+      const $modal = $('#fullscreenModal');
+      const data   = $modal.data() || {};
+      const rid    = data.rid;
+      const start  = data.start || data.page || '';
+      const end    = data.end   || data.page || '';
+      const key    = summaryKey(rid, start, end);
+
+      const existing = summaryCache.get(key) || { text: '', dirty: false, stale: false };
+      summaryCache.set(key, { text: this.value, dirty: true, stale: existing.stale });
+    });
+  });
+
+   // Called by the summary badge
+  function openSectionAndSummary(btn) {
+    // mark this click as "also open the summary editor"
+    btn.setAttribute('data-open-summary', '1');
+    goToPage(btn);
+  }
 </script>
 
 <!-- top icons and buttons -->
@@ -164,142 +455,9 @@
         <div class="col-12">
             <div class="book-content-wrapper">
                 <div class="book-header d-flex justify-content-start align-items-center">
-                @if($isAdmin)
-                    <span class="action-icon-wrapper">
-                        <i class="fas fa-cog zoom img-icon-pointer" onClick="window.location='{{config('app.url','/mindbridger')."/book/".$book->id}}/edit'" style="cursor:pointer; font-size: 24px; color: #6c757d;"></i>
-                    </span>
-                @endif
-                    <span class="action-icon-wrapper">
-                        <i class="fas fa-share-alt zoom img-icon-pointer" onClick="openSharePopup()" style="cursor:pointer; font-size: 24px; color: #6c757d;"></i>
-                    </span>
-                    <script>
-                        function openSharePopup() {
-                            const shareUrl = '<?=$bookShareLink?>';
-                            const shareTitle = '<?=addslashes($book->title)?>';
-                            const shareText = '<?=addslashes($book->author)?> - <?=addslashes($book->title)?>';
-                            
-                            // Create share popup
-                            const popup = document.createElement('div');
-                            popup.className = 'share-popup-overlay';
-                            popup.innerHTML = `
-                                <div class="share-popup">
-                                    <div class="share-popup-header">
-                                        <h5 class="mb-0">{{__("Share this resource")}}</h5>
-                                        <button type="button" class="close-btn" onclick="closeSharePopup()">&times;</button>
-                                    </div>
-                                    <div class="share-popup-body">
-                                        <div class="share-options">
-                                            <button class="share-btn share-facebook" onclick="shareToFacebook('${shareUrl}', '${shareTitle}')">
-                                                <i class="fab fa-facebook-f"></i>
-                                                Facebook
-                                            </button>
-                                            <button class="share-btn share-twitter" onclick="shareToTwitter('${shareUrl}', '${shareText}')">
-                                                <i class="fab fa-twitter"></i>
-                                                Twitter
-                                            </button>
-                                            <button class="share-btn share-linkedin" onclick="shareToLinkedIn('${shareUrl}', '${shareTitle}', '${shareText}')">
-                                                <i class="fab fa-linkedin-in"></i>
-                                                LinkedIn
-                                            </button>
-                                            <button class="share-btn share-email" onclick="shareToEmail('${shareUrl}', '${shareTitle}', '${shareText}')">
-                                                <i class="fas fa-envelope"></i>
-                                                Email
-                                            </button>
-                                        </div>
-                                        <div class="share-url-section">
-                                            <label for="share-url" class="form-label">{{__("Or copy the link")}}:</label>
-                                            <div class="input-group">
-                                                <input type="text" id="share-url" class="form-control" value="${shareUrl}" readonly>
-                                                <div class="input-group-append">
-                                                    <button class="btn btn-outline-secondary" type="button" onclick="copyShareUrl()">
-                                                        {{__("Copy")}}
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            `;
-                            
-                            document.body.appendChild(popup);
-                            document.body.style.overflow = 'hidden';
-                        }
-                        
-                        function closeSharePopup() {
-                            const popup = document.querySelector('.share-popup-overlay');
-                            if (popup) {
-                                popup.remove();
-                                document.body.style.overflow = 'auto';
-                            }
-                        }
-                        
-                        function shareToFacebook(url, title) {
-                            const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
-                            window.open(shareUrl, '_blank', 'width=600,height=400');
-                        }
-                        
-                        function shareToTwitter(url, text) {
-                            const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
-                            window.open(shareUrl, '_blank', 'width=600,height=400');
-                        }
-                        
-                        function shareToLinkedIn(url, title, text) {
-                            const shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
-                            window.open(shareUrl, '_blank', 'width=600,height=400');
-                        }
-                        
-                        function shareToEmail(url, title, text) {
-                            const subject = encodeURIComponent(title);
-                            const body = encodeURIComponent(`${text}\n\n${url}`);
-                            const mailtoUrl = `mailto:?subject=${subject}&body=${body}`;
-                            window.location.href = mailtoUrl;
-                        }
-                        
-                        function copyShareUrl() {
-                            const urlInput = document.getElementById('share-url');
-                            urlInput.select();
-                            urlInput.setSelectionRange(0, 99999);
-                            navigator.clipboard.writeText(urlInput.value)
-                                .then(() => {
-                                    const copyBtn = urlInput.nextElementSibling.querySelector('button');
-                                    const originalText = copyBtn.textContent;
-                                    copyBtn.textContent = '{{__("Copied!")}}';
-                                    copyBtn.classList.add('btn-success');
-                                    setTimeout(() => {
-                                        copyBtn.textContent = originalText;
-                                        copyBtn.classList.remove('btn-success');
-                                    }, 2000);
-                                })
-                                .catch((error) => {
-                                    alert(`{{__("Copy failed!")}} ${error}`);
-                                });
-                        }
-                    </script>
 
                 @if(Auth::check() && !$isAdmin)
-                    <span class="action-icon-wrapper">
-                        <!-- Favorite Checkbox with Heart Icon -->
-                        <label style="cursor:pointer;" class="mb-0">
-                            <input type="checkbox" id="favorite-checkbox" style="display:none;" onchange="toggleFavorite(this)">
-                            <i id="favorite-icon" class="fa-heart zoom img-icon-pointer far" style="cursor:pointer; font-size: 24px; color: #dc3545;"></i>
-                        </label>
-                    </span>
-                    <span class="action-icon-wrapper">
-                        <label style="cursor:pointer;">
-                                <input type="checkbox" id="eshelf-checkbox" style="display:none;" onchange="toggleEshelf(this)">
-                            <i id="eshelf-icon" class="far fa-bookmark zoom img-icon-pointer" 
-                                style="font-size: 24px; color:#28a745;"></i>
-                        </label>
-                    </span>            
                     <!-- Reading Time Information -->
-                    <div id="reading-time-info" class="mt-2" style="display: none;">
-                        <small class="text-muted">
-                            <i class="fas fa-clock mr-1"></i>
-                            <span id="start-time-text"></span>
-                            <span id="end-time-text"></span>
-                        </small>
-                    </div>
-
                     @if($isEresource)
                       <label>
                         @php
@@ -326,6 +484,10 @@
                         <span class="badge badge-info" style="display:{{$fButtonDisplay}};">
                             {{ __('In Progress') }}
                         </span>
+                        <button type="button" style="display:{{$fButtonDisplay}};" id="finishReadingButton"
+                                class="btn btn-sm btn-danger ml-2">
+                            {{ __('Finish Reading') }}
+                        </button>
 
                       </label>
                       @if(!empty($readingHistory) && $readingHistory->status == 'completed')
@@ -334,21 +496,25 @@
                             {{ __('Finished') }}
                         </span>
                       </label>
+                      <label>
+                        <button type="button" id="resetReadingButton"
+                                class="btn btn-sm btn-danger ml-2">
+                            {{ __('Reset') }}
+                        </button>
+                      </label>
                       @endif
                     
                       <!-- My Reading History Button and Modal -->
-                      @if(!empty($readingHistory))
-                        <label>
-                            <a href="{{ route('reading.history.show', ['book' => $book->id]) }}" class="resource-link">
-                                <button type="button" id="myReadingButton"
-                                    class="btn btn-sm btn-primary ml-2">
-                                    {{ __('Go to my Reading History') }}
-                                </button>
-                            </a>
-                        </label>
-                      @endif
                       <label>
+                        <a href="{{ route('book.show', ['book' => $book->id]) }}" class="resource-link">
+                            <button type="button" id="myReadingButton"
+                                class="btn btn-sm btn-primary ml-2" style="background-color: #F0F; color: #fff;">
+                                {{ __('Back to Book Main Page') }}
+                            </button>
+                        </a>
+                      </label>
 
+                      <label>
                         <img src='{{ config('app.url','/mindbridger') }}/image/ai-assistant.png' 
                             class='zoom img-icon-pointer ml-2' alt='AI Assistant' style='margine-left:10px;'
                             data-toggle="modal"
@@ -381,27 +547,91 @@
                                             if (response.success) {
                                                 console.log("Success:", response);
                                                 document.getElementById('startReadingButton').style.display = 'none';
+                                                document.getElementById('finishReadingButton').style.display = 'inline';
                                                 document.getElementById('eshelf-checkbox').checked=true;
                                                 toggleEshelf(document.getElementById('eshelf-checkbox'));
                       
-                                                // window.location.href = window.location.pathname; // clear section window qeury 
-                                                window.location.href = "{{ route('reading.history.show', ['book' => $book->id]) }}";
-                                                
+                                                window.location.href = window.location.pathname; // clear section window qeury 
+                                            
                                                 /* alert("Let's start reading!"); */
                                             } else {
                                                 console.warn("Unexpected response:", response);
                                                 document.getElementById('startReadingButton').style.display = 'inline';
+                                                document.getElementById('finishReadingButton').style.display = 'none';
                                                 alert("Failed to update status.");
                                             }
                                         },
                                         error: function (xhr) {
                                             console.error("Error:", xhr.responseText);
                                             document.getElementById('startReadingButton').style.display = 'inline';
+                                            document.getElementById('finishReadingButton').style.display = 'none';
                                             alert("Something went wrong!");
                                         }
                                     });
                                 } else {
                                     return false; // User cancelled
+                                }
+                            });
+
+                            $('#finishReadingButton').on('click', function () {
+                                if(confirm("{{__("Do you want to finish reading this book?")}}")) {
+                                    $.ajax({
+                                        url: "{{ route('reading_history.set_status', ['book' => $book->id]) }}",
+                                        type: "POST",
+                                        data: {
+                                            status: "completed",
+                                            book_id: "{{ $book->id }}",
+                                            _token: "{{ csrf_token() }}"
+                                        },
+                                        success: function (response) {
+                                            if (response.success) {
+                                                console.log("Success:", response);
+                                                document.getElementById('finishReadingButton').style.display = 'none';
+                                                /* alert("Reading finished!"); */
+                                                window.location.href = window.location.pathname; // clear section window qeury 
+                                            } else {
+                                                console.warn("Unexpected response:", response);
+                                                document.getElementById('finishReadingButton').style.display = 'inline';
+                                                alert("Failed to update status.");
+                                            }
+                                        },
+                                        error: function (xhr) {
+                                            console.error("Error:", xhr.responseText);
+                                            document.getElementById('finishReadingButton').style.display = 'inline';
+                                            alert("Something went wrong!");
+                                        }
+                                    });
+                                }
+                            });
+
+
+                            $('#resetReadingButton').on('click', function () {
+                                if(confirm("{{__("Do you want to reset reading history of the book? All reading history except summary will be lost!")}}")) {
+                                    $.ajax({
+                                        url: "{{ route('reading_history.reset', ['book' => $book->id]) }}",
+                                        type: "POST",
+                                        data: {
+                                            book_id: "{{ $book->id }}",
+                                            _token: "{{ csrf_token() }}"
+                                        },
+                                        success: function (response) {
+                                            if (response.success) {
+                                                console.log("Success:", response);
+                                                document.getElementById('resetReadingButton').style.display = 'none';
+                                                /* alert("Reading finished!"); */
+                                                window.location.href = window.location.pathname; // clear section window qeury 
+                                            } else {
+                                                console.warn("Unexpected response:", response);
+                                                document.getElementById('resetReadingButton').style.display = 'inline';
+                                                alert("Failed to update status.");
+                                            }
+                                        },
+                                        error: function (xhr) {
+                                            console.error("Error:", xhr.responseText);
+                                            document.getElementById('resetReadingButton').style.display = 'inline';
+                                            alert("Something went wrong!");
+                                        }
+                                    });
                                 }
                             });
                         });
@@ -521,55 +751,40 @@
 <!-- Small Modals -->  
 <div class="container mt-0">
     <div class="row">
-        <div class="col-12">               
-          <!-- Favorite Small Modal -->
-            <div class="modal fade" id="favModal" tabindex="-1" role="dialog" aria-hidden="true">
-                <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
-                    <div class="modal-content text-center">
-                    <div class="modal-body">
-                        <p id='fav_small_p' class="mb-0 text-success">{{ __('Added to your favorite list') }}</p>
-                    </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="modal fade" id="favModalD" tabindex="-1" role="dialog" aria-hidden="true">
-                <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
-                    <div class="modal-content text-center">
-                    <div class="modal-body">
-                        <p id='fav_small_p' class="mb-0 text-info">{{ __('Removed from your favorite list') }}</p>
-                    </div>
-                    </div>
-                </div>
-            </div>
-          <!-- End of Favorite Small Modal -->
-
-          <!-- Eshelf Small Modal -->
-            <div class="modal fade" id="eshelfModal" tabindex="-1" role="dialog" aria-hidden="true">
-                <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
-                    <div class="modal-content text-center">
-                    <div class="modal-body">
-                        <p id='fav_small_p' class="mb-0 text-success">{{ __('Added to your e-Shelf list') }}</p>
-                    </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="modal fade" id="eshelfModalD" tabindex="-1" role="dialog" aria-hidden="true">
-                <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
-                    <div class="modal-content text-center">
-                        <div class="modal-body">
-                            <p id='fav_small_p' class="mb-0 text-info">{{ __('Removed from your e-Shelf list') }}</p>
+        <div class="col-12">     
+          <!-- Reset Warning Modal -->
+            <div class="modal fade" id="resetWarningModal" tabindex="-1" role="dialog" aria-labelledby="resetWarningModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="resetWarningModalLabel">
+                                <i class="fas fa-exclamation-triangle text-warning mr-2"></i>경고
+                            </h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body text-center">
+                            <p class="mb-0">
+                                <i class="fas fa-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+                            </p>
+                            <h5 class="mt-3 text-warning">{{__("All reading history will be deleted")}}</h5>
+                            <p class="text-muted">모든 독서 기록이 삭제됩니다. 계속하시겠습니까?</p>
+                        </div>
+                        <div class="modal-footer justify-content-center">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+                            <button type="button" class="btn btn-danger" onclick="resetReading()">
+                                <i class="fas fa-trash mr-1"></i>삭제
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
-          <!-- End of Eshelf Small Modal -->
+          <!-- End of Reset Warning Modal -->
         </div>
     </div>
 </div>
 <!-- End of Small Modals -->
-
 
 <!-- Book Body -->
 <div class="container mt-0">
@@ -580,7 +795,10 @@
     <input type='hidden' name="id" value='{{$book->id}}'>
     <input type='hidden' name="del_file">  
     <div class="book-body">
-        <div class="card-body col-12">             
+        <div class="card-body col-12">
+            <div class="d-flex justify-content-center">
+                <h2 class="reading-title mb-4">{{__("My Reading History")}}</h2>
+            </div>
             <div class="form-group row">
                 <label for="title" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Title") }}</label>
 
@@ -597,21 +815,7 @@
                 </div>
             </div>
 
-            @if($isEresource)
-                @auth
-                    <?PHP
-                        $video_txt=show_list_videos($book,$perm,$book->rid);
-                    ?>
-                    @if($video_txt!='')
-                        <div class="form-group row">
-                            <label for="video" class="col-md-3 col-form-label text-md-right font-weight-bold">{{__('Video') }}</label>
-                            <div class="col-md-9">                                     
-                                <?=$video_txt?>                                                         
-                            </div>
-                        </div>
-                    @endif
-                @endauth
-                
+            @if($isEresource)                
                 <div class="form-group row">
                     <label for="e-Resources" class="col-md-3 col-form-label text-md-right font-weight-bold">
                         {{ __('e-Resources') }}                               
@@ -669,7 +873,11 @@
                                     'page'  => $item['page'] ?? ($item['start'] ?? null),   // legacy single page
                                     'start' => $item['start'] ?? ($item['page'] ?? null),
                                     'end'   => $item['end']   ?? ($item['page'] ?? null),
-                                    'level' => $item['level'] ?? 1
+                                    'level' => $item['level'] ?? 1,
+                                    'status' => $item['status'] ?? '',
+                                    'start_time' => $item['start_time'] ?? '',
+                                    'end_time' => $item['end_time'] ?? '',
+                                    'summary' => $item['summary'] ?? '',
                                 ];
 
                                 if ($item['level'] <= 1) {
@@ -681,7 +889,11 @@
                                         'page'     => $item['page'] ?? ($item['start'] ?? null),
                                         'start'    => $item['start'],
                                         'end'      => $item['end'],
-                                        'children' => []
+                                        'status' => $item['status'] ?? '',
+                                        'start_time' => $item['start_time'] ?? '',
+                                        'end_time' => $item['end_time'] ?? '',
+                                        'children' => [],
+                                        'summary' => $item['summary'] ?? '',
                                     ];
                                 } else {
                                     if (!$current) { // in case JSON starts with > level 1
@@ -691,7 +903,10 @@
                                             'page'     => null,
                                             'start'    => null,
                                             'end'      => null,
-                                            'children' => []
+                                            'status' => $item['status'] ?? '',
+                                            'start_time' => $item['start_time'] ?? '',
+                                            'end_time' => $item['end_time'] ?? '',
+                                            'children' => [],
                                         ];
                                     }
                                     $current['children'][] = $item;
@@ -718,6 +933,40 @@
                                         <iframe id="pdfIframe" title="PDF Viewer"
                                             style="width:100%; height:100%; border:0;" allow="fullscreen">
                                         </iframe>
+
+                                        <!-- Bottom-sheet summary editor (lives inside fullscreenModal) -->
+                                        <div id="summarySheetBackdrop" onclick="closeSummarySheet()"></div>
+
+                                        <div id="summarySheet" aria-hidden="true">
+                                            <div class="sheet-handle" role="presentation"></div>
+
+                                            <div id="summarySheetHeader">
+                                                <div>
+                                                    <i class="fas fa-pen mr-2 text-muted"></i>
+                                                    <strong>{{ __('Page Summary') }}</strong>
+                                                    <small id="summaryPageRange" class="text-muted ml-2"></small>
+                                                </div>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="closeSummarySheet()">
+                                                    {{ __('Close') }}
+                                                </button>
+                                            </div>
+
+                                            <div id="summarySheetBody">
+                                                <label for="summaryText" class="sr-only">{{ __('Write summary') }}</label>
+                                                <textarea id="summaryText" class="form-control" placeholder="{{ __('Write a brief summary for this section/page...') }}"></textarea>
+                                                <small id="summaryHelper" class="form-text text-muted mt-1">
+                                                {{ __('Tip: Capture the main idea, key terms, and 1–2 insights.') }}
+                                                </small>
+                                            </div>
+
+                                            <div id="summarySheetFooter">
+                                                <button type="button" class="btn btn-light" onclick="closeSummarySheet()">{{ __('Cancel') }}</button>
+                                                <button type="button" class="btn btn-success" onclick="saveSummaryDraft()">
+                                                <i class="fas fa-save mr-1"></i>{{ __('Save Draft') }}
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <!-- End of Bottom-sheet summary editor (lives inside fullscreenModal) -->                          
                                     </div>
                                 </div>
                             </div>
@@ -731,7 +980,11 @@
                                     $headingId  = "tocHeading{$idx}";
                                     $startPage  = $ch['start'] ?? $ch['page'];
                                     $endPage    = $ch['end'] ?? $ch['page'];
+                                    $status    = $ch['status'] ?? '';
+                                    $start_time  = $ch['start_time'] ?? '';
+                                    $end_time    = $ch['end_time'] ?? '';
                                     $hasChildren = !empty($ch['children']);
+                                    $summary = !empty($ch['summary']);
                                 @endphp
 
                                 <div class="card">
@@ -749,6 +1002,10 @@
                                                 data-end="{{ $endPage }}"
                                                 data-rf="{{ e($rfiles[0]) }}"
                                                 data-rid="{{ e($book->rid) }}"
+                                                data-status="{{ $status }}"
+                                                data-start_time="{{ $start_time }}"
+                                                data-end_time="{{ $end_time }}"
+                                                data-summary="{{ $summary }}"
                                             >
 
                                                 {{ $ch['title'] }}
@@ -762,8 +1019,24 @@
                                             </button>
                                         @else
                                             {{-- No children: plain text title, no toggle --}}
+                                            <?php
+                                           $summaryBadge = (!empty($ch['summary']))
+                                            ? "<span class='badge badge-olive mr-1' data-toggle='tooltip' title='".__('Summary')."'>
+                                                <i class='fas fa-file-lines'></i>
+                                                <span class='sr-only'>".__('Summary')."</span>
+                                                </span>"
+                                            : "";
+
+                                            if($ch['status'] == 'in_progress') {
+                                                $badge = "<span class='badge badge-warning'>".__("Reading..")."</span>";
+                                            } else if($ch['status'] == 'completed') {
+                                                $badge = "<span class='badge badge-success'>".__("Done :)")."</span>";
+                                            } else {
+                                                $badge ="";
+                                            }
+                                            ?>
                                             <span class="btn" style="pointer-events: none; cursor: default;">
-                                                {{ $ch['title'] }}
+                                                {!! $summaryBadge !!} {!! $badge !!} {{ $ch['title'] }}
                                                 <span class="badge badge-secondary ml-2">
                                                     @if($startPage !== $endPage)
                                                         pp. {{ $startPage }}–{{ $endPage }}
@@ -783,7 +1056,11 @@
                                                 data-start="{{ $startPage }}"
                                                 data-end="{{ $endPage }}"
                                                 data-rf="{{ e($rfiles[0]) }}"
-                                                data-rid="{{ e($book->rid) }}"                    
+                                                data-rid="{{ e($book->rid) }}"
+                                                data-status="{{ $status }}"
+                                                data-start_time="{{ $start_time }}"
+                                                data-end_time="{{ $end_time }}"
+                                                data-summary="{{ $summary }}"
                                                 onclick="goToPage(this)"
                                             >
                                                 {{ __('Go to page') }}
@@ -799,16 +1076,29 @@
                                         <ul class="list-group list-group-flush">
                                         @foreach($ch['children'] as $child)
                                             @php
-                                                $cStart = $child['start'] ?? $child['page'];
-                                                $cEnd   = $child['end'] ?? $child['page'];
+                                            $cStart = $child['start'] ?? $child['page'];
+                                            $cEnd   = $child['end'] ?? $child['page'];
 
+                                            $summaryBadge = (!empty($child['summary']))
+                                                ? "<span class='badge badge-olive mr-1' data-toggle='tooltip' title='".__('Summary')."'>
+                                                    <i class='fas fa-file-lines'></i>
+                                                    <span class='sr-only'>".__('Summary')."</span>
+                                                    </span>"
+                                                : "";
+                                                
+                                            if($child['status'] == 'in_progress') {
+                                                $badge = "<span class='badge badge-warning'>".__("Reading..")."</span>";
+                                            } else if($child['status'] == 'completed') {
+                                                $badge = "<span class='badge badge-success'>".__("Done :)")."</span>";
+                                            } else $badge ="";
                                             @endphp
+
                                             <li class="list-group-item d-flex align-items-center justify-content-between">
                                             <span>
                                                 @if(($child['level'] ?? 2) > 2)
-                                                    <span class="text-muted mr-2" style="display:inline-block; width: {{ (($child['level']-2)*14) }}px;"></span>
+                                                <span class="text-muted mr-2" style="display:inline-block; width: {{ (($child['level']-2)*14) }}px;"></span>
                                                 @endif
-                                                    {{ $child['title'] }}
+                                                {!! $summaryBadge !!} {!! $badge !!} {{ $child['title'] }}
                                             </span>
 
                                             @if(!is_null($child['page']))
@@ -818,7 +1108,11 @@
                                                     data-start="{{ $cStart }}"
                                                     data-end="{{ $cEnd }}"
                                                     data-rf="{{ e($rfiles[0]) }}"
-                                                    data-rid="{{ e($book->rid) }}"                                                
+                                                    data-rid="{{ e($book->rid) }}"
+                                                    data-status="{{ $child['status'] }}"
+                                                    data-start_time="{{ $child['start_time'] }}"
+                                                    data-end_time="{{ $child['end_time'] }}"
+                                                    data-summary="{{ $child['summary'] }}"
                                                     onclick="goToPage(this)"
                                                 >
                                                 @if($cStart !== $cEnd)
@@ -842,11 +1136,12 @@
                     </div>
                     <script>
                         $(document).ready(function () {
-                            // Expand all accordion panels
-                            $('#tocAccordion .collapse').each(function () {
-                                $(this).collapse('show');
-                            });
-
+                            @if(true || $historyTocMode)
+                                // Expand all accordion panels
+                                $('#tocAccordion .collapse').each(function () {
+                                    $(this).collapse('show');
+                                });
+                            @endif
                         });
                     </script>
                 </div>
@@ -872,77 +1167,7 @@
                     </div>
                 </div>
             @endif
-            <!-- End ToC Display: Accordion -->
-
-            <div class="form-group row">
-                <label for="rtype" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Type") }}</label>
-
-                <div class="col-md-9">
-                    <div class='form-control border-0'><?=\vwmldbm\code\get_c_name('code_c_rtype',$book->c_rtype)?></div>
-                </div>
-            </div>
-
-            @if(\vwmldbm\code\is_code_usable('code_c_genre'))    
-            <div class="form-group row">
-                <label for="c_genre" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Genre") }}</label>
-
-                <div class="col-md-9">
-                    <div class='form-control border-0'><?=\vwmldbm\code\get_c_name('code_c_genre',$book->c_genre)?></div>
-                </div>
-            </div>
-            @endif
-
-            @if(\vwmldbm\code\is_code_usable('code_c_grade'))
-                <div class="form-group row">
-                    <label for="c_grade" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Grade") }}</label>
-
-                    <div class="col-md-9">
-                        <div class='form-control border-0'><?=\vwmldbm\code\get_c_name('code_c_grade',$book->c_grade)?></div>
-                    </div>
-                </div>
-            @endif
-
-            @if(\vwmldbm\code\is_code_usable('code_c_category'))
-                <div class="form-group row">
-                    <label for="c_category" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Category") }}</label>
-
-                    <div class="col-md-9">
-                        <div class='form-control border-0'><?=\vwmldbm\code\get_c_name('code_c_category',$book->c_category)?></div>
-                    </div>
-                </div>
-            @endif
-            
-            @if(\vwmldbm\code\is_code_usable('code_c_category2'))
-                <div class="form-group row">
-                    <label for="c_category2" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Category2") }}</label>
-
-                    <div class="col-md-9">
-                        <div class='form-control border-0'><?=\vwmldbm\code\get_c_name('code_c_category2',$book->c_category2)?></div>
-                    </div>
-                </div>
-            @endif
-
-                <div class="form-group row">
-                    <label for="c_lang" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Language") }}</label>
-
-                    <div class="col-md-9">
-                        <span class='form-control border-0'>
-                            <?=\vwmldbm\code\print_code('vwmldbm_c_lang',$book->c_lang,'c_lang',null,null,null,'RD_ONLY',null,"class='form-control'");?>
-                        </span>
-                    </div>
-                </div>
-                
-
-                <div class="form-group row">
-                    <label for="e_resource_yn" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("e-Resource") }}</label>
-                    <div class="col-md-9">
-                        <div class='form-control border-0'>                            
-                            <?PHP
-                            echo \vwmldbm\code\print_c_yn('e_resource_yn',$book->e_resource_yn,null,'RD_ONLY',null,'Y_BLUE');
-                            ?>
-                        </div>                             
-                    </div>
-                </div>                                    
+            <!-- End ToC Display: Accordion -->                          
 
                 <div class="form-group row">
                     <label for="desc" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Description") }}</label>
@@ -951,95 +1176,6 @@
                         <div class='form-control-static overflow-auto' style='max-height:600px;min-height:100px;'>
                             <?=stripslashes($book->desc)?>
                         </div>                         
-                    </div>
-                </div>
-
-                <div class="form-group row">
-                    <label for="publisher" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Publisher") }}</label>
-
-                    <div class="col-md-9">
-                        <div class='form-control border-0'>{{ $book->publisher }}</div>
-                    </div>
-                </div>
-                
-                <div class="form-group row">
-                    <label for="publisher" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("URL") }}</label>
-
-                    <div class="col-md-9">
-                        <div class='form-control border-0'><a href='{{ $book->url }}' target='_blank'>{{ $book->url }}</a></div>
-                    </div>
-                </div>
-
-                <div class="form-group row">
-                    <label for="pub_date" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Pub Date") }}</label>
-
-                    <div class="col-md-9">
-                        <div class='form-control border-0'>{{ $book->pub_date }}</div>
-                    </div>
-                </div>
-                
-                <div class="form-group row">
-                    <label for="isbn" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("ISBN") }}</label>
-
-                    <div class="col-md-9">
-                        <div class='form-control border-0'>{{ $book->isbn }}</div>
-                    </div>
-                </div>
-
-                <div class="form-group row">
-                    <label for="eisbn" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("eISBN") }}</label>
-
-                    <div class="col-md-9">
-                        <div class='form-control border-0'>{{ $book->eisbn }}</div>
-                    </div>
-                </div>
-
-                <div class="form-group row">
-                    <label for="keywords" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Keywords") }}</label>
-
-                    <div class="col-md-9">
-                        <div class='form-control border-0'>{{ $book->keywords }}</div>                               
-                    </div>
-                </div>
-
-                <div class="form-group row">
-                    <label for="price" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Price") }}</label>
-
-                    <div class="col-md-9">
-                        <div class='form-control border-0'>{{ $book->price }}</div>                               
-                    </div>
-                </div>
-
-                <div class="form-group row">
-                    <label for="cover_image" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Cover Image") }}</label>
-                    <div class="col-md-9">
-                        @if($book->cover_image)
-                            <img onClick='open_cover_img(this)' style='cursor:pointer;' src='{{config('app.url','/nwlibrary')}}/storage/cover_images/{{$_SESSION['lib_inst']}}/{{$book->cover_image}}' height='200'>
-                            <script>  
-                                $(document).ready(function (){
-                                    $( "#dialog" ).dialog({
-                                        width:'auto',
-                                        height:'auto',
-                                        maxWidth:'400',
-                                        autoOpen: false,
-                                        position: {
-                                            my: 'middle',
-                                            at: 'top',
-                                            of: this,
-                                        }
-                                    });
-                                });
-
-                                function open_cover_img(obj) {
-                                    $('#dialog').dialog('open');    
-                                    $('#dialog_img').attr("src",obj.src);                                            
-                                }
-                            </script>
-
-                            <div id="dialog" title="" style="display:none; align-top;">
-                                <img id='dialog_img' width='100%'>
-                            </div>    
-                        @endif
                     </div>
                 </div>
 
@@ -1054,34 +1190,6 @@
         </div>
     </div>
   </form>
-<div class="row mt-4">
-        <div class="col-12">
-            <table class="table table-striped table-responsive-md">
-                <tr>
-                    <th> </th>
-                            <th>{{__("barcode")}}</th>
-                            <th>{{__("call_no")}}</th>
-                            <th>{{__("location")}}</th>
-                            <th>{{__("c_rstatus")}}</th>
-                </tr>
-                <?PHP $cnt=1; ?>
-            @foreach($book_copy as $bc)                  
-                <tr>
-                    <td>{{$cnt++}}</td> 
-                    <td>{{$bc['barcode']}}</td>
-                    <td>{{$bc['call_no']}}</td>
-                    <td>{{$bc['location']}}</td>
-                    <td>
-                        <?PHP
-                            if(isset($c_rstatus_arr[$bc['c_rstatus']])) echo $c_rstatus_arr[$bc['c_rstatus']];
-                        ?>
-                    </td>
-                </tr>
-            @endforeach
-            </table>
-        </div>
-    </div>
-</div>
 
 <!-- AI Assistant Modal -->
 <div class="modal fade" id="aiModal" tabindex="-1" role="dialog" aria-labelledby="aiModalLabel" aria-hidden="true">
@@ -1305,4 +1413,5 @@ $('#metaModal').on('show.bs.modal', function (event) {
     });
 });
 </script>
+
 @endsection

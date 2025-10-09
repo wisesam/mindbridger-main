@@ -30,7 +30,25 @@
    - (Windows CMD 예시)  mklink /D storage "c:\xampp\mindbridger-main\storage\app\public"
    - (Windows PowerShell 예시) New-Item -ItemType SymbolicLink -Path "storage" -Target "C:\xampp\mindbridger-main\storage\app\public"
    - (Linux, MacOS 예시) ln -s /var/www/mindbridger-main/storage/app/public storage
-10. http://localhost/mindbridger/vwmldbm 에서 Update 버튼 클릭
+
+10. 심볼릭 링크 생성 (CSS, JS, image)
+   - mindbridger 루트 디렉토리로 이동 (예: c:\xampp\htdocs\mindbridger, /var/www/html/mindbridger)
+- (Windows CMD 예시)
+   - mklink /D css ..\..\mindbridger-main\public\css
+   - mklink /D js ..\..\mindbridger-main\public\js
+   - mklink /D image ..\..\mindbridger-main\public\image
+
+- (Windows PowerShell 예시) 
+   - ItemType SymbolicLink -Path "css" -Target "..\..\mindbridger-main\public\css"
+   - New-Item -ItemType SymbolicLink -Path "js" -Target "..\..\mindbridger-main\public\js"
+   - New-Item -ItemType SymbolicLink -Path "image" -Target "..\..\mindbridger-main\public\image"
+
+- (Linux, MacOS 예시)
+   - mklink /D css ..\..\mindbridger-main\public\css
+   - mklink /D js ..\..\mindbridger-main\public\js
+   - mklink /D image ..\..\mindbridger-main\public\image
+
+11. http://localhost/mindbridger/vwmldbm 에서 Update 버튼 클릭
        
 ## 데모
 <a href="https://wise4edu.net/mindbridger" target="_blank">MindBridger 데모</a>

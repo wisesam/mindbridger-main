@@ -1,5 +1,4 @@
 <?php
-
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -26,7 +25,7 @@ return new class extends Migration
             
                 $table->enum('status', ['none', 'in_progress', 'completed', 'suspended'])
                     ->default('none');
-            
+
                 $table->json('historyData')->nullable();
                 $table->json('historyDataBackup')->nullable();
                 $table->json('evaluationData')->nullable();
