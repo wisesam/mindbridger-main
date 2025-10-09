@@ -15,23 +15,23 @@
    - https://github.com/wisesam/mindbridger-main.git
    - 디렉토리 권한 조정이 필요할 수 있음 (Linux와 MacOS):
      - 예: chown -R apache mindbridger-main, chgrp -R apache mindbridger-main
-3. cp .env.example .env  (수정 필요)
-4. cp config/app(default).php config/app.php (수정 필요)
-5. cp config/database(default).php config/database.php (수정 필요)
-6. composer install
-7. php artisan key:generate (.env 업데이트)
-8. DB 마이그레이션 (도서관 관련 테이블 설치)
+2. cp .env.example .env  (수정 필요)
+3. cp config/app(default).php config/app.php (수정 필요)
+4. cp config/database(default).php config/database.php (수정 필요)
+5. composer install
+6. php artisan key:generate (.env 업데이트)
+7. DB 마이그레이션 (도서관 관련 테이블 설치)
    - php artisan migrate
    - php artisan db:seed --class=CodeSeeder
    - (마이그레이션 시 "No such file or directory" 오류가 발생하면, .env의 DB_SOCKET을 업데이트)
 
-9. 심볼릭 링크 생성 (책 표지 이미지용)
+8. 심볼릭 링크 생성 (책 표지 이미지용)
    - mindbridger 루트 디렉토리로 이동 (예: c:\xampp\htdocs\mindbridger, /var/www/html/mindbridger)
    - (Windows CMD 예시)  mklink /D storage "c:\xampp\mindbridger-main\storage\app\public"
    - (Windows PowerShell 예시) New-Item -ItemType SymbolicLink -Path "storage" -Target "C:\xampp\mindbridger-main\storage\app\public"
    - (Linux, MacOS 예시) ln -s /var/www/mindbridger-main/storage/app/public storage
 
-10. 심볼릭 링크 생성 (CSS, JS, image)
+9. 심볼릭 링크 생성 (CSS, JS, image)
    - mindbridger 루트 디렉토리로 이동 (예: c:\xampp\htdocs\mindbridger, /var/www/html/mindbridger)
 - (Windows CMD 예시)
    - mklink /D css ..\..\mindbridger-main\public\css
@@ -48,7 +48,7 @@
    - ln -s ../../mindbridger-main/public/js js
    - ln -s ../../mindbridger-main/public/image image
 
-11. http://localhost/mindbridger/vwmldbm 에서 Update 버튼 클릭
+10. http://localhost/mindbridger/vwmldbm 에서 Update 버튼 클릭
        
 ## 데모
 <a href="https://wise4edu.net/mindbridger" target="_blank">MindBridger 데모</a>
@@ -74,23 +74,23 @@ Laravel은 표현력이 풍부하고 우아한 문법을 가진 웹 애플리케
    - https://github.com/wisesam/mindbridger-main.git
    - Adujust directory permission if needed (Linux and MacOS):
      - eg, chown -R apache mindbridger-main, chgrp -R apache mindbridger-main
-3. cp .env.example .env  (update needed)
-4. cp config/app(default).php config/app.php (update needed)
-5. cp config/database (default).php config/database .php (update needed)
-6. composer install
-7. php artisan key:generate (update .env)
-8. DB Migration (Library related table installation)
+2. cp .env.example .env  (update needed)
+3. cp config/app(default).php config/app.php (update needed)
+4. cp config/database (default).php config/database .php (update needed)
+5. composer install
+6. php artisan key:generate (update .env)
+7. DB Migration (Library related table installation)
    - php artisan migrate
    - php artisan db:seed --class=CodeSeeder
    - (If migration gives error like " No such file or directory", then update DB_SOCKET in .env)
 
-9. Create a symbolic link (for cover images)
+8. Create a symbolic link (for cover images)
    - Go to root of mindbridger (eg, c:\xampp\htdocs\mindbridger, /var/www/html/mindbridger)
    - (Windows CMD example)  mklink /D storage "c:\xampp\mindbridger-main\storage\app\public"
    - (Window PowerShell example) New-Item -ItemType SymbolicLink -Path "storage" -Target "C:\xampp\mindbridger-main\storage\app\public"
    - (Linux, MacOS example) ln -s /var/www/mindbridger-main/storage/app/public storage
   
-10. Create symbolic links (CSS, JS, image)
+9. Create symbolic links (CSS, JS, image)
    - Go to root of mindbridger (eg, c:\xampp\htdocs\mindbridger, /var/www/html/mindbridger)
 - (Windows CMD example)
    - mklink /D css ..\..\mindbridger-main\public\css
@@ -107,7 +107,7 @@ Laravel은 표현력이 풍부하고 우아한 문법을 가진 웹 애플리케
    - ln -s ../../mindbridger-main/public/js js
    - ln -s ../../mindbridger-main/public/image image
      
-11. Click Update button from http://localhost/mindbridger/vwmldbm
+10. Click Update button from http://localhost/mindbridger/vwmldbm
        
 ## Demo
 <a href="https://wise4edu.net/mindbridger" target="_blank">MindBridger Demo</a>
