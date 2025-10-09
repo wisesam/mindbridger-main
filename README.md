@@ -44,9 +44,9 @@
    - New-Item -ItemType SymbolicLink -Path "image" -Target "..\..\mindbridger-main\public\image"
 
 - (Linux, MacOS 예시)
-   - mklink /D css ..\..\mindbridger-main\public\css
-   - mklink /D js ..\..\mindbridger-main\public\js
-   - mklink /D image ..\..\mindbridger-main\public\image
+   - ln -s ../../mindbridger-main/public/css css
+   - ln -s ../../mindbridger-main/public/js js
+   - ln -s ../../mindbridger-main/public/image image
 
 11. http://localhost/mindbridger/vwmldbm 에서 Update 버튼 클릭
        
@@ -89,7 +89,25 @@ Laravel은 표현력이 풍부하고 우아한 문법을 가진 웹 애플리케
    - (Windows CMD example)  mklink /D storage "c:\xampp\mindbridger-main\storage\app\public"
    - (Window PowerShell example) New-Item -ItemType SymbolicLink -Path "storage" -Target "C:\xampp\mindbridger-main\storage\app\public"
    - (Linux, MacOS example) ln -s /var/www/mindbridger-main/storage/app/public storage
-10. Click Update button from http://localhost/mindbridger/vwmldbm
+  
+10. Create symbolic links (CSS, JS, image)
+   - Go to root of mindbridger (eg, c:\xampp\htdocs\mindbridger, /var/www/html/mindbridger)
+- (Windows CMD example)
+   - mklink /D css ..\..\mindbridger-main\public\css
+   - mklink /D js ..\..\mindbridger-main\public\js
+   - mklink /D image ..\..\mindbridger-main\public\image
+
+- (Windows PowerShell example) 
+   - ItemType SymbolicLink -Path "css" -Target "..\..\mindbridger-main\public\css"
+   - New-Item -ItemType SymbolicLink -Path "js" -Target "..\..\mindbridger-main\public\js"
+   - New-Item -ItemType SymbolicLink -Path "image" -Target "..\..\mindbridger-main\public\image"
+
+- (Linux, MacOS example)
+   - ln -s ../../mindbridger-main/public/css css
+   - ln -s ../../mindbridger-main/public/js js
+   - ln -s ../../mindbridger-main/public/image image
+     
+11. Click Update button from http://localhost/mindbridger/vwmldbm
        
 ## Demo
 <a href="https://wise4edu.net/mindbridger" target="_blank">MindBridger Demo</a>
