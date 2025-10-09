@@ -26,24 +26,24 @@
    - (마이그레이션 시 "No such file or directory" 오류가 발생하면, .env의 DB_SOCKET을 업데이트)
 
 8. 심볼릭 링크 생성 (책 표지 이미지용)
-   - mindbridger 루트 디렉토리로 이동 (예: c:\xampp\htdocs\mindbridger, /var/www/html/mindbridger)
+  - mindbridger 루트 디렉토리로 이동 (예: c:\xampp\htdocs\mindbridger, /var/www/html/mindbridger)
    - (Windows CMD 예시)  mklink /D storage "c:\xampp\mindbridger-main\storage\app\public"
    - (Windows PowerShell 예시) New-Item -ItemType SymbolicLink -Path "storage" -Target "C:\xampp\mindbridger-main\storage\app\public"
    - (Linux, MacOS 예시) ln -s /var/www/mindbridger-main/storage/app/public storage
 
 9. 심볼릭 링크 생성 (CSS, JS, image)
-   - mindbridger 루트 디렉토리로 이동 (예: c:\xampp\htdocs\mindbridger, /var/www/html/mindbridger)
-- (Windows CMD 예시)
+  - mindbridger 루트 디렉토리로 이동 (예: c:\xampp\htdocs\mindbridger, /var/www/html/mindbridger)
+  - (Windows CMD 예시)
    - mklink /D css ..\..\mindbridger-main\public\css
    - mklink /D js ..\..\mindbridger-main\public\js
    - mklink /D image ..\..\mindbridger-main\public\image
 
-- (Windows PowerShell 예시) 
+  - (Windows PowerShell 예시) 
    - ItemType SymbolicLink -Path "css" -Target "..\..\mindbridger-main\public\css"
    - New-Item -ItemType SymbolicLink -Path "js" -Target "..\..\mindbridger-main\public\js"
    - New-Item -ItemType SymbolicLink -Path "image" -Target "..\..\mindbridger-main\public\image"
 
-- (Linux, MacOS 예시)
+  - (Linux, MacOS 예시)
    - ln -s ../../mindbridger-main/public/css css
    - ln -s ../../mindbridger-main/public/js js
    - ln -s ../../mindbridger-main/public/image image
@@ -85,27 +85,27 @@ Laravel은 표현력이 풍부하고 우아한 문법을 가진 웹 애플리케
    - (If migration gives error like " No such file or directory", then update DB_SOCKET in .env)
 
 8. Create a symbolic link (for cover images)
-   - Go to root of mindbridger (eg, c:\xampp\htdocs\mindbridger, /var/www/html/mindbridger)
+  - Go to root of mindbridger (eg, c:\xampp\htdocs\mindbridger, /var/www/html/mindbridger)
    - (Windows CMD example)  mklink /D storage "c:\xampp\mindbridger-main\storage\app\public"
    - (Window PowerShell example) New-Item -ItemType SymbolicLink -Path "storage" -Target "C:\xampp\mindbridger-main\storage\app\public"
    - (Linux, MacOS example) ln -s /var/www/mindbridger-main/storage/app/public storage
   
 9. Create symbolic links (CSS, JS, image)
    - Go to root of mindbridger (eg, c:\xampp\htdocs\mindbridger, /var/www/html/mindbridger)
-- (Windows CMD example)
-   - mklink /D css ..\..\mindbridger-main\public\css
-   - mklink /D js ..\..\mindbridger-main\public\js
-   - mklink /D image ..\..\mindbridger-main\public\image
+    - (Windows CMD example)
+       - mklink /D css ..\..\mindbridger-main\public\css
+       - mklink /D js ..\..\mindbridger-main\public\js
+       - mklink /D image ..\..\mindbridger-main\public\image
 
-- (Windows PowerShell example) 
-   - ItemType SymbolicLink -Path "css" -Target "..\..\mindbridger-main\public\css"
-   - New-Item -ItemType SymbolicLink -Path "js" -Target "..\..\mindbridger-main\public\js"
-   - New-Item -ItemType SymbolicLink -Path "image" -Target "..\..\mindbridger-main\public\image"
+    - (Windows PowerShell example) 
+       - ItemType SymbolicLink -Path "css" -Target "..\..\mindbridger-main\public\css"
+       - New-Item -ItemType SymbolicLink -Path "js" -Target "..\..\mindbridger-main\public\js"
+       - New-Item -ItemType SymbolicLink -Path "image" -Target "..\..\mindbridger-main\public\image"
 
-- (Linux, MacOS example)
-   - ln -s ../../mindbridger-main/public/css css
-   - ln -s ../../mindbridger-main/public/js js
-   - ln -s ../../mindbridger-main/public/image image
+    - (Linux, MacOS example)
+       - ln -s ../../mindbridger-main/public/css css
+       - ln -s ../../mindbridger-main/public/js js
+       - ln -s ../../mindbridger-main/public/image image
      
 10. Click Update button from http://localhost/mindbridger/vwmldbm
        
