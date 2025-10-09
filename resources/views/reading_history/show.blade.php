@@ -46,6 +46,106 @@
 
 </style>
 
+<style>
+/* For summary button and modal */
+/* Olive button */
+.btn-olive {
+  background-color: #6b8e23; /* olive drab */
+  border-color: #6b8e23;
+  color: #fff;
+}
+.btn-olive:hover,
+.btn-olive:focus {
+  background-color: #5f801f;
+  border-color: #5f801f;
+  color: #fff;
+}
+
+/* Bottom sheet inside the fullscreen modal */
+#summarySheetBackdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.35);
+  display: none;
+  z-index: 1059; /* just under the sheet itself */
+}
+
+#summarySheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 50vh;       /* half the fullscreen modal */
+  max-height: 65vh;   /* safety cap */
+  background: #fff;
+  border-top-left-radius: 14px;
+  border-top-right-radius: 14px;
+  box-shadow: 0 -8px 24px rgba(0,0,0,.25);
+  transform: translateY(100%);
+  transition: transform .28s ease;
+  z-index: 1060; /* above iframe/body inside modal */
+  display: flex;
+  flex-direction: column;
+}
+
+#summarySheet.show {
+  transform: translateY(0);
+}
+
+#summarySheet .sheet-handle {
+  width: 48px;
+  height: 5px;
+  border-radius: 999px;
+  background: #ddd;
+  margin: 10px auto 6px;
+}
+
+#summarySheetHeader {
+  padding: 6px 14px 8px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#summarySheetBody {
+  padding: 12px 14px;
+  overflow: auto;
+}
+
+#summaryText {
+  width: 100%;
+  min-height: 28vh;
+  resize: vertical;
+}
+
+#summarySheetFooter {
+  padding: 10px 14px 14px;
+  border-top: 1px solid #f1f1f1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* for summary
+/* Bootstrap 4-safe custom badge color */
+.badge.badge-olive {
+  background-color: #6b8e23 !important;
+  color: #fff !important;
+  /* Optional: ensure it's visually like other badges */
+  border: none !important;
+}
+
+/* If the badge is ever a link */
+a.badge.badge-olive:hover,
+a.badge.badge-olive:focus {
+  color: #fff !important;
+}
+
+
+</style>
+
+
 @php
 // url for PDFviewer. Ensure the PDF URL is correctly formed
     $rfiles=explode(';',$book->rfiles);
@@ -138,6 +238,12 @@
                 $('#resetButton').show(); 
             }
         });
+
+        document.getElementById('fullscreenModalLabel').innerHTML +=
+            " <button id='openSummaryBtn' type='button' class='btn btn-olive btn-sm ml-2' onclick='openSummarySheet()'>" +
+            "   <i class=\"fas fa-pen mr-1\"></i>{{ __('Write Summary') }}" +
+            " </button>";
+
       @endif
       })
       .on('hidden.bs.modal.pdf', function () {
@@ -197,6 +303,152 @@
     });
 </script>
 
+<script>
+  // For summary bottom sheet
+  // Open the sheet: pulls current start/end from the fullscreenModal data set in goToPage()
+  function openSummarySheet() {
+    const $modal = $('#fullscreenModal');
+    const data   = $modal.data() || {};
+    const start  = data.start || data.page || '';
+    const end    = data.end   || data.page || '';
+    const rid    = data.rid;
+
+    // label
+    const rangeText = (String(start) === String(end)) ? ('p. ' + start) : ('pp. ' + start + '–' + end);
+    document.getElementById('summaryPageRange').textContent = rangeText;
+
+    const key = summaryKey(rid, start, end);
+    const cached = summaryCache.get(key);
+
+    // If we have a cached draft (dirty or not), use it and don't fetch (unless marked stale and not dirty)
+    if (cached) {
+      $('#summaryText').val(cached.text || '');
+      // If stale but not dirty, refresh from server in the background and only replace if user hasn't typed meanwhile.
+      if (cached.stale && !cached.dirty) {
+        const token = Date.now().toString();
+        $('#summaryText').data('fetch-token', token);
+
+        $.get("{{ route('reading_history.section_summary.get', ['book' => $book->id]) }}", { start, end })
+          .done(function(res){
+            const txt = (res && typeof res.summary === 'string') ? res.summary : '';
+            const current = summaryCache.get(key) || { text:'', dirty:false, stale:false };
+            // Only update if still not dirty and token matches (user didn't type)
+            if (!current.dirty && $('#summaryText').data('fetch-token') === token) {
+              summaryCache.set(key, { text: txt, dirty: false, stale: false });
+              $('#summaryText').val(txt);
+            }
+          })
+          .always(function(){
+            $('#summaryText').removeData('fetch-token');
+          });
+      }
+
+      showSummarySheetUI();
+      return;
+    }
+
+    // No cache: set empty while fetching first time
+    $('#summaryText').val('');
+    const token = Date.now().toString();
+    $('#summaryText').data('fetch-token', token);
+
+    $.get("{{ route('reading_history.section_summary.get', ['book' => $book->id]) }}", { start, end })
+      .done(function(res){
+        const txt = (res && typeof res.summary === 'string') ? res.summary : '';
+        // set as fresh (not dirty, not stale)
+        summaryCache.set(key, { text: txt, dirty: false, stale: false });
+        // only write if same request
+        if ($('#summaryText').data('fetch-token') === token) {
+          $('#summaryText').val(txt);
+        }
+      })
+      .fail(function(){
+        summaryCache.set(key, { text: '', dirty: false, stale: false });
+      })
+      .always(function(){
+        $('#summaryText').removeData('fetch-token');
+      });
+
+    showSummarySheetUI();
+
+    function showSummarySheetUI() {
+      document.getElementById('summarySheetBackdrop').style.display = 'block';
+      document.getElementById('summarySheet').classList.add('show');
+      document.getElementById('summarySheet').setAttribute('aria-hidden', 'false');
+      setTimeout(() => document.getElementById('summaryText').focus(), 120);
+    }
+  }
+
+  function closeSummarySheet() {
+    document.getElementById('summarySheet').classList.remove('show');
+    document.getElementById('summarySheet').setAttribute('aria-hidden', 'true');
+    document.getElementById('summarySheetBackdrop').style.display = 'none';
+    // NOTE: we DO NOT clear textarea here; cache already holds the current text (dirty)
+  }
+
+  // Simple draft saver (front-end only). Wire to your API later.
+  function saveSummaryDraft() {
+    var $modal = $('#fullscreenModal');
+    var data = $modal.data() || {};
+    var start = data.start || data.page || '';
+    var end   = data.end   || data.page || '';
+    var text  = $('#summaryText').val().trim();
+
+    $.post("{{ route('reading_history.section_summary.store', ['book' => $book->id]) }}", {
+        _token: "{{ csrf_token() }}",
+        start: start,
+        end: end,
+        summary: text
+    }).done(function(res){
+        // toast/feedback here...
+        closeSummarySheet();
+    }).fail(function(xhr){
+        alert('Failed to save summary: ' + (xhr.responseJSON?.error || xhr.statusText));
+    });
+  }
+
+
+  // Optional helper if you want per-section caching
+  function summaryCacheKey(rid, start, end) {
+    return 'summary:' + (rid || 'rid') + ':' + (start || 's') + '-' + (end || 'e');
+  }
+
+  // Ensure sheet closes when the fullscreen modal closes
+  $('#fullscreenModal').on('hidden.bs.modal', function () {
+    closeSummarySheet();
+  });
+
+
+  // Per-section cache: key => { text: string, stale: boolean }
+  const summaryCache = new Map();
+  function summaryKey(rid, start, end) {
+    return `${rid || 'rid'}:${start || 's'}-${end || 'e'}`;
+  }
+  
+
+    // Attach once
+  $(document).ready(function () {
+    $('#summaryText').on('input', function () {
+      const $modal = $('#fullscreenModal');
+      const data   = $modal.data() || {};
+      const rid    = data.rid;
+      const start  = data.start || data.page || '';
+      const end    = data.end   || data.page || '';
+      const key    = summaryKey(rid, start, end);
+
+      const existing = summaryCache.get(key) || { text: '', dirty: false, stale: false };
+      summaryCache.set(key, { text: this.value, dirty: true, stale: existing.stale });
+    });
+  });
+
+   // Called by the summary badge
+  function openSectionAndSummary(btn) {
+    // mark this click as "also open the summary editor"
+    btn.setAttribute('data-open-summary', '1');
+    goToPage(btn);
+  }
+</script>
+
 <!-- top icons and buttons -->
 <div class="container mt-0">
     <div class="row">
@@ -205,25 +457,7 @@
                 <div class="book-header d-flex justify-content-start align-items-center">
 
                 @if(Auth::check() && !$isAdmin)
-                    <button id="start-reading-btn" class="btn btn-success btn-sm ml-2" style="display: none;" onclick="showReadingStartModal()">
-                        <i class="fas fa-play mr-1"></i>{{ __('Start Reading') }}
-                    </button>
-                    <button id="finish-reading-btn" class="btn btn-warning btn-sm ml-2" style="display: none;" onclick="finishReading()">
-                        <i class="fas fa-stop mr-1"></i>{{ __('Finish') }}
-                    </button>
-                    <button id="reset-reading-btn" class="btn btn-danger btn-sm ml-2" style="display: none;" onclick="showResetWarning()">
-                        <i class="fas fa-undo mr-1"></i>{{ __('Reset') }}
-                    </button>
-                
                     <!-- Reading Time Information -->
-                    <div id="reading-time-info" class="mt-2" style="display: none;">
-                        <small class="text-muted">
-                            <i class="fas fa-clock mr-1"></i>
-                            <span id="start-time-text"></span>
-                            <span id="end-time-text"></span>
-                        </small>
-                    </div>
-
                     @if($isEresource)
                       <label>
                         @php
@@ -372,9 +606,9 @@
 
 
                             $('#resetReadingButton').on('click', function () {
-                                if(confirm("{{__("Do you want to reset reading history of the book? All data will be lost!")}}")) {
+                                if(confirm("{{__("Do you want to reset reading history of the book? All reading history except summary will be lost!")}}")) {
                                     $.ajax({
-                                        url: "{{ route('reading_history.destroy', ['book' => $book->id]) }}",
+                                        url: "{{ route('reading_history.reset', ['book' => $book->id]) }}",
                                         type: "POST",
                                         data: {
                                             book_id: "{{ $book->id }}",
@@ -643,6 +877,7 @@
                                     'status' => $item['status'] ?? '',
                                     'start_time' => $item['start_time'] ?? '',
                                     'end_time' => $item['end_time'] ?? '',
+                                    'summary' => $item['summary'] ?? '',
                                 ];
 
                                 if ($item['level'] <= 1) {
@@ -658,6 +893,7 @@
                                         'start_time' => $item['start_time'] ?? '',
                                         'end_time' => $item['end_time'] ?? '',
                                         'children' => [],
+                                        'summary' => $item['summary'] ?? '',
                                     ];
                                 } else {
                                     if (!$current) { // in case JSON starts with > level 1
@@ -697,6 +933,40 @@
                                         <iframe id="pdfIframe" title="PDF Viewer"
                                             style="width:100%; height:100%; border:0;" allow="fullscreen">
                                         </iframe>
+
+                                        <!-- Bottom-sheet summary editor (lives inside fullscreenModal) -->
+                                        <div id="summarySheetBackdrop" onclick="closeSummarySheet()"></div>
+
+                                        <div id="summarySheet" aria-hidden="true">
+                                            <div class="sheet-handle" role="presentation"></div>
+
+                                            <div id="summarySheetHeader">
+                                                <div>
+                                                    <i class="fas fa-pen mr-2 text-muted"></i>
+                                                    <strong>{{ __('Page Summary') }}</strong>
+                                                    <small id="summaryPageRange" class="text-muted ml-2"></small>
+                                                </div>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="closeSummarySheet()">
+                                                    {{ __('Close') }}
+                                                </button>
+                                            </div>
+
+                                            <div id="summarySheetBody">
+                                                <label for="summaryText" class="sr-only">{{ __('Write summary') }}</label>
+                                                <textarea id="summaryText" class="form-control" placeholder="{{ __('Write a brief summary for this section/page...') }}"></textarea>
+                                                <small id="summaryHelper" class="form-text text-muted mt-1">
+                                                {{ __('Tip: Capture the main idea, key terms, and 1–2 insights.') }}
+                                                </small>
+                                            </div>
+
+                                            <div id="summarySheetFooter">
+                                                <button type="button" class="btn btn-light" onclick="closeSummarySheet()">{{ __('Cancel') }}</button>
+                                                <button type="button" class="btn btn-success" onclick="saveSummaryDraft()">
+                                                <i class="fas fa-save mr-1"></i>{{ __('Save Draft') }}
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <!-- End of Bottom-sheet summary editor (lives inside fullscreenModal) -->                          
                                     </div>
                                 </div>
                             </div>
@@ -714,6 +984,7 @@
                                     $start_time  = $ch['start_time'] ?? '';
                                     $end_time    = $ch['end_time'] ?? '';
                                     $hasChildren = !empty($ch['children']);
+                                    $summary = !empty($ch['summary']);
                                 @endphp
 
                                 <div class="card">
@@ -734,6 +1005,7 @@
                                                 data-status="{{ $status }}"
                                                 data-start_time="{{ $start_time }}"
                                                 data-end_time="{{ $end_time }}"
+                                                data-summary="{{ $summary }}"
                                             >
 
                                                 {{ $ch['title'] }}
@@ -748,14 +1020,23 @@
                                         @else
                                             {{-- No children: plain text title, no toggle --}}
                                             <?php
+                                           $summaryBadge = (!empty($ch['summary']))
+                                            ? "<span class='badge badge-olive mr-1' data-toggle='tooltip' title='".__('Summary')."'>
+                                                <i class='fas fa-file-lines'></i>
+                                                <span class='sr-only'>".__('Summary')."</span>
+                                                </span>"
+                                            : "";
+
                                             if($ch['status'] == 'in_progress') {
                                                 $badge = "<span class='badge badge-warning'>".__("Reading..")."</span>";
                                             } else if($ch['status'] == 'completed') {
                                                 $badge = "<span class='badge badge-success'>".__("Done :)")."</span>";
-                                            } else $badge ="";
+                                            } else {
+                                                $badge ="";
+                                            }
                                             ?>
                                             <span class="btn" style="pointer-events: none; cursor: default;">
-                                                {!! $badge !!} {{ $ch['title'] }}
+                                                {!! $summaryBadge !!} {!! $badge !!} {{ $ch['title'] }}
                                                 <span class="badge badge-secondary ml-2">
                                                     @if($startPage !== $endPage)
                                                         pp. {{ $startPage }}–{{ $endPage }}
@@ -779,6 +1060,7 @@
                                                 data-status="{{ $status }}"
                                                 data-start_time="{{ $start_time }}"
                                                 data-end_time="{{ $end_time }}"
+                                                data-summary="{{ $summary }}"
                                                 onclick="goToPage(this)"
                                             >
                                                 {{ __('Go to page') }}
@@ -794,22 +1076,29 @@
                                         <ul class="list-group list-group-flush">
                                         @foreach($ch['children'] as $child)
                                             @php
-                                                $cStart = $child['start'] ?? $child['page'];
-                                                $cEnd   = $child['end'] ?? $child['page'];
+                                            $cStart = $child['start'] ?? $child['page'];
+                                            $cEnd   = $child['end'] ?? $child['page'];
 
-                                                if($child['status'] == 'in_progress') {
-                                                    $badge = "<span class='badge badge-warning'>".__("Reading..")."</span>";
-                                                } else if($child['status'] == 'completed') {
-                                                    $badge = "<span class='badge badge-success'>".__("Done :)")."</span>";
-                                                }  else $badge =""; 
-
+                                            $summaryBadge = (!empty($child['summary']))
+                                                ? "<span class='badge badge-olive mr-1' data-toggle='tooltip' title='".__('Summary')."'>
+                                                    <i class='fas fa-file-lines'></i>
+                                                    <span class='sr-only'>".__('Summary')."</span>
+                                                    </span>"
+                                                : "";
+                                                
+                                            if($child['status'] == 'in_progress') {
+                                                $badge = "<span class='badge badge-warning'>".__("Reading..")."</span>";
+                                            } else if($child['status'] == 'completed') {
+                                                $badge = "<span class='badge badge-success'>".__("Done :)")."</span>";
+                                            } else $badge ="";
                                             @endphp
+
                                             <li class="list-group-item d-flex align-items-center justify-content-between">
                                             <span>
                                                 @if(($child['level'] ?? 2) > 2)
-                                                    <span class="text-muted mr-2" style="display:inline-block; width: {{ (($child['level']-2)*14) }}px;"></span>
+                                                <span class="text-muted mr-2" style="display:inline-block; width: {{ (($child['level']-2)*14) }}px;"></span>
                                                 @endif
-                                                    {!! $badge !!} {{ $child['title'] }}
+                                                {!! $summaryBadge !!} {!! $badge !!} {{ $child['title'] }}
                                             </span>
 
                                             @if(!is_null($child['page']))
@@ -823,6 +1112,7 @@
                                                     data-status="{{ $child['status'] }}"
                                                     data-start_time="{{ $child['start_time'] }}"
                                                     data-end_time="{{ $child['end_time'] }}"
+                                                    data-summary="{{ $child['summary'] }}"
                                                     onclick="goToPage(this)"
                                                 >
                                                 @if($cStart !== $cEnd)

@@ -107,8 +107,17 @@ Route::middleware(['auth'])->group(function () {
 
     // Reading History Routes
     Route::post('reading_history/{book}/status', [ReadingHistoryController::class, 'set_status'])->name('reading_history.set_status');
-    Route::post('reading_history/{book}/destroy', [ReadingHistoryController::class, 'destroy'])->name('reading_history.destroy');
+    // Route::post('reading_history/{book}/destroy', [ReadingHistoryController::class, 'destroy'])->name('reading_history.destroy');
+    Route::post('reading_history/{book}/reset', [ReadingHistoryController::class, 'reset'])->name('reading_history.reset');
     Route::post('reading_history/{book}/section/status', [ReadingHistoryController::class, 'section_set_status'])->name('reading_history.section_set_status');
+
+
+    // Save / get section summary
+    Route::post('/reading-history/{book}/section-summary/store', [ReadingHistoryController::class, 'section_summary_store'])
+        ->name('reading_history.section_summary.store');
+
+    Route::get('/reading-history/{book}/section-summary/get', [ReadingHistoryController::class, 'section_summary_get'])
+        ->name('reading_history.section_summary.get');
 
 });
 
@@ -119,6 +128,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/reading_history/{book}', [ReadingHistoryController::class, 'show'])
         ->name('reading.history.show');
 });
+
+
 
 Route::post('book/{book}/get_meta', [BookTextMetaController::class, 'get_meta'])->name('get_meta');
 

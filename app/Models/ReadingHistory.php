@@ -90,44 +90,69 @@ class ReadingHistory extends Model
      */
     public function create_reading_toc($book_id)
     {
-        $book=Book::where('inst',session('lib_inst'))
-        ->where('id',$book_id)->first();
+        // Find book for current inst
+        $book = Book::where('inst', session('lib_inst'))
+            ->where('id', $book_id)
+            ->first();
 
-        // Decode book's auto_toc
-        $bookToc = json_decode($book->auto_toc, true) ?? [];
-        
-        // if there is no $book->auto_toc, it cannot proceeed the reading history
-        if (empty($bookToc)) {
-            return response()->json(['error' => 'No ToC found for this book'], 404);
+        if (!$book) {
+            return null; // no book
         }
 
-        // Extend each ToC entry
+        // Decode book's auto_toc
+        $bookToc = $book->auto_toc;
+        if (is_string($bookToc)) {
+            $bookToc = json_decode($bookToc, true) ?: [];
+        } elseif (!is_array($bookToc)) {
+            $bookToc = [];
+        }
+        if (empty($bookToc)) {
+            return null; // no toc
+        }
+
+        // Get existing reading history (do NOT create here)
+        $history = self::where('inst', session('lib_inst'))
+            ->where('user_id', session('uid'))
+            ->where('book_id', $book->id)
+            ->first();
+
+        if (!$history) {
+            return null; // caller must have created row beforehand
+        }
+
+        // 🔒 Do NOT fill if historyData already exists in DB (even if it's "[]")
+        // Use raw value to distinguish NULL vs existing JSON
+        $raw = method_exists($history, 'getRawOriginal')
+            ? $history->getRawOriginal('historyData')
+            : $history->historyData; // fallback (still fine in most cases)
+
+        if (!is_null($raw)) {
+            // historyData column already has a value (could be "[]"), so just return
+            return $history;
+        }
+
+        // Build initial reading ToC payload (only when column was NULL)
         $readingToc = collect($bookToc)->map(function ($item, $index) {
             return [
-                'idx'        => $index,  // <-- add index here
+                'idx'        => $index,
                 'title'      => $item['title'] ?? null,
                 'page'       => $item['page'] ?? null,
                 'start'      => $item['start'] ?? null,
                 'end'        => $item['end'] ?? null,
                 'level'      => $item['level'] ?? null,
-        
-                // per-ToC fields
+
+                // per-section state (blank)
                 'start_time' => null,
                 'end_time'   => null,
-                'status'     => 'none',
+                'status'     => self::STATUS_NONE,
+                'summary'    => null,
             ];
         })->values()->toArray();
 
-        // Save to reading_history
-        return self::updateOrCreate(
-            [
-                'inst'    => session('lib_inst'),
-                'user_id' => session('uid'),
-                'book_id' => $book->id,
-            ],
-            [
-                'historyData' => $readingToc, // <- if you cast this, no json_encode needed
-            ]
-        );
+        $history->historyData = $readingToc;
+        $history->save();
+
+        return $history;
     }
+
 }
