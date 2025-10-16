@@ -1,4 +1,4 @@
-# MindBridger 오픈 소스 AI 도서관 시스템에 오신 것을 환영합니다 (Laravel 메인 저장소)
+# MindBridger 오픈 소스 AI 도서관 시스템에 오신 것을 환영합니다. (Laravel 메인 저장소)
 # Welcome to MindBridger Open Source AI Library System (Main Repo of Laravel): See below for English Guidance
 
 ## 환경
