@@ -16,7 +16,11 @@
     "Logout": "تسجيل الخروج",
     "Title": "العنوان",
     "Author": "المؤلف",
+<<<<<<< HEAD
     "ISBN": "رقم ISBN",
+=======
+    "ISBN": "ردمك رقم",
+>>>>>>> main
     "Advanced": "بحث متقدم",
     "Register": "تسجيل",
     "List": "قائمة",
@@ -26,12 +30,17 @@
     "Submit": "تنفيذ",
     "Edit": "تعديل",
     "Delete": "حذف",
+<<<<<<< HEAD
     "Search": "بحث",
     "Search Resource": "البحث عن مورد",
+=======
+    "Search": "ابحث",
+    "Search Resource":"ابحث عن مورد",
+>>>>>>> main
     "confirm_pwd": "تأكيد كلمة المرور",
     "User List": "قائمة المستخدمين",
     "Book List": "قائمة الكتب",
-    "Resource List": "قائمة الموارد",
+    "Resource List": "موراد المكتبة",
     "Edit Profile": "تعديل الملف الشخصي",
     "Register Book": "تسجيل كتاب",
     "Edit Book": "تعديل الكتاب",
@@ -53,7 +62,11 @@
     "User ID / Barcode / Name": "معرف المستخدم / الباركود / الاسم",
     "Type": "النوع",
     "Category": "الفئة",
+<<<<<<< HEAD
     "Advanced Search": "بحث متقدم",
+=======
+    "Advanced Search": "ابحث متقدم",
+>>>>>>> main
     "Resourse Copy": "نسخ",
     "Resource Copy Information": "معلومات النسخ",
     "Rental Information": "معلومات الإعارة",
@@ -96,17 +109,29 @@
     "Admin Tutorials": "دروس المشرف",
     "My Favorites": "المفضلة الخاصة بي",
     "Login failed! Pelase try again.": "فشل تسجيل الدخول! حاول مرة أخرى.",
+<<<<<<< HEAD
     "Browse our collection": "تصفح مجموعتنا",
     "Your borrowed items": "العناصر المستعارة",
     "Your saved items": "العناصر المحفوظة",
     "Your personal shelf": "الرف الشخصي",
     "Browse our complete collection": "تصفح المجموعة الكاملة",
+=======
+    "Browse our collection": "تعرف على مجموعتنا",
+    "Your borrowed items": "العناصر المستعارة",
+    "Your saved items": "العناصر المحفوظة",
+    "Your personal shelf": "الرف الشخصي",
+    "Browse our complete collection": "تعرف على مواردنا",
+>>>>>>> main
     "Cover": "الغلاف",
     "Title": "العنوان",
     "Author": "المؤلف",
     "e-Resource": "المورد الإلكتروني",
     "Type": "نوع المورد",
+<<<<<<< HEAD
     "Genre": "النوع الأدبي",
+=======
+    "Genre": "النوع المحتوى",
+>>>>>>> main
     "Grade": "الصف",
     "Category": "الفئة",
     "Category2": "الفئة 2",
@@ -116,8 +141,13 @@
     "Pub Date": "تاريخ النشر",
     "Table of Contents": "جدول المحتويات",
     "URL": "الرابط",
+<<<<<<< HEAD
     "ISBN": "رقم ISBN",
     "eISBN": "eISBN",
+=======
+    "ISBN": "ردمك رقم",
+    "eISBN": "ردمك رقم الإلكتروني",
+>>>>>>> main
     "Keywords": "الكلمات المفتاحية",
     "Price": "السعر",
     "Available in our library. Matches your interests.": "متوفر في مكتبتنا. يتطابق مع اهتماماتك.",
