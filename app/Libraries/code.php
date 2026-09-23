@@ -4,10 +4,23 @@ namespace wlibrary\code;
 
 function print_lang($field_name=null, $c=null, $fevent=null) {
     if(!$field_name) $field_name="lang";
-    $kr_sel=null;
-    $en_sel=null;
-    $cn_sel=null;
-    $mn_sel=null;
+    $kr_sel=null; // korean
+    $en_sel=null; // english
+    $cn_sel=null; // chinese
+    $mn_sel=null; // mongolian  
+    $id_sel=null; // indonesian   
+    $uz_sel=null; // uzbek
+    $vi_sel=null; // vietnamese
+    $th_sel=null; // thai
+    $ky_sel=null; // kyrgyz
+    $th_sel=null; // thai
+    $tr_sel=null; // turkish
+    $fa_sel=null; // persian
+    $prs_sel=null; // Dari Persian
+    $ur_sel=null; // urdu
+    $kh_sel=null; // khmer
+    $tj_sel=null; // tajik
+
 
     if($c=='kr') $kr_sel=" selected";
     else if($c=='ar') $mn_sel=" selected";
@@ -19,7 +32,18 @@ function print_lang($field_name=null, $c=null, $fevent=null) {
         <option value='en' $en_sel>EN</option>
         <option value='cn' $cn_sel>CN</option>
         <option value='kr' $kr_sel>KR</option>
-        <option value='ar' $mn_sel>AR</option>
+        <option value='ar' $mn_sel>AR</option> 
+        <option value='id' $id_sel>ID</option> 
+        <option value='uz' $uz_sel>UZ</option>
+        <option value='vi' $vi_sel>VI</option>
+        <option value='th' $th_sel>TH</option>  
+        <option value='ky' $ky_sel>KY</option>
+        <option value='tr' $tr_sel>TR</option>
+        <option value='fa' $fa_sel>FA</option>
+        <option value='prs' $prs_sel>PRS</option>   
+        <option value='ur' $ur_sel>UR</option>  
+        <option value='kh' $kh_sel>KH</option>
+        <option value='tj' $tj_sel>TJ</option>
     </select>";
     return $rval;
 }
