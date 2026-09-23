@@ -77,7 +77,8 @@
             justify-content: space-between;
         }
 
-        @media (min-width: 576px) and (max-width: 767.98px) {             //Small devices (landscape phones and up)
+       /* Small devices (landscape phones and up) */
+        @media (min-width: 576px) and (max-width: 767.98px) {
             .slide-box img {
                 -ms-flex: 0 0 50%;
                 flex: 0 0 50%;
@@ -85,7 +86,8 @@
             }
         }
 
-        @media (min-width: 768px) and (max-width: 991.98px) {             //Medium device (Tablets and up)
+        /* Medium devices (tablets and up) */
+        @media (min-width: 768px) and (max-width: 991.98px) {
             .slide-box img {
                 -ms-flex: 0 0 33.3333%;
                 flex: 0 0 33.3333%;
@@ -93,8 +95,8 @@
             }
         }
 
-        @media (min-width: 992px)											//Desktops
-        {
+        /* Desktops */
+        @media (min-width: 992px) {
             .slide-box img {
                 -ms-flex: 0 0 25%;
                 flex: 0 0 25%;
@@ -230,6 +232,62 @@
                 height: 48px;
             }
         }
+
+        /* Book language selection 2026.09.23 */
+
+        /* Book language select */
+        .book-language-select {
+            display: block;
+            width: 100%;
+            height: 54px;
+
+            margin-top: 0;
+
+            padding: 0 46px 0 20px;
+
+            font-family: inherit;
+            font-size: 1.1rem;
+            font-weight: 400;
+            line-height: 54px;
+
+            color: #495057;
+            background-color: #fff;
+
+            border: 2px solid #e9ecef;
+            border-radius: 50%;
+
+            box-sizing: border-box;
+
+            appearance: auto;
+            -webkit-appearance: auto;
+
+            transition:
+                border-color 0.2s ease,
+                box-shadow 0.2s ease;
+        }
+
+        .book-language-select:focus {
+            border-color: #007bff;
+            outline: none;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.20);
+        }
+
+        .book-language-select {
+            width: 100%;
+            height: 54px;
+            padding: 0.75rem 1.25rem;
+            font-size: 1.1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 50%;
+            color: #495057;
+            background-color: #fff;
+        }
+
+        .book-language-select:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
     </style>
 </head>
 <body>

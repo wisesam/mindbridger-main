@@ -58,6 +58,38 @@
                             </div>
                         </div>
 
+                        <div class="form-group mb-4">
+                            <label
+                                for="book_language"
+                                class="form-label fw-bold text-dark"
+                            >
+                                {{ __("Book Language") }}
+                            </label>
+
+                            <select
+                                class="custom-select custom-select-lg"
+                                name="book_language"
+                                id="book_language"
+                            >
+                                <option value="">
+                                    {{ __("Any Language") }}
+                                </option>
+
+                                @foreach(config('book_languages') as $code => $name)
+                                    <option
+                                        value="{{ $code }}"
+                                        {{ old('book_language') === $code ? 'selected' : '' }}
+                                    >
+                                        {{ $name }}
+                                    </option>
+                                @endforeach
+                            </select>
+
+                            <small class="form-text text-muted mt-2">
+                                {{ __("Select the language of the books you want to read") }}
+                            </small>
+
+                        </div>
                         <div class="form-check mb-4 p-3 bg-light rounded">
                             <input type="hidden" name="free" value="0">
                             <input type="checkbox" class="form-check-input" name="free" id="free" value="1">
