@@ -95,7 +95,6 @@
   "Intro Videos": "介绍影片",
   "Admin Tutorials": "管理员教程",
   "My Favorites": "我的收藏",
-
   "Library / Videos": "图书馆 / 视频",
   "Login failed! Pelase try again.": "登录失败！请重试。",
   "Browse our collection": "浏览我们的馆藏",
@@ -207,5 +206,5 @@
   "Resource Type": "资料类型",
   "Book Language": "图书语言",
   "Any Language": "任意语言",
-  "Select the language of the books you want to read": "请选择您想阅读的图书语言"
+  "Select the language of the books you want to read": "请选择您想阅读的图书语言",
 }

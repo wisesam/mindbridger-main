@@ -155,9 +155,6 @@
   "Go to my Reading History": "Buka Riwayat Membaca Saya",
   "Back to Book Main Page": "Kembali ke Halaman Utama Buku",
   "My Reading History": "Riwayat Membaca Saya",
-  "Book Language": "Bahasa Buku",
-  "Any Language": "Bahasa Apa Pun",
-  "Select the language of the books you want to read": "Pilih bahasa buku yang ingin Anda baca",
   "Available in our library. Matches your interests.": "Tersedia di perpustakaan kami. Sesuai dengan minat Anda.",
   "Finish": "Selesai",
   "AI Book Advisor": "Penasihat Buku AI",
@@ -208,5 +205,8 @@
   "Readonly Video": "Video Hanya Baca",
   "e-Resource after login": "Sumber daya elektronik tersedia setelah masuk",
   "Published Date": "Tanggal Terbit",
-  "Resource Type": "Jenis Sumber Daya"
+  "Resource Type": "Jenis Sumber Daya",
+  "Book Language": "Bahasa Buku",
+  "Any Language": "Bahasa Apa Pun",
+  "Select the language of the books you want to read": "Pilih bahasa buku yang ingin Anda baca"
 }

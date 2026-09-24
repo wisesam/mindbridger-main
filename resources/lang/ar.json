@@ -208,5 +208,8 @@
     "Readonly Video": "فيديو للقراءة فقط",
     "e-Resource after login": "المورد الإلكتروني بعد تسجيل الدخول",
     "Published Date": "تاريخ النشر",
-    "Resource Type": "نوع المورد"
+    "Resource Type": "نوع المورد",
+    "Book Language": "لغة الكتاب",
+    "Any Language": "أي لغة",
+    "Select the language of the books you want to read": "حدد لغة الكتب التي ترغب في قراءتها"
 }
