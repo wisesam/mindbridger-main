@@ -456,11 +456,12 @@ Given the following excerpt from a book:
 {$sectionText}
 
 1. Provide a clear explanation in {$locale} (7–10 sentences).
-2. Generate 10 True/False questions (with correct answers).
-3. Focus on the main story only (There could be before and after chuncked text).
-4. Make 40% easy, 30% medium, 30% hard questions.
-5. Add the difficulty level tag (easy, medium, hard) in the beginning of each question.
-6. Output valid JSON only, in this structure:
+2. Generate 4 True/False questions (with correct answers).
+3. Generate 2 Multiple Choice questions (with correct answers).
+4. Focus on the main story only (There could be before and after chuncked text).
+5. Make 40% easy, 30% medium, 30% hard questions.
+6. Add the difficulty level tag (easy, medium, hard) in the beginning of each question.
+7. Output valid JSON only, in this structure:
 
 {
   "explanation": "....",
