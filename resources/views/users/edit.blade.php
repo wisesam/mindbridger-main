@@ -59,14 +59,20 @@
                             </label>
                             <div class="col-md-9">
                                 <div class="w-100">
-                                    {{ Form::email('email', old('email', $user->email), [
-                                        'class' => 'form-control form-control-lg' . ($errors->has('email') ? ' is-invalid' : ''),
-                                        'placeholder' => 'Enter your email',
-                                        'autocomplete' => 'email'
-                                    ]) }}
-                                    @error('email')
-                                        <div class="invalid-feedback d-block">{{ $message }}</div>
-                                    @enderror
+                                    @if(Auth::user()->isAdmin())
+                                        {{ Form::email('email', old('email', $user->email), [
+                                            'class' => 'form-control form-control-lg' . ($errors->has('email') ? ' is-invalid' : ''),
+                                            'placeholder' => 'Enter your email',
+                                            'autocomplete' => 'email'
+                                        ]) }}
+                                        @error('email')
+                                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                                        @enderror
+                                    @else
+                                        <input type="email" class="form-control form-control-lg bg-light"
+                                               value="{{ $user->email }}" readonly aria-readonly="true">
+                                        <small class="text-muted">{{ __('Only administrators can change email addresses.') }}</small>
+                                    @endif
                                 </div>
                             </div>
                         </div>

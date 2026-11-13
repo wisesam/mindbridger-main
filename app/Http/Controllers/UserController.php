@@ -49,14 +49,23 @@ class UserController extends Controller
             abort(403);
         }
 
+        // Email changes are restricted to administrators. Reject forged requests
+        // from members even if they manually add an email field to the form.
+        if (!$isAdmin && $request->exists('email') && $request->input('email') !== $user->email) {
+            abort(403, 'Only administrators can change email addresses.');
+        }
+
         $changingPassword = $request->filled('password');
-        $changingEmail = $request->input('email') !== $user->email;
+        $changingEmail = $isAdmin && $request->input('email') !== $user->email;
 
         $rules = [
             'name' => ['required', 'string'],
-            'email' => ['required', 'email', Rule::unique('users', 'email')->ignore($user->email, 'email')],
             'password' => ['nullable', 'string', 'min:8', 'confirmed', 'required_with:password_confirmation'],
         ];
+
+        if ($isAdmin) {
+            $rules['email'] = ['required', 'email', Rule::unique('users', 'email')->ignore($user->email, 'email')];
+        }
 
         // A person changing their own password must prove knowledge of the old one.
         // An administrator resetting ANOTHER user's password does not need it.
@@ -74,7 +83,9 @@ class UserController extends Controller
         $validated = $request->validate($rules);
 
         $user->name = $validated['name'];
-        $user->email = $validated['email'];
+        if ($isAdmin) {
+            $user->email = $validated['email'];
+        }
 
         // Role, code and status are administrative settings, never member-editable.
         if ($isAdmin && !$isSelf) {
