@@ -2,6 +2,8 @@
 namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Illuminate\Pagination;
 use App\Models\User;
 use App\Models\Rental;
@@ -20,102 +22,106 @@ class UserController extends Controller
     public function edit($id) // User $user => $id [SJH]
     {   
         $theInst=new \vwmldbm\code\Inst_var($_SESSION['lib_inst']);
-        $user = User::where('inst',$_SESSION['lib_inst'])->where('id',$id)->first();
-        if(Auth::user()->id !=$user->id && !Auth::user()->isAdmin()) 
+        $user = User::where('inst',$_SESSION['lib_inst'])->where('id',$id)->firstOrFail();
+        if (Auth::user()->id != $user->id && !Auth::user()->isAdmin()) {
             return redirect('/');
-        else return view('users.edit', compact('user'))->with('theInst',$theInst);
+        }
+        if (Auth::user()->id != $user->id && $user->utype === 'SA' && !Auth::user()->isAdmin('SA')) {
+            abort(403);
+        }
+        return view('users.edit', compact('user'))->with('theInst', $theInst);
     }
 
-    public function update($id) // User $user => $id [SJH]
-    { 
-        $user = User::where('inst',$_SESSION['lib_inst'])->where('id',$id)->first();
-        if($user->email == request('email')) { // Email is not being updated
-            if(request('password')) {
-                $this->validate(request(), [
-                    'name' => 'required',
-                    'password' => 'min:8|confirmed'
-                ]);
-            }
-            else {
-                $this->validate(request(), [
-                    'name' => 'required',
-                ]);
-            }
-          
-            $user->name = request('name');
+    public function update(Request $request, $id) // User $user => $id [SJH]
+    {
+        $user = User::where('inst', $_SESSION['lib_inst'])
+            ->where('id', $id)
+            ->firstOrFail();
 
-            if(request('utype')){
-                if(request('utype')=='SA'){ // Super admin only can set other admin as SA
-                    if(Auth::user()->isAdmin('SA')){
-                        $user->utype = 'SA';
-                    }
-                }
-                else  $user->utype = request('utype');
-            }
-            
-            $user->ustatus = request('ustatus');
-            if(request('code_c_utype') && Auth::user()->isAdmin()) $user->code_c_utype = request('code_c_utype');
-            if(request('password')) $user->password = bcrypt(request('password'));
-            
-            $old_aved_at=$user->updated_at;
-            $user->save();
-            $new_saved_at=$user->updated_at;
+        $isSelf = Auth::user()->id == $user->id;
+        $isAdmin = Auth::user()->isAdmin();
 
-            if($old_aved_at==$new_saved_at) 
-                return back()->with('warning',__("User Profile Not Updated")); 
-            else return back()->with('success',__("User Profile Updated"));           
+        // A member may edit only their own profile. Administrators may edit others.
+        abort_unless($isSelf || $isAdmin, 403);
+
+        // Only a super admin can reset or update another super admin's account.
+        if (!$isSelf && $user->utype === 'SA' && !Auth::user()->isAdmin('SA')) {
+            abort(403);
         }
-        else { // Email is being updated
-            if(request('password')) {
-                $this->validate(request(), [
-                    'name' => 'required',
-                     //'email' => 'required|email|unique:users',
-                    'email' => 'email|required|unique:users',
-                    'password' => 'min:8|confirmed'
-                ]);
-            }
-            else {
-                $this->validate(request(), [
-                    'name' => 'required',
-                    'email' => 'email|required|unique:users'
-                ]);
-            }
-           
-            $user->name = request('name');
-            $user->email = request('email');
-            
-            if(request('utype')){
-                if(request('utype')=='SA'){
-                    if(Auth::user()->isAdmin('SA')){
-                        $user->utype = 'SA';
-                    }
-                }
-                else  $user->utype = request('utype');
-            }
-           
-            if(request('code_c_utype') && Auth::user()->isAdmin()) $user->code_c_utype = request('code_c_utype');
-            
-            if(request('password')) $user->password = bcrypt(request('password'));
-            
-            $old_saved_at=$user->updated_at;
-            $user->save();
-            $new_saved_at=$user->updated_at;
 
-            if($old_saved_at==$new_saved_at) 
-                return back()->with('warning',__("User Profile Not Updated")); 
-            
-            else {
-                if(Auth::user()->id==$user->id) { // User him/herself changed the email, then log out and go to the log in page
-                    Auth::logout();
-                    return redirect('/login')->with('success',__("User Profile Updated (".$user->email.")").' '.__("Please Log in again!"));
+        $changingPassword = $request->filled('password');
+        $changingEmail = $request->input('email') !== $user->email;
+
+        $rules = [
+            'name' => ['required', 'string'],
+            'email' => ['required', 'email', Rule::unique('users', 'email')->ignore($user->email, 'email')],
+            'password' => ['nullable', 'string', 'min:8', 'confirmed', 'required_with:password_confirmation'],
+        ];
+
+        // A person changing their own password must prove knowledge of the old one.
+        // An administrator resetting ANOTHER user's password does not need it.
+        if ($changingPassword && $isSelf) {
+            $rules['current_password'] = [
+                'required',
+                function ($attribute, $value, $fail) use ($user) {
+                    if (!Hash::check($value, $user->password)) {
+                        $fail(__('The current password is incorrect.'));
+                    }
+                },
+            ];
+        }
+
+        $validated = $request->validate($rules);
+
+        $user->name = $validated['name'];
+        $user->email = $validated['email'];
+
+        // Role, code and status are administrative settings, never member-editable.
+        if ($isAdmin && !$isSelf) {
+            if ($request->filled('utype')) {
+                $requestedType = $request->input('utype');
+                if (in_array($requestedType, ['SA', 'A', 'M', 'G'], true) &&
+                    ($requestedType !== 'SA' || Auth::user()->isAdmin('SA'))) {
+                    $user->utype = $requestedType;
                 }
-                else {
-                    return back()->with('success',__("User Profile Updated"));
-                }                
+            }
+
+            if ($request->filled('ustatus') &&
+                in_array($request->input('ustatus'), ['A', 'I', 'S', 'PS', 'T'], true)) {
+                $user->ustatus = $request->input('ustatus');
+            }
+
+            if ($request->filled('code_c_utype')) {
+                $user->code_c_utype = $request->input('code_c_utype');
             }
         }
+
+        if ($changingPassword) {
+            $user->password = Hash::make($validated['password']);
+        }
+
+        if (!$user->isDirty()) {
+            return back()->with('warning', __('User Profile Not Updated'));
+        }
+
+        $user->save();
+
+        // Preserve the existing log-out-on-email-change behavior; also require a
+        // fresh login after changing your own password.
+        if ($isSelf && ($changingEmail || $changingPassword)) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect('/login')->with(
+                'success',
+                __('User Profile Updated') . ' ' . __('Please Log in again!')
+            );
+        }
+
+        return back()->with('success', __('User Profile Updated'));
     }
-    
+
     public function list(Request $request) {
         $search_key=$request->input('search_key');
         $utype=$request->input('utype');

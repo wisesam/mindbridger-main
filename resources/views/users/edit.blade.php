@@ -39,7 +39,16 @@
                                 <i class="fas fa-user mr-2 text-primary"></i><?PHP echo $field_arr["name"]; ?>
                             </label>
                             <div class="col-md-9">
-                                {{Form::text('name',$user->name,['class' => 'form-control form-control-lg','placeholder'=>'Enter your name'])}}
+                                <div class="w-100">
+                                    {{ Form::text('name', old('name', $user->name), [
+                                        'class' => 'form-control form-control-lg' . ($errors->has('name') ? ' is-invalid' : ''),
+                                        'placeholder' => 'Enter your name',
+                                        'autocomplete' => 'name'
+                                    ]) }}
+                                    @error('name')
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                    @enderror
+                                </div>
                             </div>
                         </div>
 
@@ -49,7 +58,16 @@
                                 <i class="fas fa-envelope mr-2 text-info"></i>{{$field_arr["email"]}}
                             </label>
                             <div class="col-md-9">
-                                {{Form::text('email',$user->email,['class' => 'form-control form-control-lg','placeholder'=>'Enter your email'])}}
+                                <div class="w-100">
+                                    {{ Form::email('email', old('email', $user->email), [
+                                        'class' => 'form-control form-control-lg' . ($errors->has('email') ? ' is-invalid' : ''),
+                                        'placeholder' => 'Enter your email',
+                                        'autocomplete' => 'email'
+                                    ]) }}
+                                    @error('email')
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                    @enderror
+                                </div>
                             </div>
                         </div>
                                 
@@ -105,27 +123,63 @@
                             </div>
                         </div>
 
-                        @if(trim($theInst->mode) == 'INDEPENDENT')
-                            <!-- Password -->
+                        <!-- Password change / administrator password reset -->
+                        @if(Auth::user()->id == $user->id)
                             <div class="form-group row mb-3">
-                                <label class="col-md-3 col-form-label text-md-right font-weight-bold">
-                                    <i class="fas fa-lock mr-2 text-warning"></i><?PHP echo $field_arr["password"]; ?>
+                                <label for="current_password" class="col-md-3 col-form-label text-md-right font-weight-bold">
+                                    <i class="fas fa-key mr-2 text-warning"></i>{{ __('Current Password') }}
                                 </label>
-                                <div class="col-md-9">
-                                    {{Form::password('password',['class' => 'form-control form-control-lg','placeholder'=>'Enter new password'])}}
-                                </div>
-                            </div>
-
-                            <!-- Password Confirmation -->
-                            <div class="form-group row mb-3">
-                                <label class="col-md-3 col-form-label text-md-right font-weight-bold">
-                                    <i class="fas fa-lock mr-2 text-warning"></i>{{__('confirm_pwd')}}
-                                </label>
-                                <div class="col-md-9">
-                                    {{Form::password('password_confirmation',['class' => 'form-control form-control-lg','placeholder'=>'Confirm new password'])}}
+                                <div class="col-md-9 d-block">
+                                    {{ Form::password('current_password', [
+                                        'id' => 'current_password',
+                                        'class' => 'form-control form-control-lg' . ($errors->has('current_password') ? ' is-invalid' : ''),
+                                        'placeholder' => 'Required only when changing password',
+                                        'autocomplete' => 'current-password'
+                                    ]) }}
+                                    @error('current_password')
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                    @enderror
                                 </div>
                             </div>
                         @endif
+
+                        <!-- New Password -->
+                        <div class="form-group row mb-3">
+                            <label for="password" class="col-md-3 col-form-label text-md-right font-weight-bold">
+                                <i class="fas fa-lock mr-2 text-warning"></i>{{ __('New Password') }}
+                            </label>
+                            <div class="col-md-9 d-block">
+                                {{ Form::password('password', [
+                                    'id' => 'password',
+                                    'class' => 'form-control form-control-lg' . ($errors->has('password') ? ' is-invalid' : ''),
+                                    'placeholder' => 'At least 8 characters (leave blank to keep current)',
+                                    'autocomplete' => 'new-password',
+                                    'minlength' => 8
+                                ]) }}
+                                @error('password')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <!-- Confirm New Password -->
+                        <div class="form-group row mb-3">
+                            <label for="password_confirmation" class="col-md-3 col-form-label text-md-right font-weight-bold">
+                                <i class="fas fa-lock mr-2 text-warning"></i>{{ __('Confirm New Password') }}
+                            </label>
+                            <div class="col-md-9 d-block">
+                                {{ Form::password('password_confirmation', [
+                                    'id' => 'password_confirmation',
+                                    'class' => 'form-control form-control-lg' . ($errors->has('password_confirmation') ? ' is-invalid' : ''),
+                                    'placeholder' => 'Re-enter new password',
+                                    'autocomplete' => 'new-password',
+                                    'minlength' => 8
+                                ]) }}
+                                @error('password_confirmation')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
 
                         {{Form::hidden('_method','PATCH')}}
 
@@ -214,10 +268,14 @@
         font-size: 0.95rem;
     }
 
-    /* Fixed height for all form elements */
+    /* Minimum row height; grow naturally to display validation messages. */
     .card-body .form-group.row {
         min-height: 60px;
         align-items: center;
+    }
+
+    .card-body .form-group.row .invalid-feedback {
+        height: auto;
     }
 
     .card-body .form-control, 
