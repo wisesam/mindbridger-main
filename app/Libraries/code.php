@@ -85,7 +85,7 @@ function print_lang($field_name = 'lang', $c = 'en', $fevent = null)
         $sel = ($code === $selected) ? ' selected' : '';
 
         $html .= '<option value="' . e($code) . '"' . $sel . '>'
-               . e(strtoupper($code))
+               . e($lang->name . ' (' . strtoupper($code) . ')')
                . '</option>';
     }
 
