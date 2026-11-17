@@ -67,7 +67,7 @@
         ?>
         @foreach($book_copy as $bc)
             <?php
-                $b=App\Book::where('inst',$_SESSION['lib_inst'])->where('id',$bc->bid)->first();
+                $b=App\Model\Book::where('inst',$_SESSION['lib_inst'])->where('id',$bc->bid)->first();
 
                 $late_rental_exist=App\Rental::late_rental_check(null,null,$bc->id,'RENTED');
                 $over_due_tag=null;
