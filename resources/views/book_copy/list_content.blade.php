@@ -27,6 +27,7 @@
 
 @extends('layouts.root')
 @section('content')
+<div class="container-fluid px-4">
   <form name='form_search'>
   <div class="row justify-content-center">
     <div class="container col-md-12  mt-0"> 
@@ -143,4 +144,5 @@
         </div>
     </div>
   </div>
+</div>
 @endsection

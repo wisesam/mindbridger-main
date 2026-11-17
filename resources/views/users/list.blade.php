@@ -14,6 +14,7 @@
 
 @extends('layouts.root')
 @section('content')
+<div class="container-fluid px-4">
     <div class="row justify-content-center table-responsive-sm">
       <div class="col-md-12">
         <h1>{{__("User List")}}
@@ -105,4 +106,5 @@
         </script>
       </div>   
     </div>
+</div>
 @endsection
