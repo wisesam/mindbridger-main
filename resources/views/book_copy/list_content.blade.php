@@ -21,6 +21,8 @@
     // get book_copy's availability to show/hide overdue info
     $bc_avail_arr=array();                 
     \vwmldbm\code\get_code_name_all($bc_avail_arr,'code_c_rstatus','available_yn');
+	
+	// if(!isset($book_copy)) $book_copy=null; 
   ?>
 
 @extends('layouts.root')
