@@ -1,52 +1,99 @@
 <?PHP
 /* [SJH] Wise Library Basic codes*/
 namespace wlibrary\code;
+use Illuminate\Support\Facades\DB;
 
-function print_lang($field_name=null, $c=null, $fevent=null) {
-    if(!$field_name) $field_name="lang";
-    $kr_sel=null; // korean
-    $en_sel=null; // english
-    $cn_sel=null; // chinese
-    $mn_sel=null; // mongolian  
-    $id_sel=null; // indonesian   
-    $uz_sel=null; // uzbek
-    $vi_sel=null; // vietnamese
-    $th_sel=null; // thai
-    $ky_sel=null; // kyrgyz
-    $th_sel=null; // thai
-    $tr_sel=null; // turkish
-    $fa_sel=null; // persian
-    $prs_sel=null; // Dari Persian
-    $ur_sel=null; // urdu
-    $kh_sel=null; // khmer
-    $tj_sel=null; // tajik
+// function print_lang($field_name=null, $c=null, $fevent=null) {
+//     if(!$field_name) $field_name="lang";
+//     $kr_sel=null; // korean
+//     $en_sel=null; // english
+//     $cn_sel=null; // chinese
+//     $mn_sel=null; // mongolian  
+//     $id_sel=null; // indonesian   
+//     $uz_sel=null; // uzbek
+//     $vi_sel=null; // vietnamese
+//     $th_sel=null; // thai
+//     $ky_sel=null; // kyrgyz
+//     $th_sel=null; // thai
+//     $tr_sel=null; // turkish
+//     $fa_sel=null; // persian
+//     $prs_sel=null; // Dari Persian
+//     $ur_sel=null; // urdu
+//     $kh_sel=null; // khmer
+//     $tj_sel=null; // tajik
 
 
-    if($c=='kr') $kr_sel=" selected";
-    else if($c=='ar') $mn_sel=" selected";
-    else if($c=='cn') $cn_sel=" selected";
-    else $en_sel=" selected";
+//     if($c=='kr') $kr_sel=" selected";
+//     else if($c=='ar') $mn_sel=" selected";
+//     else if($c=='cn') $cn_sel=" selected";
+//     else $en_sel=" selected";
 
-    $rval="
-    <select name='$field_name' $fevent> 
-        <option value='en' $en_sel>EN</option>
-        <option value='cn' $cn_sel>CN</option>
-        <option value='kr' $kr_sel>KR</option>
-        <option value='ar' $mn_sel>AR</option> 
-        <option value='id' $id_sel>ID</option> 
-        <option value='uz' $uz_sel>UZ</option>
-        <option value='vi' $vi_sel>VI</option>
-        <option value='th' $th_sel>TH</option>  
-        <option value='ky' $ky_sel>KY</option>
-        <option value='tr' $tr_sel>TR</option>
-        <option value='fa' $fa_sel>FA</option>
-        <option value='prs' $prs_sel>PRS</option>   
-        <option value='ur' $ur_sel>UR</option>  
-        <option value='kh' $kh_sel>KH</option>
-        <option value='tj' $tj_sel>TJ</option>
-    </select>";
-    return $rval;
+//     $rval="
+//     <select name='$field_name' $fevent> 
+//         <option value='en' $en_sel>EN</option>
+//         <option value='cn' $cn_sel>CN</option>
+//         <option value='kr' $kr_sel>KR</option>
+//         <option value='ar' $mn_sel>AR</option> 
+//         <option value='id' $id_sel>ID</option> 
+//         <option value='uz' $uz_sel>UZ</option>
+//         <option value='vi' $vi_sel>VI</option>
+//         <option value='th' $th_sel>TH</option>  
+//         <option value='ky' $ky_sel>KY</option>
+//         <option value='tr' $tr_sel>TR</option>
+//         <option value='fa' $fa_sel>FA</option>
+//         <option value='prs' $prs_sel>PRS</option>   
+//         <option value='ur' $ur_sel>UR</option>  
+//         <option value='kh' $kh_sel>KH</option>
+//         <option value='tj' $tj_sel>TJ</option>
+//     </select>";
+//     return $rval;
+// }
+
+// (26.11.18) Implemented a new print_lang function that dynamically fetches active languages from the database and generates a select dropdown. This function ensures that only valid language codes are displayed and handles default selection appropriately.
+function print_lang($field_name = 'lang', $c = 'en', $fevent = null)
+{
+    $field_name = $field_name ?: 'lang';
+    $selected = strtolower(trim((string) ($c ?: 'en')));
+
+    // Load active languages from database
+    $languages = DB::table('vwmldbm_c_lang')
+        ->where('inst', 1)
+        ->where('use_yn', 'Y')
+        ->whereNotNull('ccode')
+        ->orderBy('priority')
+        ->orderBy('name')
+        ->get(['ccode', 'name']);
+
+    // Extract valid language codes
+    $codes = $languages->map(
+        fn($lang) => strtolower(trim($lang->ccode))
+    )->all();
+
+    // Default to English if selected code is invalid
+    if (!in_array($selected, $codes, true)) {
+        $selected = in_array('en', $codes, true)
+            ? 'en'
+            : ($codes[0] ?? null);
+    }
+
+    // Build select element
+    $html = '<select name="' . e($field_name) . '"'
+          . ($fevent ? ' ' . $fevent : '') . '>';
+
+    foreach ($languages as $lang) {
+        $code = strtolower(trim($lang->ccode));
+        $sel = ($code === $selected) ? ' selected' : '';
+
+        $html .= '<option value="' . e($code) . '"' . $sel . '>'
+               . e(strtoupper($code))
+               . '</option>';
+    }
+
+    $html .= '</select>';
+
+    return $html;
 }
+
 
 function genRandStr($length = 10) {
     $characters = '0123456789abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
