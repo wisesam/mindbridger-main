@@ -69,7 +69,7 @@
             <?php
                 $b=App\Models\Book::where('inst',$_SESSION['lib_inst'])->where('id',$bc->bid)->first();
 
-                $late_rental_exist=App\Rental::late_rental_check(null,null,$bc->id,'RENTED');
+                $late_rental_exist=App\Models\Rental::late_rental_check(null,null,$bc->id,'RENTED');
                 $over_due_tag=null;
                 
 
@@ -98,9 +98,9 @@
                             if($c_rstatus_available_arr[$bc['c_rstatus']]=='Y') {
                                 if($admin_mode) $href=config('app.url','/wlibrary')."/rental/create/".$bc['id'];
                                 else $href="javscript:return;";
-                                echo "<a href='$href'><font color='".App\Book_copy::print_status_color($bc['c_rstatus'],$c_rstatus_available_arr)."'>".$c_rstatus_arr[$bc['c_rstatus']]."</font></a>";
+                                echo "<a href='$href'><font color='".App\Models\Book_copy::print_status_color($bc['c_rstatus'],$c_rstatus_available_arr)."'>".$c_rstatus_arr[$bc['c_rstatus']]."</font></a>";
                             }
-                            else echo "<font color='".App\Book_copy::print_status_color($bc['c_rstatus'],$c_rstatus_available_arr)."'>".$c_rstatus_arr[$bc['c_rstatus']]."</font>";
+                            else echo "<font color='".App\Models\Book_copy::print_status_color($bc['c_rstatus'],$c_rstatus_available_arr)."'>".$c_rstatus_arr[$bc['c_rstatus']]."</font>";
                         }
                         echo $over_due_tag;
                     ?>
@@ -109,8 +109,8 @@
                 @if($admin_mode)
                 <td class="text-nowrap">
                 <?PHP
-                    $rented_num=App\Rental::num_by_book_copy('RENTED',$bc['id']);  
-                    $all_num=App\Rental::num_by_book_copy(null,$bc['id']);
+                    $rented_num=App\Models\Rental::num_by_book_copy('RENTED',$bc['id']);  
+                    $all_num=App\Models\Rental::num_by_book_copy(null,$bc['id']);
                     
                     $rented_num_tag=0;
                     if($rented_num) {
