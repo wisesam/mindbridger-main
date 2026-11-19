@@ -26,6 +26,13 @@
     } 
 
 
+// Bilingual Reader: precompute values before Blade's @json directive.
+// @json's argument parser should not receive nested functions with commas.
+$readerAiIconUrl = config('app.url', '/mindbridger') . '/image/ai-assistant.png';
+$readerTranslationUrl = route('book.bilingual.translate', ['book' => $book->id]);
+$readerCurrentLocale = app()->getLocale();
+$readerManagedLang = \vwmldbm\code\manage_lang($readerCurrentLocale, 'ccode');
+
 // book share link: In multi-inst mode, inst_uname is needed
     $bookShareLink = config('app.url','/mindbridger').'/book/'.$book->id; // default
 
@@ -91,17 +98,57 @@
         var viewerUrl = buildViewerUrl(data.rf, data.rid, data.start, data.end);
 
         document.getElementById('pdfIframe').src = viewerUrl;
-        document.getElementById('fullscreenModalLabel').textContent =
-          (data.start === data.end)
-            ? ('Page ' + data.start)
-            : ('Pages ' + data.start + '–' + data.end);
+        // Build header controls with DOM APIs (avoid injecting page values into HTML).
+        const heading = document.getElementById('fullscreenModalLabel');
+        heading.textContent = Number(data.start) === Number(data.end)
+          ? ('Page ' + data.start)
+          : ('Pages ' + data.start + '–' + data.end);
 
-        document.getElementById('fullscreenModalLabel').innerHTML +=
-            " <img src='{{ config('app.url','/mindbridger') }}/image/ai-assistant.png' " +
-            " class='zoom img-icon-pointer ml-2' alt='AI Assistant' " +
-            " data-toggle='modal' data-target='#aiModal' " +
-            " data-rid='{{ $book->rid }}' data-start='" + start +"' data-end='" + end + "'> ";
-        
+        // Preserve the original AI Assistant button (summary + five T/F questions).
+        const aiIcon = document.createElement('img');
+        aiIcon.src = @json($readerAiIconUrl);
+        aiIcon.className = 'zoom img-icon-pointer ml-2';
+        aiIcon.alt = 'AI Assistant';
+        aiIcon.title = 'AI summary and quiz';
+        aiIcon.style.cursor = 'pointer';
+        aiIcon.setAttribute('data-toggle', 'modal');
+        aiIcon.setAttribute('data-target', '#aiModal');
+        aiIcon.dataset.rid = @json($book->rid);
+        aiIcon.dataset.start = data.start;
+        aiIcon.dataset.end = data.end;
+        heading.appendChild(aiIcon);
+
+        // The separate bilingual reader opens when a language is selected.
+        const langSelect = document.createElement('select');
+        langSelect.id = 'bilingualTargetLanguage';
+        langSelect.className = 'custom-select custom-select-sm ml-2';
+        langSelect.style.cssText = 'width:auto;max-width:220px;vertical-align:middle;font-size:0.85rem;';
+        langSelect.setAttribute('aria-label', 'Choose bilingual translation language');
+        const languageChoices = [
+          ['', '🌐 Bilingual read…'],
+          ['id', 'Indonesian / Bahasa Indonesia'],
+          ['ko', 'Korean / 한국어'],
+          ['en', 'English'],
+          ['ar', 'Arabic / العربية'],
+          ['fr', 'French / Français'],
+          ['es', 'Spanish / Español'],
+          ['vi', 'Vietnamese / Tiếng Việt'],
+          ['ru', 'Russian / Русский']
+        ];
+        languageChoices.forEach(([code, label]) => {
+          const option = document.createElement('option');
+          option.value = code;
+          option.textContent = label;
+          langSelect.appendChild(option);
+        });
+        // Put the current display language first, but do not preselect it:
+        // selecting Indonesian must still fire "change" when the UI is Indonesian.
+        const currentUiLang = String(@json($readerCurrentLocale)).toLowerCase().split(/[-_]/)[0];
+        const preferredOption = Array.from(langSelect.options).find(o => o.value === currentUiLang);
+        if (preferredOption) langSelect.insertBefore(preferredOption, langSelect.options[1]);
+        langSelect.title = 'Choose a bilingual language (current display language: ' + currentUiLang + ')';
+        heading.appendChild(langSelect);
+
             
       })
       .on('hidden.bs.modal.pdf', function () {
@@ -1120,7 +1167,11 @@
 </div>
 
 <script>
-    // AI Assistant
+    // AI Assistant. Escape model output before embedding it in an HTML template.
+    function escapeAIText(value) {
+        return $('<div>').text(String(value ?? '')).html();
+    }
+
     $('#aiModal').on('show.bs.modal', function (event) {
         let trigger = $(event.relatedTarget);
         let $body   = $('#aiModalBody');
@@ -1133,8 +1184,9 @@
         $(this).data('start', start);
         $(this).data('end', end);
 
-        // ✅ If already loaded, skip reload
-        if ($body.data('loaded')) return;
+        // AI results are specific to the selected page range.
+        // Previously a cached result from the first section could appear elsewhere.
+        if ($body.data('loadedKey') === `${start}:${end}`) return;
 
         $body.html("<p class='text-muted'>Fetching {{__("AI explanation")}}...</p>");
 
@@ -1159,16 +1211,16 @@
                                 <i class='fas fa-robot text-primary mr-2'></i>{{__("AI explanation")}}
                             </h5>
                             <div class='border rounded p-3 bg-light mb-4'>
-                                <p style='white-space: pre-wrap;'>${response.meta_data.explanation}</p>
+                                <p style='white-space: pre-wrap;'>${escapeAIText(response.meta_data.explanation)}</p>
                             </div>
                         </div>
                     `;
 
                     let questionsHtml = "<h5>{{__("True/False Questions")}}</h5><ol>";
-                    response.meta_data.questions.forEach((q, i) => {
+                    (Array.isArray(response.meta_data.questions) ? response.meta_data.questions : []).forEach((q, i) => {
                         questionsHtml += `
                             <li class="mb-3">
-                                <span>${q.q}</span><br>
+                                <span>${escapeAIText(q.q)}</span><br>
                                 <button class="btn btn-sm btn-outline-success mr-2" onclick="checkAnswer(${i}, true)">{{__("True")}}</button>
                                 <button class="btn btn-sm btn-outline-danger" onclick="checkAnswer(${i}, false)">{{__("False")}}</button>
                                 <div id="answerBox-${i}" class="mt-2" style="display:none;"></div>
@@ -1180,13 +1232,13 @@
                     $body.html(explanation + questionsHtml);
 
                     // Save correct answers
-                    window.correctAnswers = response.meta_data.questions.map(q => q.answer);
+                    window.correctAnswers = (Array.isArray(response.meta_data.questions) ? response.meta_data.questions : []).map(q => q.answer);
 
                     // Enable Save button
                     $('#saveAiBtn').prop('disabled', false);
 
                     // Mark as loaded
-                    $body.data('loaded', true);
+                    $body.data('loadedKey', `${start}:${end}`);
                 } else {
                     $body.html("<p class='text-danger'>No explanation found.</p>");
                     $('#saveAiBtn').prop('disabled', true);
@@ -1208,7 +1260,7 @@
         let $body  = $('#aiModalBody');
 
         // Reset loaded flag
-        $body.removeData('loaded');
+        $body.removeData('loadedKey');
 
         // Get saved start/end from modal
         let start = $modal.data('start');
@@ -1234,6 +1286,393 @@
         box.style.display = "block";
     }
 
+</script>
+
+<!-- Bilingual Reader: uses PDF.js selectable text from the opened section. -->
+<script>
+(function() {
+  'use strict';
+
+  const config = {
+    bookTitle: @json($book->title),
+    translationUrl: @json($readerTranslationUrl),
+    csrf: @json(csrf_token()),
+    // The project's language helper returns the ccode. The `&& !session('refreshed')`
+    // expression is a boolean and is therefore NOT a suitable language-code value.
+    uiLanguage: @json($readerCurrentLocale),
+    managedLanguage: @json($readerManagedLang),
+  };
+
+  const targetNames = {
+    id: 'Indonesian', ko: 'Korean', en: 'English', ar: 'Arabic',
+    fr: 'French', es: 'Spanish', vi: 'Vietnamese', ru: 'Russian'
+  };
+
+  let activeRun = 0;
+
+  // Select is recreated each time the PDF fullscreen modal is shown.
+  $(document).on('change', '#bilingualTargetLanguage', function() {
+    const target = this.value;
+    this.value = ''; // allow selecting the same language again later
+    if (!targetNames[target]) return;
+
+    const section = $('#fullscreenModal').data();
+    openBilingualReader(Number(section.start), Number(section.end), target);
+  });
+
+  function popupElement(doc, tag, className, value) {
+    const el = doc.createElement(tag);
+    if (className) el.className = className;
+    if (value != null) el.textContent = String(value);
+    return el;
+  }
+
+  // Text is always rendered using textContent, never unescaped innerHTML.
+  function buildPopup(win, target, start, end) {
+    const doc = win.document;
+    doc.open();
+    doc.write(`<!doctype html><html lang="${target}"><head><meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <title>MindBridger — Bilingual Reader</title>
+      <style>
+        body{font-family:system-ui,-apple-system,'Segoe UI',Arial,sans-serif;background:#f7f9fc;color:#1e293b;margin:0;line-height:1.65}
+        header{position:sticky;top:0;background:white;border-bottom:1px solid #dce4ee;padding:15px 22px;z-index:1}
+        h1{font-size:1.25rem;margin:0 0 4px}#subtitle{font-size:.9rem;color:#64748b;margin-bottom:10px}
+        #printButton{float:right;padding:7px 12px;border:1px solid #94a3b8;border-radius:7px;background:white;cursor:pointer}
+        #printButton:disabled{opacity:.5;cursor:not-allowed}
+        main{max-width:980px;margin:20px auto;padding:0 18px 45px}
+        .page{margin:28px 0 10px;font-size:1.03rem;color:#334155;border-bottom:2px solid #cbd5e1;padding-bottom:8px}
+        .language-head{font-weight:700;color:#475569;padding:10px 2px}
+        .pair{background:white;border:1px solid #e2e8f0;border-radius:9px;padding:12px 16px;margin:14px 0;break-inside:avoid}
+        /* Sentence-by-sentence: original sentence, followed by its translation. */
+        .original{display:block;white-space:pre-wrap;font-weight:600;color:#1e293b}
+        .translation{display:block;white-space:pre-wrap;margin-top:3px;color:#0f766e}
+        .muted{color:#64748b}.error{color:#b91c1c}.notice{margin:14px 0}
+        .loading-indicator{display:flex;align-items:center;gap:10px;padding:9px 12px;background:#eff6ff;
+          border-radius:8px;color:#1d4ed8;font-size:.9rem;font-weight:600;clear:both}
+        .loading-indicator.done{background:#f0fdf4;color:#166534}
+        .loading-indicator.failed{background:#fef2f2;color:#b91c1c}
+        .spinner{display:inline-block;flex:none;width:20px;height:20px;border:3px solid #bfdbfe;
+          border-top-color:#2563eb;border-radius:50%;animation:bilingual-spin .8s linear infinite}
+        @keyframes bilingual-spin{to{transform:rotate(360deg)}}
+        .loading-indicator.done .spinner,.loading-indicator.failed .spinner{display:none}
+        .loading-placeholder{padding:42px 15px;text-align:center;color:#475569;background:white;
+          border:1px dashed #cbd5e1;border-radius:10px;margin-top:18px}
+        .loading-placeholder .spinner{width:34px;height:34px;border-width:4px;vertical-align:middle;margin-right:10px}
+        .loading-placeholder[hidden]{display:none}
+        @media(max-width:680px){header{padding:12px}main{padding:0 10px 28px}.pair{padding:10px 12px}}
+        @media print{header{position:static}#printButton,.loading-indicator,.loading-placeholder{display:none}
+          body{background:white}.pair{break-inside:avoid}}
+      </style></head><body>
+      <!--header><button id="printButton" type="button" disabled>Print / Save PDF</button-->
+      <h1 id="bookTitle"></h1><div id="subtitle"></div>
+      <div id="loadingIndicator" class="loading-indicator" role="status" aria-live="polite">
+        <span class="spinner" aria-hidden="true"></span><span id="progress">Preparing PDF text…</span>
+      </div></header>
+      <main><div class="language-head"><span>Original PDF text ↓ </span><span id="targetHeading"></span></div>
+        <div id="loadingPlaceholder" class="loading-placeholder" role="status">
+          <span class="spinner" aria-hidden="true"></span><span>Reading PDF and generating bilingual text…</span>
+        </div><div id="readerContent"></div></main>
+      </body></html>`);
+    doc.close();
+    doc.getElementById('bookTitle').textContent = config.bookTitle;
+    doc.getElementById('subtitle').textContent = 'MindBridger · Pages ' + start + '–' + end;
+    doc.getElementById('targetHeading').textContent = targetNames[target] + ' · AI translation';
+    //doc.getElementById('printButton').addEventListener('click', () => win.print());
+    return doc;
+  }
+
+  function readerStatus(doc, message, state='loading') {
+    const status = doc.getElementById('loadingIndicator');
+    status.classList.toggle('done', state === 'done');
+    status.classList.toggle('failed', state === 'failed');
+    doc.getElementById('progress').textContent = message;
+    if (state !== 'loading') {
+      doc.getElementById('loadingPlaceholder').hidden = true;
+      //doc.getElementById('printButton').disabled = state !== 'done';
+    }
+  }
+
+  function addNotice(doc, container, text, className='notice muted') {
+    container.appendChild(popupElement(doc, 'p', className, text));
+  }
+
+  async function getPDFDocument() {
+    const iframe = document.getElementById('pdfIframe');
+    // Works only if PDF.js viewer is served from the same origin as MindBridger.
+    for (let attempt = 0; attempt < 40; attempt++) {
+      const app = iframe.contentWindow && iframe.contentWindow.PDFViewerApplication;
+      if (app && app.pdfDocument) return app.pdfDocument;
+      await new Promise(resolve => setTimeout(resolve, 250));
+    }
+    throw new Error('PDF.js text is not ready. Open the PDF and wait for it to finish loading.');
+  }
+
+  async function extractLines(pdf, pageNumber) {
+    const page = await pdf.getPage(pageNumber);
+    const content = await page.getTextContent();
+    const lines = [];
+    let current = '';
+
+    content.items.forEach(item => {
+      const part = String(item.str || '');
+      if (part) {
+        // Most PDF.js text items include explicit whitespace, but insert a space
+        // between consecutive word-like chunks when it is missing.
+        const needsSpace = current && !/\s$/.test(current) && !/^\s/.test(part)
+          && !/^[,.;:!?%)\]、。]/.test(part) && !/[(\[]$/.test(current);
+        current += (needsSpace ? ' ' : '') + part;
+      }
+      if (item.hasEOL) {
+        lines.push(current.trim());
+        current = '';
+      }
+    });
+    if (current.trim()) lines.push(current.trim());
+    return lines;
+  }
+
+  // PDF.js `hasEOL` represents VISUAL line wrapping, not sentence boundaries.
+  // Join wrapped lines before splitting so an English sentence that occupies
+  // two PDF lines receives only one Indonesian translation.
+  function sentencesFromLines(lines) {
+    const paragraphs = [];
+    let current = '';
+    const flush = () => {
+      if (current.trim()) paragraphs.push(current.trim());
+      current = '';
+    };
+
+    lines.forEach(raw => {
+      const line = String(raw || '').replace(/\s+/g, ' ').trim();
+      if (!line) { flush(); return; }
+
+      // Keep common textbook headings separate from the following sentence.
+      const isHeading = line.length <= 90 && (
+        /^(?:chapter|unit|lesson|section)\s+\d+\b/i.test(line) ||
+        /^[A-Z][A-Z\d \t:,-]{5,}$/.test(line)
+      );
+      if (isHeading) {
+        flush();
+        paragraphs.push(line);
+        return;
+      }
+
+      // Rejoin a word broken by a PDF visual line break, e.g. "environ-" + "ment".
+      if (current.endsWith('-') && /^[a-z]/.test(line)) {
+        current = current.slice(0, -1) + line;
+      } else {
+        current = current ? current + ' ' + line : line;
+      }
+    });
+    flush();
+
+    const segments = [];
+    paragraphs.forEach(paragraph => {
+      let parts;
+      if (typeof Intl !== 'undefined' && typeof Intl.Segmenter === 'function') {
+        parts = [...new Intl.Segmenter('en', {granularity: 'sentence'}).segment(paragraph)]
+          .map(item => item.segment.trim()).filter(Boolean);
+      } else {
+        // Fallback if the browser does not support Intl.Segmenter.
+        parts = paragraph.split(/(?<=[.!?。！？]["'”’)?\]]?)\s+(?=[^\s])/u).filter(Boolean);
+      }
+
+      // Intl sometimes splits after honorifics such as "Dr." and "Ms.".
+      // Rejoin them with the next part before submitting for translation.
+      const sentences = [];
+      let pending = '';
+      parts.forEach(part => {
+        pending = pending ? pending + ' ' + part : part;
+        if (/\b(?:Mr|Mrs|Ms|Dr|Prof|Sr|Jr|St|Rev|Gen|Col|Capt|Lt|Mt|No|Fig)\.$/i.test(pending)) {
+          return;
+        }
+        sentences.push(pending);
+        pending = '';
+      });
+      if (pending) sentences.push(pending);
+
+      sentences.forEach(sentence => {
+        // Preserve all content if one unusually long sentence exceeds the API limit.
+        // Such rare cases become continuation pairs rather than truncated text.
+        while (sentence.length > 1000) {
+          let cut = sentence.lastIndexOf(' ', 1000);
+          if (cut < 500) cut = 1000;
+          segments.push(sentence.slice(0, cut).trim());
+          sentence = sentence.slice(cut).trim();
+        }
+        if (sentence) segments.push(sentence);
+      });
+    });
+    return segments;
+  }
+
+  function batchSegments(segments) {
+    const batches = [];
+    let batch = [], length = 0;
+    segments.forEach(text => {
+      if (batch.length >= 24 || (length + text.length > 4000 && batch.length)) {
+        batches.push(batch); batch = []; length = 0;
+      }
+      batch.push(text); length += text.length;
+    });
+    if (batch.length) batches.push(batch);
+    return batches;
+  }
+
+  async function translateBatch(batch, target, start, end) {
+    const response = await fetch(config.translationUrl, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-CSRF-TOKEN': config.csrf
+      },
+      body: JSON.stringify({
+        target_language: target, start_page: start, end_page: end, segments: batch
+      })
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.message || data.error || ('Translation request failed (' + response.status + ')'));
+    if (!Array.isArray(data.translations) || data.translations.length !== batch.length) {
+      throw new Error('The translation response did not match the requested sentences.');
+    }
+    return data.translations;
+  }
+
+  function appendRows(doc, container, sourceSegments, translations, target) {
+    sourceSegments.forEach((source, index) => {
+      const translated = translations[index] || {};
+      const row = popupElement(doc, 'div', 'pair');
+      row.appendChild(popupElement(doc, 'div', 'original', source));
+      const translation = popupElement(doc, 'div', 'translation',
+        translated.already_target ? source : (translated.translated || ''));
+      translation.setAttribute('lang', target);
+      row.appendChild(translation);
+      container.appendChild(row);
+    });
+  }
+
+  // The ToC can use logical/printed page numbers, while PDF.js always uses
+  // 1-based physical page indices. Some customized viewers also expose only
+  // the requested PDF excerpt. Resolve the mapping before extracting text.
+  async function resolveSectionPages(pdf, start, end) {
+    if (!Number.isInteger(start) || !Number.isInteger(end) || start < 1 || end < start) {
+      throw new Error('Invalid Table of Contents page numbers: ' + start + '–' + end + '.');
+    }
+    if (end - start + 1 > 40) {
+      throw new Error('Select a section of at most 40 pages to limit processing and translation costs.');
+    }
+
+    const total = Number(pdf.numPages);
+    if (!Number.isInteger(total) || total < 1) {
+      throw new Error('PDF.js did not report a valid page count. Check that the PDF finished loading.');
+    }
+    console.info('MindBridger bilingual page mapping', {requestedStart: start, requestedEnd: end, pdfPages: total});
+
+    const requested = Array.from({length: end - start + 1}, (_, i) => start + i);
+    if (end <= total) {
+      return {pages: requested.map(n => ({bookPage: n, pdfPage: n})), note: null};
+    }
+
+    // PDF page labels can be different from physical page indices.
+    // Example: a one-page PDF whose printed page label is "35".
+    let labels = null;
+    try {
+      if (typeof pdf.getPageLabels === 'function') labels = await pdf.getPageLabels();
+    } catch (e) {
+      console.warn('Could not retrieve PDF page labels:', e);
+    }
+    if (Array.isArray(labels) && labels.length === total) {
+      const matches = requested.map(n => labels.findIndex(label => {
+        const normalized = String(label || '').trim();
+        return normalized === String(n) ||
+          new RegExp('^(?:page\\s*)?0*' + n + '$', 'i').test(normalized);
+      }));
+      if (matches.every((index, i) => index >= 0 && (i === 0 || index > matches[i - 1]))) {
+        return {
+          pages: requested.map((n, i) => ({bookPage: n, pdfPage: matches[i] + 1})),
+          note: 'Using PDF page labels to match the book’s printed page numbering.'
+        };
+      }
+    }
+
+    // Some customized PDF.js deployments load an excerpt consisting only of
+    // the selected pages. Only use an excerpt mapping when the iframe URL
+    // explicitly carries this exact requested start/end and page counts match.
+    const iframe = document.getElementById('pdfIframe');
+    const viewerUrl = new URL(iframe.getAttribute('src') || iframe.src, window.location.href);
+    const viewerStart = Number(viewerUrl.searchParams.get('start'));
+    const viewerEnd = Number(viewerUrl.searchParams.get('end'));
+    const isSelectedExcerpt = viewerStart === start && viewerEnd === end &&
+      total === requested.length && start > total;
+
+    if (isSelectedExcerpt) {
+      return {
+        pages: requested.map((n, i) => ({bookPage: n, pdfPage: i + 1})),
+        note: 'Summary: ' + total + ' page(s) for the selected book range ' +
+          start + '–' + end + '. Treating them as a selected-page excerpt; verify the original text matches the intended section.'
+      };
+    }
+
+    throw new Error('Table of Contents requests page ' + start + (end !== start ? '–' + end : '') +
+      ', but the loaded PDF contains only ' + total + ' physical page(s). ' +
+      'Check the PDF file and ToC numbering. The reader will not translate an uncertain page.');
+  }
+
+  async function openBilingualReader(start, end, target) {
+    // Must be called immediately from the select change event to avoid popup blockers.
+    const win = window.open('', 'mindbridgerBilingualReader', 'width=1250,height=850,scrollbars=yes,resizable=yes');
+    if (!win) { alert('Please allow pop-ups for MindBridger to open the bilingual reader.'); return; }
+    win.focus();
+    const doc = buildPopup(win, target, start, end);
+    const container = doc.getElementById('readerContent');
+    const placeholder = doc.getElementById('loadingPlaceholder');
+    const myRun = ++activeRun;
+
+    try {
+      readerStatus(doc, 'Loading PDF text…');
+      const pdf = await getPDFDocument();
+      const mapping = await resolveSectionPages(pdf, start, end);
+      if (mapping.note) addNotice(doc, container, mapping.note, 'notice muted');
+      let translatedCount = 0;
+      for (const {bookPage, pdfPage} of mapping.pages) {
+        if (myRun !== activeRun || win.closed) return;
+        readerStatus(doc, 'Extracting text from book page ' + bookPage + '…');
+        const lines = await extractLines(pdf, pdfPage);
+        const segments = sentencesFromLines(lines);
+        container.appendChild(popupElement(doc, 'h2', 'page', 'Page ' + bookPage));
+        if (!segments.length) {
+          addNotice(doc, container, 'No selectable text found on this page (scanned PDFs require OCR).');
+          continue;
+        }
+        let completedOnPage = 0;
+        for (const batch of batchSegments(segments)) {
+          if (myRun !== activeRun || win.closed) return;
+          readerStatus(doc, 'Translating page ' + bookPage + ' · ' + completedOnPage +
+            ' of ' + segments.length + ' sentences translated…');
+          const translations = await translateBatch(batch, target, bookPage, bookPage);
+          if (myRun !== activeRun || win.closed) return;
+          appendRows(doc, container, batch, translations, target);
+          placeholder.hidden = true; // Original/translation sentence pairs now visible.
+          translatedCount += batch.length;
+          completedOnPage += batch.length;
+          readerStatus(doc, 'Translating page ' + bookPage + ' · ' + completedOnPage +
+            ' of ' + segments.length + ' sentences translated…');
+        }
+      }
+      if (myRun === activeRun && !win.closed) {
+        readerStatus(doc, 'Completed · ' + translatedCount + ' bilingual sentences · AI translation (review for accuracy)', 'done');
+      }
+    } catch (error) {
+      if (myRun !== activeRun || win.closed) return;
+      readerStatus(doc, 'Could not complete the bilingual reading.', 'failed');
+      addNotice(doc, container, error.message || 'Unknown error', 'notice error');
+      console.error('MindBridger bilingual reader:', error);
+    }
+  }
+})();
 </script>
 
 <!-- Book Meta Modal -->

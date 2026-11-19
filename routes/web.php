@@ -64,6 +64,7 @@ Route::delete('users/{user}/destroy', [UserController::class, 'destroy'])->name(
 Route::get('users/list', [UserController::class, 'list'])->name('users.list'); // [SJH]
 Route::get('users/choose_list', [UserController::class, 'choose_list'])->name('users.choose_list'); // [SJH]
 
+
 // Route::resource('inst/{inst}/book','BookController'); // [SJH]
 Route::resource('book', BookController::class); // [SJH]
 Route::resource('book_copy', Book_copyController::class)
@@ -71,6 +72,13 @@ Route::resource('book_copy', Book_copyController::class)
     ->names([
         'create' => 'book_copy.create',
     ]); // [SJH] 2024.12.19
+
+// Login + throttling prevent anonymous / unlimited translation requests. // [SJH] 2026.11.20
+Route::post('/book/{book}/bilingual-translate',
+    [\App\Http\Controllers\BookAIAdvisorController::class, 'translateSection'])
+    ->middleware(['auth', 'throttle:60,1'])
+    ->name('book.bilingual.translate');
+
 
 // Book Copy Specific Routes
 Route::get('/book_copy/create/{book}', [Book_copyController::class, 'create'])->name('book_copy.create'); // [SJH] 2024.12.19
