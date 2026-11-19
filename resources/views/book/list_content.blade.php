@@ -295,9 +295,15 @@
                                     </td>
                                     <td class="action-cell">
                                         @if(empty($copy_num))
-                                        <a href="javascript:confirm_delete('{{$b->title}}','{{$b->id}}');" class="action-link">
-                                            <i class="fas fa-trash text-danger"> <img src="{{config('app.url','/mindbridger')}}/image/button/del_bw.png" class="zoom"></i>
-                                        </a>                        
+                                            <a href="#"
+                                            onclick="confirm_delete(this.dataset.title, this.dataset.id); return false;"
+                                            data-title="{{ $b->title }}"
+                                            data-id="{{ $b->id }}"
+                                            class="action-link">
+                                                <i class="fas fa-trash text-danger">
+                                                    <img src="{{ config('app.url','/mindbridger') }}/image/button/del_bw.png" class="zoom">
+                                                </i>
+                                            </a>
                                         @endif
                                     </td>
                                     @endif
