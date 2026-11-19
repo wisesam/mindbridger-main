@@ -1461,7 +1461,7 @@ a.badge.badge-olive:focus {
         @media print{header{position:static}#printButton,.loading-indicator,.loading-placeholder{display:none}
           body{background:white}.pair{break-inside:avoid}}
       </style></head><body>
-      <header><button id="printButton" type="button" disabled>Print / Save PDF</button>
+      <!--header><button id="printButton" type="button" disabled>Print / Save PDF</button-->
       <h1 id="bookTitle"></h1><div id="subtitle"></div>
       <div id="loadingIndicator" class="loading-indicator" role="status" aria-live="polite">
         <span class="spinner" aria-hidden="true"></span><span id="progress">Preparing PDF text…</span>
@@ -1475,7 +1475,7 @@ a.badge.badge-olive:focus {
     doc.getElementById('bookTitle').textContent = config.bookTitle;
     doc.getElementById('subtitle').textContent = 'MindBridger · Pages ' + start + '–' + end;
     doc.getElementById('targetHeading').textContent = targetNames[target] + ' · AI translation';
-    doc.getElementById('printButton').addEventListener('click', () => win.print());
+    //doc.getElementById('printButton').addEventListener('click', () => win.print());
     return doc;
   }
 
@@ -1486,7 +1486,7 @@ a.badge.badge-olive:focus {
     doc.getElementById('progress').textContent = message;
     if (state !== 'loading') {
       doc.getElementById('loadingPlaceholder').hidden = true;
-      doc.getElementById('printButton').disabled = state !== 'done';
+      //doc.getElementById('printButton').disabled = state !== 'done';
     }
   }
 
