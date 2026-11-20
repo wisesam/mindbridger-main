@@ -1432,24 +1432,63 @@ $readerManagedLang = \vwmldbm\code\manage_lang($readerCurrentLocale, 'ccode');
     return lines;
   }
 
-  // PDF.js `hasEOL` represents VISUAL line wrapping, not sentence boundaries.
-  // Join wrapped lines before splitting so an English sentence that occupies
-  // two PDF lines receives only one Indonesian translation.
+  // Reassemble headings and discard only HIGH-CONFIDENCE OCR/diagram noise
+  // before sending text to the translation API. Visual PDF lines are not sentences.
+  function isLikelyPdfNoise(text) {
+    const s = String(text || '').trim();
+    if (s.length < 35) return false; // Leave short fragments to AI for context.
+    const chars = Array.from(s);
+    const punctuation = chars.filter(ch => /[^\p{L}\p{N}\s]/u.test(ch)).length;
+    const words = chars.filter(ch => /[\p{L}\p{N}]/u.test(ch)).length;
+    const singles = (s.match(/(?:^|[^A-Za-z])[A-Za-z](?=$|[^A-Za-z])/g) || []).length;
+    const punctRate = punctuation / chars.length;
+    const textRate = words / chars.length;
+
+    // Typical corrupt diagram text: scattered one-letter fragments and punctuation.
+    if (singles >= 7 && punctuation >= 12 && punctRate >= 0.20) return true;
+    // Especially broken OCR glyph streams, but not ordinary prose or clean captions.
+    if (s.length >= 65 && punctuation >= 22 && punctRate > 0.38 && textRate < 0.43) return true;
+    if ((s.match(/\uFFFD/g) || []).length >= 4 && punctuation >= 10) return true;
+    return false;
+  }
+
   function sentencesFromLines(lines) {
     const paragraphs = [];
     let current = '';
+    let pendingMarker = '';
     const flush = () => {
       if (current.trim()) paragraphs.push(current.trim());
       current = '';
     };
+    // Roman numeral / alphabet / list markers are chapter labels, not sentences.
+    // Only recognize a bare marker on its OWN PDF line.
+    const standaloneMarker = /^(?:\(?[IVXLCDM]{1,8}\)?|[A-Z]|\d{1,2})(?:[.)])?$/u;
+    const inlineHeading = /^(?:\(?[IVXLCDM]{1,8}\)?|[A-Z]|\d{1,2})[.)]\s+\S/u;
+    const conventionalHeading = /^(?:chapter|unit|lesson|section)\s+\d+\b/i;
 
     lines.forEach(raw => {
       const line = String(raw || '').replace(/\s+/g, ' ').trim();
       if (!line) { flush(); return; }
-
-      // Keep common textbook headings separate from the following sentence.
-      const isHeading = line.length <= 90 && (
-        /^(?:chapter|unit|lesson|section)\s+\d+\b/i.test(line) ||
+      if (isLikelyPdfNoise(line)) {
+        // Discard noise without attaching it to neighboring prose.
+        flush();
+        return;
+      }
+      if (standaloneMarker.test(line)) {
+        flush();
+        pendingMarker = line;
+        return;
+      }
+      if (pendingMarker) {
+        flush();
+        // Join 'II.' followed by '근원적 종교개혁' as ONE title segment.
+        // A marker lacking a usable next line is not translated on its own.
+        paragraphs.push(pendingMarker + ' ' + line);
+        pendingMarker = '';
+        return;
+      }
+      const isHeading = line.length <= 130 && (
+        inlineHeading.test(line) || conventionalHeading.test(line) ||
         /^[A-Z][A-Z\d \t:,-]{5,}$/.test(line)
       );
       if (isHeading) {
@@ -1457,8 +1496,7 @@ $readerManagedLang = \vwmldbm\code\manage_lang($readerCurrentLocale, 'ccode');
         paragraphs.push(line);
         return;
       }
-
-      // Rejoin a word broken by a PDF visual line break, e.g. "environ-" + "ment".
+      // Rejoin a word hyphenated only because it wrapped in the PDF.
       if (current.endsWith('-') && /^[a-z]/.test(line)) {
         current = current.slice(0, -1) + line;
       } else {
@@ -1469,32 +1507,35 @@ $readerManagedLang = \vwmldbm\code\manage_lang($readerCurrentLocale, 'ccode');
 
     const segments = [];
     paragraphs.forEach(paragraph => {
+      if (isLikelyPdfNoise(paragraph)) return;
+      // A heading is displayed/translated as a whole, never split at 'II.'.
+      const isHeading = paragraph.length <= 130 && (
+        inlineHeading.test(paragraph) || conventionalHeading.test(paragraph) ||
+        /^[A-Z][A-Z\d \t:,-]{5,}$/.test(paragraph)
+      );
+      if (isHeading) {
+        segments.push(paragraph);
+        return;
+      }
       let parts;
       if (typeof Intl !== 'undefined' && typeof Intl.Segmenter === 'function') {
         parts = [...new Intl.Segmenter('en', {granularity: 'sentence'}).segment(paragraph)]
           .map(item => item.segment.trim()).filter(Boolean);
       } else {
-        // Fallback if the browser does not support Intl.Segmenter.
         parts = paragraph.split(/(?<=[.!?。！？]["'”’)?\]]?)\s+(?=[^\s])/u).filter(Boolean);
       }
-
-      // Intl sometimes splits after honorifics such as "Dr." and "Ms.".
-      // Rejoin them with the next part before submitting for translation.
       const sentences = [];
       let pending = '';
       parts.forEach(part => {
         pending = pending ? pending + ' ' + part : part;
-        if (/\b(?:Mr|Mrs|Ms|Dr|Prof|Sr|Jr|St|Rev|Gen|Col|Capt|Lt|Mt|No|Fig)\.$/i.test(pending)) {
-          return;
-        }
+        if (/\b(?:Mr|Mrs|Ms|Dr|Prof|Sr|Jr|St|Rev|Gen|Col|Capt|Lt|Mt|No|Fig)\.$/i.test(pending)) return;
         sentences.push(pending);
         pending = '';
       });
       if (pending) sentences.push(pending);
 
       sentences.forEach(sentence => {
-        // Preserve all content if one unusually long sentence exceeds the API limit.
-        // Such rare cases become continuation pairs rather than truncated text.
+        if (isLikelyPdfNoise(sentence)) return;
         while (sentence.length > 1000) {
           let cut = sentence.lastIndexOf(' ', 1000);
           if (cut < 500) cut = 1000;
@@ -1542,16 +1583,22 @@ $readerManagedLang = \vwmldbm\code\manage_lang($readerCurrentLocale, 'ccode');
   }
 
   function appendRows(doc, container, sourceSegments, translations, target) {
+    let displayed = 0;
     sourceSegments.forEach((source, index) => {
       const translated = translations[index] || {};
+      // AI flags illegible OCR/diagram fragments. Do not render either side.
+      if (translated.skip === true) return;
+      const targetText = translated.already_target ? source : (translated.translated || '');
+      if (!String(targetText).trim()) return;
       const row = popupElement(doc, 'div', 'pair');
       row.appendChild(popupElement(doc, 'div', 'original', source));
-      const translation = popupElement(doc, 'div', 'translation',
-        translated.already_target ? source : (translated.translated || ''));
+      const translation = popupElement(doc, 'div', 'translation', targetText);
       translation.setAttribute('lang', target);
       row.appendChild(translation);
       container.appendChild(row);
+      displayed++;
     });
+    return displayed;
   }
 
   // The ToC can use logical/printed page numbers, while PDF.js always uses
@@ -1637,6 +1684,7 @@ $readerManagedLang = \vwmldbm\code\manage_lang($readerCurrentLocale, 'ccode');
       const mapping = await resolveSectionPages(pdf, start, end);
       if (mapping.note) addNotice(doc, container, mapping.note, 'notice muted');
       let translatedCount = 0;
+      let skippedCount = 0;
       for (const {bookPage, pdfPage} of mapping.pages) {
         if (myRun !== activeRun || win.closed) return;
         readerStatus(doc, 'Extracting text from book page ' + bookPage + '…');
@@ -1654,16 +1702,17 @@ $readerManagedLang = \vwmldbm\code\manage_lang($readerCurrentLocale, 'ccode');
             ' of ' + segments.length + ' sentences translated…');
           const translations = await translateBatch(batch, target, bookPage, bookPage);
           if (myRun !== activeRun || win.closed) return;
-          appendRows(doc, container, batch, translations, target);
+          const shown = appendRows(doc, container, batch, translations, target);
           placeholder.hidden = true; // Original/translation sentence pairs now visible.
-          translatedCount += batch.length;
+          translatedCount += shown;
+          skippedCount += batch.length - shown;
           completedOnPage += batch.length;
           readerStatus(doc, 'Translating page ' + bookPage + ' · ' + completedOnPage +
             ' of ' + segments.length + ' sentences translated…');
         }
       }
       if (myRun === activeRun && !win.closed) {
-        readerStatus(doc, 'Completed · ' + translatedCount + ' bilingual sentences · AI translation (review for accuracy)', 'done');
+        readerStatus(doc, 'Completed · ' + translatedCount + ' bilingual sentences · ' + skippedCount + ' skipped OCR fragments · AI translation (review for accuracy)', 'done');
       }
     } catch (error) {
       if (myRun !== activeRun || win.closed) return;
