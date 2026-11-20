@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
 use App\Libraries\Code;
 use Illuminate\Http\Request;
 use Illuminate\Auth\Events\Registered;
@@ -845,20 +846,48 @@ class BookAIAdvisorController extends Controller
             return response()->json(['message' => 'Please select at most 40 PDF pages.'], 422);
         }
 
-        $inst = session('lib_inst') ?? config('app.inst', 1);
+        // Public bilingual reading is supported for guests, but only within
+        // the institution selected by the current library session.
+        $inst = session('lib_inst');
+        if (empty($inst) && config('app.multi_inst')) {
+            return response()->json([
+                'message' => 'Please select a library before translating.'
+            ], 403);
+        }
+        $inst = $inst ?: config('app.inst', 1);
+
         $bookRecord = Book::where('inst', $inst)
             ->where('id', $book)
             ->firstOrFail();
 
-        // Prevent users of one institution from translating private books
-        // belonging to another, or books hidden from ordinary members.
-        if ($bookRecord->hide_yn === 'Y'
-            && (!Auth::check() || !Auth::user()->isAdmin())) {
-            abort(403);
+        $isGuest = !Auth::check();
+        $isAdmin = !$isGuest && Auth::user()->isAdmin();
+
+        // Match BookController::show() visibility rules: hidden books are
+        // accessible to administrators only; guests must also be allowed
+        // to see the book AND its PDF resource without signing in.
+        if ($bookRecord->hide_yn === 'Y' && !$isAdmin) {
+            abort(403, 'This book is not publicly available.');
+        }
+        if ($isGuest && (
+            $bookRecord->hide_from_guest_yn === 'Y' ||
+            $bookRecord->e_res_af_login_yn === 'Y'
+        )) {
+            abort(403, 'Sign in to access this book or its e-resource.');
         }
 
-        // Authentication is enforced again in routes/web.php.
-        if (!Auth::check()) abort(401);
+        // No Auth::check() requirement: guests may translate public books.
+        // Apply a stricter per-IP quota to unauthenticated OpenAI requests.
+        // The route also enforces a 60/min limit for everyone.
+        if ($isGuest) {
+            $guestKey = 'book-bilingual:guest:' . hash('sha256', (string) $request->ip());
+            if (RateLimiter::tooManyAttempts($guestKey, 12)) {
+                return response()->json([
+                    'message' => 'Too many guest translation requests. Please try again shortly.'
+                ], 429);
+            }
+            RateLimiter::hit($guestKey, 60);
+        }
 
         $segments = array_values($validated['segments']);
         $characters = array_sum(array_map(
