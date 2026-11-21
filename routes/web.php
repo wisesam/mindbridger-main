@@ -15,6 +15,7 @@ use App\Http\Controllers\BookUserEshelfController;
 use App\Http\Controllers\BookAIAdvisorController;
 use App\Http\Controllers\BookTextMetaController;
 use App\Http\Controllers\ReadingHistoryController;
+use App\Http\Controllers\BookEbookUploadController;
 
 /*
 |--------------------------------------------------------------------------
@@ -72,6 +73,11 @@ Route::resource('book_copy', Book_copyController::class)
     ->names([
         'create' => 'book_copy.create',
     ]); // [SJH] 2024.12.19
+
+Route::post('/book/{book}/ebooks', [BookEbookUploadController::class, 'store'])
+->middleware('auth')
+->name('book.ebooks.upload');
+
 
 // Login + throttling prevent anonymous / unlimited translation requests. // [SJH] 2026.11.20
 Route::post('/book/{book}/bilingual-translate',
@@ -132,6 +138,7 @@ Route::middleware(['auth'])->group(function () {
         ->name('reading_history.section_summary.get');
 
 });
+
 
 // AI Book section Operation Routes
 Route::post('reading_history/{book}/section/ai', [ReadingHistoryController::class, 'section_ai_explain'])->name('reading_history.section_ai');

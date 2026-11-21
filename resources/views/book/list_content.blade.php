@@ -49,6 +49,13 @@
         $search_word_arr[]=$search_word;
     }
     else $operation=null;
+
+    // User::canPublishBooks(): users.utype -> code_c_utype.w2_utype, create_yn = Y.
+    // Cache publishing permissions once for this list (avoid a role query per row).
+    $currentUser = Auth::user();
+    $isBookAdmin = $currentUser && $currentUser->isAdmin();
+    $canPublishBooks = $currentUser && $currentUser->canPublishBooks();
+    $currentUserId = $currentUser ? (string) $currentUser->id : null;
 ?>
 
 <div class="resource-list-container">
@@ -68,10 +75,11 @@
                     </div>
                 </div>
                 <div class="col-md-4 text-end">
-                    @if(Auth::check() && Auth::user()->isAdmin() && !isset($no_add_btt)) 
-                    <button type='button' class='btn btn-primary btn-lg' onClick="window.location='{{config('app.url','/mindbridger')}}/book/create'">
-                        <i class="fas fa-plus me-2"></i>{{__("Add Resource")}}
-                    </button>
+                    @if($canPublishBooks && !isset($no_add_btt))
+                        <button type="button" class="btn btn-primary btn-lg"
+                            onClick="window.location='{{config('app.url','/mindbridger')}}/book/create'">
+                            <i class="fas fa-plus me-2"></i>{{__("Add Resource")}}
+                        </button>
                     @endif
                 </div>
             </div>
@@ -117,7 +125,7 @@
                             <thead class="table-header">
                                 <tr>
                                     <th class="cover-col">{{__("Cover")}}</th>
-                                                                    <th class="title-col">{{__("Title")}}</th>
+                                    <th class="title-col">{{__("Title")}}</th>
                                 <th class="author-col">{{__("Author")}}</th>
                                 <th class="type-col">{{__("e-Resource")}}</th>
                                 <th class="rtype-col">{{__("Type")}}</th>
@@ -142,7 +150,7 @@
                                 <th class="date-col">{{__("Pub Date")}}</th> -->
                                     <th class="copies-col">{{__("Copies")}}</th>
                                     
-                                    @if(Auth::check() && Auth::user()->isAdmin()) 
+                                    @if($canPublishBooks) 
                                     <th class="action-col"></th>
                                     <th class="action-col"></th>
                                     @endif
@@ -150,6 +158,17 @@
                             </thead>
                             <tbody>
                                 @foreach($books as $b)
+                                @php
+                                    // Match User::canManageBook(): admins may manage all institutional
+                                    // books; eligible members may manage only records they created.
+                                    // Owner is created_by (NOT the editable creator display name).
+                                    $canManageThisBook = $canPublishBooks
+                                        && (string) $b->inst === (string) session('lib_inst')
+                                        && ($isBookAdmin || (
+                                            $b->created_by !== null
+                                            && (string) $b->created_by === $currentUserId
+                                        ));
+                                @endphp
                                 <tr class="resource-row">
                                     <td class="cover-cell">
                                         @if($b->cover_image) 
@@ -287,19 +306,22 @@
                                         <span class="copies-badge">{{$copy_num}}</span>
                                     </td>
 
-                                    @if(Auth::check() && Auth::user()->isAdmin()) 
+                                    @if($canPublishBooks)
                                     <td class="action-cell">
-                                        <a href="{{config('app.url','/mindbridger')}}/book/{{$b->id}}/edit" class="action-link">
-                                            <i class="fas fa-edit text-primary"></i>
-                                        </a>
+                                        @if($canManageThisBook)
+                                            <a href="{{config('app.url','/mindbridger')}}/book/{{$b->id}}/edit"
+                                               class="action-link" title="{{ __('Edit') }}" aria-label="{{ __('Edit') }}">
+                                                <i class="fas fa-edit text-primary"></i>
+                                            </a>
+                                        @endif
                                     </td>
                                     <td class="action-cell">
-                                        @if(empty($copy_num))
+                                        @if($canManageThisBook && empty($copy_num))
                                             <a href="#"
-                                            onclick="confirm_delete(this.dataset.title, this.dataset.id); return false;"
-                                            data-title="{{ $b->title }}"
-                                            data-id="{{ $b->id }}"
-                                            class="action-link">
+                                               onclick="confirm_delete(this.dataset.title, this.dataset.id); return false;"
+                                               data-title="{{ $b->title }}"
+                                               data-id="{{ $b->id }}"
+                                               class="action-link" title="{{ __('Delete') }}" aria-label="{{ __('Delete') }}">
                                                 <i class="fas fa-trash text-danger">
                                                     <img src="{{ config('app.url','/mindbridger') }}/image/button/del_bw.png" class="zoom">
                                                 </i>

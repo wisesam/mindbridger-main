@@ -11,6 +11,7 @@
     
     $perm['R'] ='Y'; // Read permission
 	$isAdmin = (Auth::check() && Auth::user()->isAdmin()) ? true : false;
+    $canManageBook = Auth::check() && Auth::user()->canManageBook($book);
     $isEresource = ($book->files ? true : false);
 
  // if the normal user logged in, and has reading history use it otherwise use book's auto_toc
@@ -211,7 +212,7 @@ $readerManagedLang = \vwmldbm\code\manage_lang($readerCurrentLocale, 'ccode');
         <div class="col-12">
             <div class="book-content-wrapper">
                 <div class="book-header d-flex justify-content-start align-items-center">
-                @if($isAdmin)
+                @if($canManageBook)
                     <span class="action-icon-wrapper">
                         <i class="fas fa-cog zoom img-icon-pointer" onClick="window.location='{{config('app.url','/mindbridger')."/book/".$book->id}}/edit'" style="cursor:pointer; font-size: 24px; color: #6c757d;"></i>
                     </span>
@@ -643,6 +644,15 @@ $readerManagedLang = \vwmldbm\code\manage_lang($readerCurrentLocale, 'ccode');
                     <div class='form-control border-0'>{{ $book->author }}</div>
                 </div>
             </div>
+
+            @if(filled($book->creator))
+            <div class="form-group row">
+                <label for="creator" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Creator") }}</label>
+                <div class="col-md-9">
+                    <div class="form-control border-0">{{ $book->creator }}</div>
+                </div>
+            </div>
+            @endif
 
             @if($isEresource)
                 @auth

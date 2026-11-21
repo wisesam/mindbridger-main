@@ -28,7 +28,7 @@ return new class extends Migration
     public function down()
     {
         Schema::table('code_c_code_set', function (Blueprint $table) {
-            $table->dropColumn(['set_admin_only_yn', 'disk_quota']);
+            $table->dropColumn(['set_admin_only_yn']);
         });
     }
 };

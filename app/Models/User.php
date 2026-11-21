@@ -237,6 +237,83 @@ class User extends Authenticatable
 		else return null;
     }
 
+    /**
+     * Users.utype maps to code_c_utype.w2_utype (SA/A/M/G legacy role).
+     * Ordinary users may publish only if create_yn = Y for that role
+     * in their institution. c_lang = 10 is the canonical EN row used
+     * by the existing get_w2utype_code() lookup.
+     *
+     * The default_utype_yn flag selects a default code; it does NOT
+     * authorize book publishing.
+     *
+     * @return object|null Matching row containing disk_quota, or null.
+     */
+    public function bookPublishingUserType()
+    {
+        if ((string) $this->inst !== (string) session('lib_inst') || empty($this->utype)) {
+            return null;
+        }
+
+        return DB::table('code_c_utype')
+            ->where('inst', $this->inst)
+            ->where('c_lang', 10)
+            ->where('create_yn', 'Y')
+            ->orderBy('code')
+            ->first(['disk_quota']);
+    }
+
+    public function canPublishBooks(): bool
+    {
+        if ($this->isAdmin()) {
+            return true;
+        }
+        // A user-type permission from institution A must not authorize
+        // a user to publish into institution B by changing lib_inst.
+        return (string) $this->inst === (string) session('lib_inst')
+            && $this->bookPublishingUserType() !== null;
+    }
+
+    
+    /**
+     * Admins can manage any book in their institution.
+     * Normal users require create_yn = 'Y'
+     * and may manage only books they created.
+     */
+    public function canManageBook(\App\Models\Book $book): bool
+    {
+        // Check institution
+        if ((string) $this->inst !== (string) session('lib_inst')
+            || (string) $book->inst !== (string) $this->inst) {
+            return false;
+        }
+
+        // Admins can manage all books
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        // Check code_c_utype.create_yn = 'Y'
+        if ($this->bookPublishingUserType() === null) {
+            return false;
+        }
+
+        // Normal users can manage only their own books
+        return $book->created_by !== null
+            && (string) $book->created_by === (string) $this->id;
+    }
+
+
+    /** Return null for unlimited admin storage, bytes for eligible users. */
+    public function bookDiskQuotaBytes(): ?int
+    {
+        if ($this->isAdmin()) {
+            return null;
+        }
+        $type = $this->bookPublishingUserType();
+        // Fail closed if the quota is missing or zero.
+        return $type ? (int) floor(max(0, (float) $type->disk_quota) * 1048576) : 0;
+    }
+
     public function favoriteBooks(){
         return $this->belongsToMany(Book::class, 'book_user_favorites')->withTimestamps();
     }

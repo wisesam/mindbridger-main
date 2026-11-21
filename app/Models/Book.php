@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder; // Needed for composite primary key
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use App\Book_copy; // Use the model that we defined
 
 class Book extends Model
@@ -25,6 +26,7 @@ class Book extends Model
         'id',
         'title',
         'author',
+        'creator',
         'c_rtype',
         'c_genre',
         'publisher',
@@ -67,6 +69,9 @@ class Book extends Model
     protected $casts = [
         'title'    => 'string',
         'author'   => 'string',
+        'creator'  => 'string',
+        // created_by is server-assigned ownership; publish eligibility is User::canPublishBooks().
+        'created_by' => 'string',
         'pub_date' => 'date:Y-m-d H:i:s',
         'reg_date' => 'date:Y-m-d H:i:s',
         // 'auto_toc' => 'array',  // lets you read/write it as PHP array
@@ -132,9 +137,10 @@ class Book extends Model
         }
 
         if (method_exists($user, 'isAdmin') && !$user->isAdmin()) {
-            return $q->where(function ($sub) {
+            return $q->where(function ($sub) use ($user) {
                 $sub->where('hide_yn', '<>', 'Y')
-                    ->orWhereNull('hide_yn');
+                    ->orWhereNull('hide_yn')
+                    ->orWhere('created_by', (string) $user->id); // owner sees own hidden books
             });
         }
 

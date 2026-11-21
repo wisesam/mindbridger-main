@@ -10,7 +10,7 @@ use App\Models\Book;
 use App\Models\Book_copy; 
 use App\Models\BookTextMeta; 
 use App\Models\ReadingHistory;
-use DB; // instead of Eloquent, use DB
+use Illuminate\Support\Facades\DB; // transactions for related database writes
 
 require_once(config('app.root2')."/vwmldbm/config.php");
 require_once(config('app.root2')."/vwmldbm/lib/code.php");
@@ -47,89 +47,42 @@ class BookController extends Controller
             }
         }    
 
-      // Search
-        $search_word=$request->input('search_word');
-        $search_target=$request->input('search_target');
-        // $search_target: i_title, i_author, i_isbn, i_advanced
+        // All branches share a visibility scope. Do not use ungrouped orWhere,
+        // which can unintentionally reveal hidden books across institutions.
+        $search_word = $request->input('search_word');
+        $search_target = $request->input('search_target');
+        $pageSize = min(100, max(1, (int) $request->input('page_size', 10)));
+        $query = Book::visibleTo(Auth::user());
 
-        if($request->input('page_size'))
-            $pageSize=$request->input('page_size');
-        else $pageSize=10;
+        if ($search_word !== null && trim((string) $search_word) !== '') {
+            $word = '%' . trim((string) $search_word) . '%';
+            $field = [
+                'i_title' => 'title',
+                'i_author' => 'author',
+                'i_creator' => 'creator',
+                'i_publisher' => 'publisher',
+                'i_isbn' => 'isbn',
+                'i_eisbn' => 'eisbn',
+            ][$search_target] ?? null;
 
-        $warr[]=['inst',session('lib_inst')];
-        if(!Auth::check()){
-            $warr[]=['hide_from_guest_yn','<>','Y'];
-            // $warr[]=['hide_from_guest_yn','=',null, 'or'];
-        } 
-        else if(!Auth::user()->isAdmin()) {
-            $warr[]=['hide_yn','<>','Y'];
-            // $warr[]=['hide_yn','=',null,'or'];
-        }
-
-        if($search_word) {
-            if($search_target=='i_title') {
-                $books=Book::where($warr)->where('title','LIKE',"%{$search_word}%")->orderBy('id','desc')->paginate($pageSize);
-            }
-            else if($search_target=='i_author') {
-                $books=Book::where($warr)->where('author','LIKE',"%{$search_word}%")->orderBy('id','desc')->paginate($pageSize);
-            }
-            else if($search_target=='i_publisher') {
-                $books=Book::where($warr)->where('publisher','LIKE',"%{$search_word}%")->orderBy('id','desc')->paginate($pageSize);
-            }
-            else if($search_target=='i_isbn') {
-                $books=Book::where($warr)->where('isbn','LIKE',"%{$search_word}%")->orderBy('id','desc')->paginate($pageSize);
-            }
-            else if($search_target=='i_eisbn') {
-                $books=Book::where($warr)->where('eisbn','LIKE',"%{$search_word}%")->orderBy('id','desc')->paginate($pageSize);
-            }
-            else {
-                $warr[]=['title','LIKE',"%{$search_word}%"];
-                $books=Book::where($warr)
-                ->orWhere([['inst',session('lib_inst')],['author','LIKE',"%{$search_word}%"]])
-                ->orWhere([['inst',session('lib_inst')],['publisher','LIKE',"%{$search_word}%"]])
-                ->orWhere([['inst',session('lib_inst')],['keywords','LIKE',"%{$search_word}%"]])
-                ->orWhere([['inst',session('lib_inst')],['isbn','LIKE',"%{$search_word}%"]])
-                ->orWhere([['inst',session('lib_inst')],['eisbn','LIKE',"%{$search_word}%"]])
-                ->orderBy('id','desc')->paginate($pageSize);
-            }
-        }
-        else {
-            if(! Auth::check()) { // exclude hide_yn, hide_from_guest books => well allow the listing only
-                $books = Book::where('inst', session('lib_inst'))
-                ->where(function ($q) {
-                    $q->where(function ($sub) {
-                        $sub->where('hide_from_guest_yn', '<>', 'Y')
-                            ->orWhereNull('hide_from_guest_yn');
-                    })
-                    ->where(function ($sub) {
-                        $sub->where('hide_yn', '<>', 'Y')
-                            ->orWhereNull('hide_yn');
-                    });
-                })
-                ->orderBy('id', 'desc')
-                ->paginate($pageSize);
-            }               
-            else { // logged in, then exclude hide_yn for non admins
-                if(!Auth::user()->isAdmin()) {
-                    $books = Book::where('inst', session('lib_inst'))
-                        ->where(function ($q) {
-                            $q->where('hide_yn', '<>', 'Y')
-                            ->orWhereNull('hide_yn');
-                        })
-                        ->orderBy('id', 'desc')
-                        ->paginate($pageSize);
-                }
-                else {
-                    $books=Book::where('inst',session('lib_inst'))
-                    ->orderBy('id','desc')->paginate($pageSize);
-                }
+            if ($field) {
+                $query->where($field, 'LIKE', $word);
+            } else {
+                $query->where(function ($q) use ($word) {
+                    foreach (['title', 'author', 'creator', 'publisher', 'keywords', 'isbn', 'eisbn'] as $column) {
+                        $q->orWhere($column, 'LIKE', $word);
+                    }
+                });
             }
         }
 
-        // $books=Book::orderBy('id','desc')->get();
-        return view('book.list')->with('books',$books)->with('inst',session('lib_inst'))
-            ->with('search_word',$search_word)
-            ->with('search_target',$search_target)->with('request',$request);
+        $books = $query->orderBy('id', 'desc')->paginate($pageSize)
+            ->appends($request->query());
+
+        return view('book.list')->with('books', $books)->with('inst', session('lib_inst'))
+            ->with('search_word', $search_word)->with('search_target', $search_target)
+            ->with('request', $request)
+            ->with('canPublishBooks', Auth::check() && Auth::user()->canPublishBooks());
     }
 
     /**
@@ -139,11 +92,10 @@ class BookController extends Controller
      */
     public function create()
     {
-        if(!Auth::check() || !Auth::user()->isAdmin()) 
-            return redirect('/');
-        else {
-            return view('book.create');
-        }
+        if (!Auth::check()) return redirect()->guest('login');
+        // Central policy: admins or users.utype -> code_c_utype.w2_utype, create_yn = Y.
+        abort_unless(Auth::user()->canPublishBooks(), 403, 'You cannot create books.');
+        return view('book.create');
     }
 
     /**
@@ -154,10 +106,12 @@ class BookController extends Controller
      */
     public function store(Request $request)
     {
+        abort_unless(Auth::check() && Auth::user()->canPublishBooks(), 403);
         $isbn_error=false;
 
         $this->validate($request,[
-            'title' => 'required',           
+            'title' => 'required',
+            'creator' => 'nullable|string|max:255',
             'cover_image'=>'image|nullable|max:1999'
        ]); 
         
@@ -167,7 +121,7 @@ class BookController extends Controller
             $filearray2 = explode(".", $_POST["file_name"]);
             $fext = strtolower($filearray2[sizeof($filearray2)-1]);
             if ($fext != "jpg" && $fext != "jpeg" && $fext != "png"){
-                return redirect('/book/'.$book->id.'/edit')->with('error',__("JPG or PNG only!"));
+                return redirect('/book/create')->with('error',__("JPG or PNG only!"));
             }
             
 			// check if the cover image directory by the inst no was created (especially in case of multi-inst mode)
@@ -221,9 +175,11 @@ class BookController extends Controller
         $book = new Book;
         $book->title=$request->input('title');
         $book->inst=session('lib_inst');
+        $book->created_by = (string) Auth::user()->id; // never trust form-supplied owner
         $book->id=Book::max('id')+1;
         $book->rid=$this::get_new_rid();
         $book->author=$request->input('author');
+        $book->creator=$request->input('creator');
         $book->c_rtype=$request->input('c_rtype');
         $book->c_genre=$request->input('c_genre');
         $book->c_lang=$request->input('c_lang');
@@ -259,7 +215,9 @@ class BookController extends Controller
 
         if($isbn_error) return redirect('/book/create')->with('book',$request->all())->with('error',__("Duplicate ISBN/e-ISBN!"));
 
-        $book->save();
+        DB::transaction(function () use ($book) {
+            $book->save();
+        });
         return redirect('/book/'.$book->id.'/edit')->with('success',__("Book Created"));
     }
 
@@ -321,7 +279,7 @@ class BookController extends Controller
         }
 
         if($book->hide_yn=='Y'){
-            if((Auth::check() && !Auth::user()->isAdmin()) || !Auth::check()) {
+            if(!Auth::check() || !Auth::user()->canManageBook($book)) {
                 $books=Book::where('inst',session('lib_inst'))
                     ->orderBy('id','desc')->paginate(10);    
                 
@@ -366,22 +324,14 @@ class BookController extends Controller
      */
     public function edit($id)
     {
-        if(!Auth::check()) {
-            return redirect()->guest('login'); // for login => intended URI
-        }
-        else if(!Auth::user()->isAdmin()){ // illegal access           
-            return redirect('/')->with('warning',__("No Authority"));
-        }
+        if (!Auth::check()) return redirect()->guest('login');
 
-        $book=Book::where('inst',session('lib_inst'))
-                ->where('id',$id)->first();
+        $book = Book::where('inst', session('lib_inst'))
+            ->where('id', $id)->firstOrFail();
+        abort_unless(Auth::user()->canManageBook($book), 403);
 
+        // Repair only after verifying the user owns this book.
         $this->man_files($book);
-        if(!isset($book->id)) {
-            $books=Book::where('inst',session('lib_inst'))
-                    ->orderBy('id','desc')->paginate(10);    
-            return redirect('/book/')->with('books',$books)->with('warning',__("The resource does not exist!"));
-        }
 
         $book_copy=Book_copy::where('inst',session('lib_inst'))
                         ->where('bid',$book->id)->get()->toArray();        
@@ -401,6 +351,18 @@ class BookController extends Controller
      */
     public function update(Request $request, $id)
     {
+        abort_unless(Auth::check(), 403);
+        $book = Book::where('inst', session('lib_inst'))->where('id', $id)->firstOrFail();
+        abort_unless(Auth::user()->canManageBook($book), 403);
+
+        // Ensure duplicate ISBN does not allow mutation before validation errors.
+        foreach (['isbn', 'eisbn'] as $column) {
+            if ($request->filled($column) && Book::where('inst', session('lib_inst'))
+                ->where('id', '<>', $id)->where($column, $request->input($column))->exists()) {
+                return redirect('/book/'.$id.'/edit')->with('error', __('Duplicate ISBN/e-ISBN!'));
+            }
+        }
+
         // check if the cover image directory by the inst no was created (especially in case of multi-inst mode)
         if(!Storage::exists('public/cover_images/'.session('lib_inst'))) {
             Storage::makeDirectory('public/cover_images/'.session('lib_inst'));
@@ -414,17 +376,16 @@ class BookController extends Controller
         $isbn_error=false;
 
         $this->validate($request,[
-            'title' => 'required'
+            'title' => 'required',
+            'creator' => 'nullable|string|max:255'
             ]); 
         
-      // Find Book
-       $book = Book::where('inst',session('lib_inst'))
-       ->where('id',$id)->first();
+      // Book and ownership already checked above.
  
     // Case 1: Delete cover image submitted but the fileds should be saved.
         if($request->input('del_cover_image')=="DEL") {
-            Storage::delete('public/cover_images/'.session('lib_inst').'/'.$book->cover_image);
-            
+            $oldCoverImage = $book->cover_image;
+
           // Check if ISBN, e-ISBN is duplate
             if($request->input('isbn')) {
                 $search_book = Book::where('inst',session('lib_inst'))
@@ -452,6 +413,7 @@ class BookController extends Controller
 */
             $book->title=$request->input('title');
             $book->author=$request->input('author');
+            $book->creator=$request->input('creator');
             $book->c_rtype=$request->input('c_rtype');
             $book->c_genre=$request->input('c_genre');
             $book->c_lang=$request->input('c_lang');
@@ -485,23 +447,29 @@ class BookController extends Controller
             $book->auto_toc=$request->input('auto_toc');  
             $book->meta_data=$request->input('meta_data');  
 
-            $book->save();
-
-            $bookTextMeta = BookTextMeta::updateOrCreate(
-                [
-                    'inst'    => session('lib_inst'),
-                    'book_id' => $id
-                ],
-                [
-                    'text' => $request->input('pdf_text'),
-                    'meta' => $request->input('meta_info'),
-                ]
-            );
-    
-
-            if($isbn_error) {
+            if ($isbn_error) {
                 return redirect('/book/'.$book->id.'/edit')->with('error',__("Duplicate ISBN/e-ISBN!"));
             }
+
+            // Commit both database changes together; delete the image only after success.
+            DB::transaction(function () use ($book, $request, $id) {
+                $book->save();
+                BookTextMeta::updateOrCreate(
+                    [
+                        'inst'    => session('lib_inst'),
+                        'book_id' => $id
+                    ],
+                    [
+                        'text' => $request->input('pdf_text'),
+                        'meta' => $request->input('meta_info'),
+                    ]
+                );
+            });
+
+            if ($oldCoverImage) {
+                Storage::delete('public/cover_images/'.session('lib_inst').'/'.$oldCoverImage);
+            }
+
             return redirect('/book/'.$book->id.'/edit')->with('success',__("Book Updated"));
         } // End of Case 1: Delete cover image submitted but the fileds should be saved.
      
@@ -585,6 +553,7 @@ class BookController extends Controller
 
         $book->title=$request->input('title');
         $book->author=$request->input('author');
+        $book->creator=$request->input('creator');
         $book->c_rtype=$request->input('c_rtype');
         $book->c_genre=$request->input('c_genre');
         $book->c_lang=$request->input('c_lang');
@@ -621,21 +590,25 @@ class BookController extends Controller
         if($request->input('file_name')){
                 $book->cover_image=$fileNameToStore;
         }
-        $book->save();
-        $bookTextMeta = BookTextMeta::updateOrCreate(
-            [
-                'inst'    => session('lib_inst'),
-                'book_id' => $id
-            ],
-            [
-                'text' => $request->input('pdf_text'),
-                'meta' => $request->input('meta_info'),
-            ]
-        );
-
-        if($isbn_error) {
+        if ($isbn_error) {
             return redirect('/book/'.$book->id.'/edit')->with('error',__("Duplicate ISBN/e-ISBN!"));
         }
+
+        // Keep Book and BookTextMeta consistent if either database write fails.
+        DB::transaction(function () use ($book, $request, $id) {
+            $book->save();
+            BookTextMeta::updateOrCreate(
+                [
+                    'inst'    => session('lib_inst'),
+                    'book_id' => $id
+                ],
+                [
+                    'text' => $request->input('pdf_text'),
+                    'meta' => $request->input('meta_info'),
+                ]
+            );
+        });
+
         return redirect('/book/'.$book->id.'/edit')->with('success',__("Book Updated"));
     }
 
@@ -647,33 +620,31 @@ class BookController extends Controller
      */
     public function destroy($id)
     {
-        if(!Auth::check() || !Auth::user()->isAdmin()) // illegal access
-            return redirect('/')->with('warning',__("No Authority"));
+        abort_unless(Auth::check(), 403);
+        $inst = session('lib_inst');
+        $book = Book::where('inst', $inst)->where('id', $id)->firstOrFail();
+        abort_unless(Auth::user()->canManageBook($book), 403);
 
-        $inst=session('lib_inst');
-        $book = Book::where("inst",$inst)->where("id",$id)->get()[0];
-        // $book = Book::find($id); return;
-        // $book = new \App\Book(["inst"=>session('lib_inst'),"id"=>$id]); // doesn't work
-        // Check for correct user       
-        
-        // echo "<pre>";
-        // print_r($book); return;
-		
-		$msg=null; // 2025.7.2
-		
-        if($book->cover_image) {
-            // Delete Image
+        // Non-admin users may not delete books with physical book copies.
+        if (!Auth::user()->isAdmin() && Book_copy::where('inst', $inst)
+            ->where('bid', $id)->exists()) {
+            return redirect('/book/'.$id.'/edit')->with('error', __('Book has physical copies. Ask an administrator.'));
+        }
+
+        DB::transaction(function () use ($book) {
+            $book->delete();
+        });
+
+        // Filesystems are not transaction-aware; clean up only after DB commit.
+        $msg = null;
+        if ($book->cover_image) {
             Storage::delete('public/cover_images/'.$inst.'/'.$book->cover_image);
         }
-  
-        if(Storage::exists('ebook/'.$inst.'/'.$book->rid)) {
-            if(!Storage::deleteDirectory('ebook/'.$inst.'/'.$book->rid)){
-                $msg=" (Resource Directory Removal Error!)";
-            }
+        if (Storage::exists('ebook/'.$inst.'/'.$book->rid) &&
+            !Storage::deleteDirectory('ebook/'.$inst.'/'.$book->rid)) {
+            $msg = ' (Resource Directory Removal Error!)';
         }
-
-        $book->delete();
-        return redirect('/book')->with('success','Book Removed'.$msg);
+        return redirect('/book')->with('success', __('Book Removed').$msg);
     }
 
       /**

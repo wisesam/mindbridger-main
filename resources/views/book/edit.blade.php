@@ -27,6 +27,9 @@
     $perm['R'] ='Y'; // Read permission
     $perm['M'] ='Y'; // Modificiation permission
     $perm['D'] ='Y'; // Delete permission
+    $isAdmin = Auth::check() && Auth::user()->isAdmin();
+    $quotaBytes = Auth::user()->bookDiskQuotaBytes();
+    $usedBytes = $isAdmin ? null : \App\Services\BookStorageQuota::usedBytes(Auth::user());
 	
 ?>
 
@@ -103,6 +106,17 @@
                                     <span class="invalid-feedback" role="alert">
                                         <strong>{{ $message }}</strong>
                                     </span>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label for="creator" class="col-md-3 col-form-label text-md-right">{{ __("Creator") }}</label>
+                            <div class="col-md-7">
+                                <input id="creator" type="text" class="form-control @error('creator') is-invalid @enderror"
+                                       name="creator" value="{{ old('creator', $book->creator) }}" maxlength="255">
+                                @error('creator')
+                                    <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
                                 @enderror
                             </div>
                         </div>
@@ -282,6 +296,13 @@
                                      echo edit_list_old_files($book,$perm,$book->rid); 
                              
                                 ?>
+                                @unless($isAdmin)
+                                  <div class="small text-muted mb-2">
+                                    {{ __('E-book storage used') }}:
+                                    {{ number_format($usedBytes / 1048576, 2) }} MB /
+                                    {{ number_format($quotaBytes / 1048576, 2) }} MB
+                                  </div>
+                                @endunless
                                 <input name='openFile[]' id='filesToUpload' type='file' multiple='' class='dnd_file' onchange='check_ext(this);'>
                                 <ol id='fileList'></ol>
                                 
@@ -298,75 +319,66 @@
                                     var list;
                                     var file_ok;
 
+                                    // Laravel upload endpoint: authorization and quota checked on server.
                                     function progress_upload(mode) {
-                                        var f=document.getElementById('pform');                                        
-                                        if(f.filesToUpload.value=='') { // no file upload
-                                            document.getElementById('pform').action="{{config('app.url','/mindbridger')."/book/".$book->id}}"; // reset the action. Double check.
+                                        const form = document.editForm;
+                                        const input = document.getElementById('filesToUpload');
+                                        if (!input || input.files.length === 0) {
+                                            form.submit();
                                             return;
-                                        }                                        
-                                        f.operation.value="Modify";
-                                        f.action='{{config('app.url')}}/lib/progress_up.php';
-                                        var bar = $('#bar1');
-                                        var percent = $('#percent1');
-
-                                        $('#pform').ajaxForm({
-                                            beforeSubmit: function() {                                                
-                                                document.getElementById('progress_div').style.display='block';                                                
-                                                var percentVal = '0%';
-                                                bar.width(percentVal)
-                                                percent.html(percentVal);
-                                                f.action='{{config('app.url')}}/lib/progress_up.php';                                                
-                                            },
-
-                                            uploadProgress: function(event, position, total, percentComplete) {
-                                                var percentVal = percentComplete + '%';
-                                                bar.width(percentVal)
-                                                percent.html(percentVal);
-                                                
-                                                document.getElementById('filesToUpload').focus(); // to show the progress bar after submitting (scroll up)
-                                            },
-                                            
-                                            success: function() {
-                                                var percentVal = '100%';
-                                                bar.width(percentVal)
-                                                percent.html(percentVal);
-                                                f.action="{{config('app.url','/mindbridger')."/book/".$book->id}}"; // reset the action. Double check.
-                                                f.filesToUpload.value='';
-                                            },
-
-                                            complete: function(xhr) {
-                                                if(xhr.responseText)
-                                                {
-                                                    console.log(xhr.responseText);
-                                                    if(xhr.responseText!='MOD_SUCCESS') return;
-                                                    //document.getElementById('output_image').innerHTML=xhr.responseText;
-                                                    f.action="{{config('app.url','/mindbridger')."/book/".$book->id}}"; // reset the action. Double check.
-                                                    f.progress_up_flag.value='Y';
-                                                    if(mode=='HANDLE_COVER_IMG_TOO') {                                                        
-                                                        var f_name = document.getElementById('cover_image').files[0];
-
-                                                        if(typeof f_name !='undefined') {
-                                                            f_name_arr=f_name.name.split('.');
-                                                            var f_ext = f_name_arr[f_name_arr.length - 1].toLowerCase();
-                                                            
-                                                            var dataURL;
-                                                            if(f_ext=='jpg' || f_ext=='jpeg') dataURL=photoCanvas.toDataURL("image/jpeg");
-                                                            else if(f_ext=='png') dataURL=photoCanvas.toDataURL("image/png");
-                                                            
-                                                            document.getElementById('wise_photo_data').value = dataURL;
-                                                            f.cover_image.value=''; // empty file because we are not uploading file but string (wise_photo_data)
-                                                            //f.operation.value='FUPLOAD';
-                                                        }                                                
-                                                    }
-                                                    f.submit();
+                                        }
+                                        if (!file_ok) {
+                                            alert('Please correct the file selection.');
+                                            return;
+                                        }
+                                        const uploadUrl = "{{ route('book.ebooks.upload', ['book' => $book->id]) }}";
+                                        const data = new FormData();
+                                        Array.from(input.files).forEach(file => data.append('openFile[]', file));
+                                        const bar = $('#bar1');
+                                        const percent = $('#percent1');
+                                        const xhr = new XMLHttpRequest();
+                                        xhr.open('POST', uploadUrl, true);
+                                        xhr.setRequestHeader('X-CSRF-TOKEN', @json(csrf_token()));
+                                        xhr.setRequestHeader('Accept', 'application/json');
+                                        document.getElementById('progress_div').style.display = 'block';
+                                        xhr.upload.onprogress = function (event) {
+                                            if (event.lengthComputable) {
+                                                const val = Math.floor(event.loaded * 100 / event.total) + '%';
+                                                bar.width(val);
+                                                percent.text(val);
+                                            }
+                                        };
+                                        xhr.onload = function () {
+                                            let response = {};
+                                            try { response = JSON.parse(xhr.responseText); } catch (e) {}
+                                            if (xhr.status < 200 || xhr.status >= 300 || !response.success) {
+                                                alert(response.message || (response.errors && Object.values(response.errors).flat().join('\n')) ||
+                                                      ('Upload failed: HTTP ' + xhr.status));
+                                                return;
+                                            }
+                                            bar.width('100%'); percent.text('100%');
+                                            input.value = '';
+                                            form.progress_up_flag.value = 'Y';
+                                            form.operation.value = '';
+                                            form.del_file.value = '';
+                                            if (mode === 'HANDLE_COVER_IMG_TOO') {
+                                                const coverInput = document.getElementById('cover_image');
+                                                const cover = coverInput && coverInput.files[0];
+                                                if (cover) {
+                                                    const ext = cover.name.split('.').pop().toLowerCase();
+                                                    const mime = ext === 'png' ? 'image/png' : 'image/jpeg';
+                                                    document.getElementById('wise_photo_data').value = photoCanvas.toDataURL(mime);
+                                                    coverInput.value = '';
                                                 }
                                             }
-                                        });
+                                            form.submit();
+                                        };
+                                        xhr.onerror = function () { alert('Network error uploading the e-books.'); };
+                                        xhr.send(data);
                                     }
-                                    
+
                                     function toggle_file_sub(obj){
-                                        if(obj.value!='') document.editForm.action='progress_up.php'; 
-                                        else document.editForm.action=''; 
+                                        // Laravel upload endpoint is called by progress_upload(); do not change form.action. 
                                     }
 
                                     function check_ext(fobj) {
@@ -398,7 +410,7 @@
                                         for (var x = 0; x < input.files.length; x++) {
                                             //add to list
                                             var li = document.createElement('li');
-                                            li.innerHTML = input.files[x].name;
+                                            li.textContent = input.files[x].name; // prevent filename HTML injection
                                             var fsize=input.files[x].size;                                        
                                                                                
                                             if(total_size>post_max_size) {
@@ -553,7 +565,7 @@
                                     $pdfUrl = session('app.url')."/lib/get_book_file.php?rf={$rfiles[0]}&rid={$book->rid}";
                                 @endphp
                                 <span class="mb-2">
-                                    <button id="btn-auto_toc_js" class="btn btn-primary"
+                                    <button type="button" id="btn-auto_toc_js" class="btn btn-primary"
                                         data-pdf-url="{{ $pdfUrl }}">{{__("1. Meta Data from PDF")}} 
                                     </button>
 
@@ -992,7 +1004,7 @@
 
                         <div class="form-group row mb-0">
                             <div class="col-md-7 offset-md-4">
-                                <button type="submit" onClick="check_img_submit()" class="btn btn-primary">
+                                <button type="button" onClick="check_img_submit()" class="btn btn-primary">
                                     {{ __('Submit') }}
                                 </button>
                                 &nbsp; 
@@ -1138,9 +1150,11 @@
                                 <th>{{__("location")}}</th>
                                 <th>{{__("c_rstatus")}}</th>
         <th>
+            @if($isAdmin)
             <button type='button' class='btn btn-outline-info' onClick="window.location='{{config('app.url','/mindbridger')}}/book_copy/create/{{$book->id}}'">
                     + 
-            </button>           
+            </button>
+            @endif           
         </th>
       </tr>
       <?PHP $cnt=1; ?>
@@ -1156,9 +1170,11 @@
                 ?>
             </td>
             <td>
+                @if($isAdmin)
                 <a href="{{config('app.url','/mindbridger')}}/book_copy/{{$bc['id']}}/edit">
                     <img src="{{config('app.url','/mindbridger')}}/image/button/mod_bw.png" class="zoom">
                 </a>
+                @endif
             </td>
         </tr>
       @endforeach
