@@ -55,7 +55,6 @@
     $currentUser = Auth::user();
     $isBookAdmin = $currentUser && $currentUser->isAdmin();
     $canPublishBooks = $currentUser && $currentUser->canPublishBooks();
-    $currentUserId = $currentUser ? (string) $currentUser->id : null;
 ?>
 
 <div class="resource-list-container">
@@ -159,15 +158,11 @@
                             <tbody>
                                 @foreach($books as $b)
                                 @php
-                                    // Match User::canManageBook(): admins may manage all institutional
-                                    // books; eligible members may manage only records they created.
-                                    // Owner is created_by (NOT the editable creator display name).
+                                    // Proven ownership uses created_by, not the Creator display text.
+                                    $isMyUpload = $b->isUploadedBy($currentUser);
                                     $canManageThisBook = $canPublishBooks
                                         && (string) $b->inst === (string) session('lib_inst')
-                                        && ($isBookAdmin || (
-                                            $b->created_by !== null
-                                            && (string) $b->created_by === $currentUserId
-                                        ));
+                                        && ($isBookAdmin || $isMyUpload);
                                 @endphp
                                 <tr class="resource-row">
                                     <td class="cover-cell">
@@ -192,6 +187,13 @@
                                             else echo $b->title;
                                             ?>
                                         </a>
+                                        @if($isMyUpload)
+                                            <div class="mt-1">
+                                                <span class="badge badge-success my-upload-label" title="{{ __('Uploaded by your account') }}">
+                                                    <i class="fas fa-upload" aria-hidden="true"></i> {{ __('My Upload') }}
+                                                </span>
+                                            </div>
+                                        @endif
                                     </td>                        
                                     
                                     <td class="author-cell">                       
@@ -207,23 +209,33 @@
                                     </td>
                                     
                                     <td class="type-cell">
-                                        <?PHP
-                                        if($b->e_resource_yn) {
-                                            echo \vwmldbm\code\print_c_yn('e_resource_yn',$b->e_resource_yn,null,'RD_ONLY_Y',"");                       
-                                            $rfiles=explode(';',$b->rfiles);
-                                            $num_files=count($rfiles)-1; // empty entry is included
-                                            if($num_files>1) $num_files_txt="({$num_files})";
-                                            else $num_files_txt=null;
-
-                                            $fsize=0;
-                                            foreach($rfiles as $key => $val) {
-                                                $fpath=config('app.root')."/storage/app/ebook/{$_SESSION['lib_inst']}/{$b->rid}/{$rfiles[$key]}";
-                                                if($val && file_exists($fpath)) $fsize+=filesize($fpath);
-                                            }
-                                            $fsize=\wlibrary\code\format_fsize($fsize,'MB',1)."MB";
-                                            if($num_files>0) echo "<br><span class='file-info'>{$fsize} $num_files_txt</span>";
-                                        }
-                                        ?>
+                                        @if($b->e_resource_yn === 'Y')
+                                            <span>{{ __('Yes') }}</span>
+                                            @php
+                                                // Unlike the previous `count(explode(...)) - 1`,
+                                                // this counts files with OR without trailing semicolons.
+                                                $ebookStats = $b->ebookStorageStats();
+                                            @endphp
+                                            @if($ebookStats['existing'] > 0)
+                                                <div class="file-info">
+                                                    @if($ebookStats['bytes'] < 1048576)
+                                                        {{ number_format($ebookStats['bytes'] / 1024, 1) }} KB
+                                                    @else
+                                                        {{ number_format($ebookStats['bytes'] / 1048576, 1) }} MB
+                                                    @endif
+                                                    @if($ebookStats['count'] > 1)
+                                                        ({{ $ebookStats['count'] }} {{ __('files') }})
+                                                    @endif
+                                                </div>
+                                            @elseif($ebookStats['count'] === 0)
+                                                <div class="small text-muted">{{ __('No file uploaded') }}</div>
+                                            @endif
+                                            @if($ebookStats['missing'] > 0)
+                                                <div class="small text-danger">{{ __('Missing e-book file') }}</div>
+                                            @endif
+                                        @else
+                                            <span>{{ __('No') }}</span>
+                                        @endif
                                     </td>
 
                                     <td class="rtype-cell">
@@ -547,6 +559,8 @@
         color: #0056b3;
         text-decoration: underline;
     }
+
+    .my-upload-label { font-size: 0.75rem; font-weight: 600; }
 
     .file-info {
         color: #28a745;

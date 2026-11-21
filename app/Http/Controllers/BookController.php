@@ -8,7 +8,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Pagination;
 use App\Models\Book; 
 use App\Models\Book_copy; 
-use App\Models\BookTextMeta; 
+use App\Models\BookTextMeta;
+use App\Models\User; 
 use App\Models\ReadingHistory;
 use Illuminate\Support\Facades\DB; // transactions for related database writes
 
@@ -111,7 +112,6 @@ class BookController extends Controller
 
         $this->validate($request,[
             'title' => 'required',
-            'creator' => 'nullable|string|max:255',
             'cover_image'=>'image|nullable|max:1999'
        ]); 
         
@@ -179,7 +179,7 @@ class BookController extends Controller
         $book->id=Book::max('id')+1;
         $book->rid=$this::get_new_rid();
         $book->author=$request->input('author');
-        $book->creator=$request->input('creator');
+        $book->creator=Auth::user()->name; // Derived from authenticated user; never trust form input.
         $book->c_rtype=$request->input('c_rtype');
         $book->c_genre=$request->input('c_genre');
         $book->c_lang=$request->input('c_lang');
@@ -339,7 +339,14 @@ class BookController extends Controller
         $bookTextMeta=BookTextMeta::where('inst',session('lib_inst'))
             ->where('book_id',$book->id)->first();
 
-        return view('book.edit')->with('book',$book)->with('book_copy',$book_copy)->with('bookTextMeta',$bookTextMeta);
+        $creatorDisplayName = $book->creator;
+        if (blank($creatorDisplayName) && filled($book->created_by)) {
+            $creatorDisplayName = User::where('inst', $book->inst)
+                ->where('id', $book->created_by)->value('name');
+        }
+
+        return view('book.edit')->with('book',$book)->with('book_copy',$book_copy)
+            ->with('bookTextMeta',$bookTextMeta)->with('creatorDisplayName',$creatorDisplayName);
     }
 
     /**
@@ -354,6 +361,13 @@ class BookController extends Controller
         abort_unless(Auth::check(), 403);
         $book = Book::where('inst', session('lib_inst'))->where('id', $id)->firstOrFail();
         abort_unless(Auth::user()->canManageBook($book), 403);
+
+        // Existing creator name is immutable. For legacy records missing the name,
+        // derive it from the original `created_by` account, never today's editor.
+        if (blank($book->creator) && filled($book->created_by)) {
+            $book->creator = User::where('inst', $book->inst)
+                ->where('id', $book->created_by)->value('name');
+        }
 
         // Ensure duplicate ISBN does not allow mutation before validation errors.
         foreach (['isbn', 'eisbn'] as $column) {
@@ -377,7 +391,6 @@ class BookController extends Controller
 
         $this->validate($request,[
             'title' => 'required',
-            'creator' => 'nullable|string|max:255'
             ]); 
         
       // Book and ownership already checked above.
@@ -413,7 +426,6 @@ class BookController extends Controller
 */
             $book->title=$request->input('title');
             $book->author=$request->input('author');
-            $book->creator=$request->input('creator');
             $book->c_rtype=$request->input('c_rtype');
             $book->c_genre=$request->input('c_genre');
             $book->c_lang=$request->input('c_lang');
@@ -553,7 +565,6 @@ class BookController extends Controller
 
         $book->title=$request->input('title');
         $book->author=$request->input('author');
-        $book->creator=$request->input('creator');
         $book->c_rtype=$request->input('c_rtype');
         $book->c_genre=$request->input('c_genre');
         $book->c_lang=$request->input('c_lang');

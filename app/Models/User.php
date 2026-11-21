@@ -293,7 +293,7 @@ class User extends Authenticatable
         }
 
         // Check code_c_utype.create_yn = 'Y'
-        if ($this->bookPublishingUserType() === null) {
+        if (!$this->bookPublishingUserType()) {
             return false;
         }
 

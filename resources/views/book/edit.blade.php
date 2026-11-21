@@ -110,16 +110,13 @@
                             </div>
                         </div>
 
-                        <div class="form-group row">
-                            <label for="creator" class="col-md-3 col-form-label text-md-right">{{ __("Creator") }}</label>
-                            <div class="col-md-7">
-                                <input id="creator" type="text" class="form-control @error('creator') is-invalid @enderror"
-                                       name="creator" value="{{ old('creator', $book->creator) }}" maxlength="255">
-                                @error('creator')
-                                    <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
-                                @enderror
-                            </div>
-                        </div>
+                         <div class="form-group row">
+                             <label for="creator" class="col-md-3 col-form-label text-md-right">{{ __('Creator') }}</label>
+                             <div class="col-md-7">
+                                 <input id="creator" type="text" class="form-control" value="{{ $creatorDisplayName ?? '' }}" readonly>
+                                 <small class="form-text text-muted">{{ __('Assigned to the original uploader; cannot be changed.') }}</small>
+                             </div>
+                         </div>
 
                         <div class="form-group row">
                             <label for="rtype" class="col-md-3 col-form-label text-md-right">{{ __("Resource Type") }}</label>

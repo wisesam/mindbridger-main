@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder; // Needed for composite primary key
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use App\Book_copy; // Use the model that we defined
 
@@ -109,6 +110,58 @@ class Book extends Model
         return $res[0]->cnt;
     }
 
+
+    /** Whether this book was originally created by the given user (not by its author). */
+    public function isUploadedBy(?User $user): bool
+    {
+        return $user !== null
+            && (string) $this->inst === (string) $user->inst
+            && $this->created_by !== null
+            && (string) $this->created_by === (string) $user->id;
+    }
+
+    /**
+     * Actual files stored under storage/app/ebook/{inst}/{rid}/.
+     * Supports both old `a;b;` and new `a;b` rfiles formats.
+     * Returned counts distinguish registered filenames from existing files.
+     */
+    public function ebookStorageStats(): array
+    {
+        $storedNames = array_values(array_filter(
+            array_map('trim', explode(';', (string) $this->rfiles)),
+            static function ($name) { return $name !== ''; }
+        ));
+
+        $disk = Storage::disk('local');
+        $directory = 'ebook/' . $this->inst . '/' . $this->rid;
+        $bytes = 0;
+        $existing = 0;
+        $missing = 0;
+
+        foreach ($storedNames as $storedName) {
+            // The stored filename must not traverse outside this book's directory.
+            if ($storedName === '.' || $storedName === '..'
+                || basename($storedName) !== $storedName
+                || str_contains($storedName, '\\')) {
+                $missing++;
+                continue;
+            }
+            $path = $directory . '/' . $storedName;
+            if ($disk->exists($path)) {
+                $existing++;
+                $bytes += (int) $disk->size($path);
+            } else {
+                $missing++;
+            }
+        }
+
+        return [
+            'bytes' => $bytes,
+            'count' => count($storedNames),
+            'existing' => $existing,
+            'missing' => $missing,
+        ];
+    }
 
     // accessor for the show URL
     public function getShowUrlAttribute()
