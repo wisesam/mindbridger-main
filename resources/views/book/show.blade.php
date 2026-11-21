@@ -947,7 +947,7 @@ $readerManagedLang = \vwmldbm\code\manage_lang($readerCurrentLocale, 'ccode');
                 <label for="c_genre" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Genre") }}</label>
 
                 <div class="col-md-9">
-                    <div class='form-control border-0'><?=\vwmldbm\code\get_c_name('code_c_genre',$book->c_genre)?></div>
+                    <div class='form-control border-0'><?=$book->c_genre?> <?=\vwmldbm\code\get_c_name('code_c_genre',$book->c_genre)?></div>
                 </div>
             </div>
             @endif
