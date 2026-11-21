@@ -654,43 +654,7 @@ $readerManagedLang = \vwmldbm\code\manage_lang($readerCurrentLocale, 'ccode');
             </div>
             @endif
 
-            @if($isEresource)
-                @auth
-                    <?PHP
-                        $video_txt=show_list_videos($book,$perm,$book->rid);
-                    ?>
-                    @if($video_txt!='')
-                        <div class="form-group row">
-                            <label for="video" class="col-md-3 col-form-label text-md-right font-weight-bold">{{__('Video') }}</label>
-                            <div class="col-md-9">                                     
-                                <?=$video_txt?>                                                         
-                            </div>
-                        </div>
-                    @endif
-                @endauth
-                
-                <div class="form-group row">
-                    <label for="e-Resources" class="col-md-3 col-form-label text-md-right font-weight-bold">
-                        {{ __('e-Resources') }}                               
-                    </label>
-                    @if(Auth::check() || $book->e_res_af_login_yn!='Y') 
-                    <div class="col-md-9">
-                        <?PHP 
-                            echo show_list_old_files($book,$perm,$book->rid);                                
-                        ?>
-                        <ol id='fileList'></ol>                               
-                                                    
-                    </div>
-                    @elseif($book->e_resource_yn=='Y' && $book->e_res_af_login_yn=='Y')
-                        <div class="col-md-9">
-                        <span style='color:magenta;'>
-                            {{__("Log in required")}}
-                        </span>
-                        </div>
-                    @endif
-                </div>
-            @endif
-
+            
             <!-- ToC Display: Accordion -->
             <?php
                 $userToC = !empty($tocOrigin) ? true : false; // whether ToC data exists from user's reading history
@@ -931,6 +895,45 @@ $readerManagedLang = \vwmldbm\code\manage_lang($readerCurrentLocale, 'ccode');
             @endif
             <!-- End ToC Display: Accordion -->
 
+
+            @if($isEresource)
+                @auth
+                    <?PHP
+                        $video_txt=show_list_videos($book,$perm,$book->rid);
+                    ?>
+                    @if($video_txt!='')
+                        <div class="form-group row">
+                            <label for="video" class="col-md-3 col-form-label text-md-right font-weight-bold">{{__('Video') }}</label>
+                            <div class="col-md-9">                                     
+                                <?=$video_txt?>                                                         
+                            </div>
+                        </div>
+                    @endif
+                @endauth
+                
+                <div class="form-group row">
+                    <label for="e-Resources" class="col-md-3 col-form-label text-md-right font-weight-bold">
+                        {{ __('e-Resources') }}                               
+                    </label>
+                    @if(Auth::check() || $book->e_res_af_login_yn!='Y') 
+                    <div class="col-md-9">
+                        <?PHP 
+                            echo show_list_old_files($book,$perm,$book->rid);                                
+                        ?>
+                        <ol id='fileList'></ol>                               
+                                                    
+                    </div>
+                    @elseif($book->e_resource_yn=='Y' && $book->e_res_af_login_yn=='Y')
+                        <div class="col-md-9">
+                        <span style='color:magenta;'>
+                            {{__("Log in required")}}
+                        </span>
+                        </div>
+                    @endif
+                </div>
+            @endif
+
+
             <div class="form-group row">
                 <label for="rtype" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Type") }}</label>
 
@@ -944,7 +947,7 @@ $readerManagedLang = \vwmldbm\code\manage_lang($readerCurrentLocale, 'ccode');
                 <label for="c_genre" class="col-md-3 col-form-label text-md-right font-weight-bold">{{ __("Genre") }}</label>
 
                 <div class="col-md-9">
-                    <div class='form-control border-0'><?=\vwmldbm\code\get_c_name('code_c_genre',$book->c_genre)?></div>
+                    <div class='form-control border-0'><?=\vwmldbm\code\get_c_name('code_c_genre',$book->c_genre)?>aa</div>
                 </div>
             </div>
             @endif
