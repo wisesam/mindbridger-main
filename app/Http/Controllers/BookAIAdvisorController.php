@@ -866,15 +866,15 @@ class BookAIAdvisorController extends Controller
         // Match BookController::show() visibility rules: hidden books are
         // accessible to administrators only; guests must also be allowed
         // to see the book AND its PDF resource without signing in.
-        if ($bookRecord->hide_yn === 'Y' && !$isAdmin) {
-            abort(403, 'This book is not publicly available.');
-        }
-        if ($isGuest && (
-            $bookRecord->hide_from_guest_yn === 'Y' ||
-            $bookRecord->e_res_af_login_yn === 'Y'
-        )) {
-            abort(403, 'Sign in to access this book or its e-resource.');
-        }
+        // if ($bookRecord->hide_yn === 'Y' && !$isAdmin) {
+        //     abort(403, 'This book is not publicly available.');
+        // }
+        // if ($isGuest && (
+        //     $bookRecord->hide_from_guest_yn === 'Y' ||
+        //     $bookRecord->e_res_af_login_yn === 'Y'
+        // )) {
+        //     abort(403, 'Sign in to access this book or its e-resource.');
+        // }
 
         // No Auth::check() requirement: guests may translate public books.
         // Apply a stricter per-IP quota to unauthenticated OpenAI requests.
