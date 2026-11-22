@@ -31,6 +31,11 @@
 // @json's argument parser should not receive nested functions with commas.
 $readerAiIconUrl = config('app.url', '/mindbridger') . '/image/ai-assistant.png';
 $readerTranslationUrl = route('book.bilingual.translate', ['book' => $book->id]);
+$readerStoredFiles = array_values(array_filter(explode(';', (string) $book->rfiles), 'strlen'));
+$readerPdfFileUrl = !empty($readerStoredFiles)
+    ? route('book.ebooks.file', ['rid' => $book->rid, 'rf' => $readerStoredFiles[0]])
+    : null;
+$readerPdfWorkerUrl = config('app.url', '/mindbridger') . '/lib/pdf.js/build/pdf.worker.js';
 $readerCurrentLocale = app()->getLocale();
 $readerManagedLang = \vwmldbm\code\manage_lang($readerCurrentLocale, 'ccode');
 
@@ -56,6 +61,8 @@ $readerManagedLang = \vwmldbm\code\manage_lang($readerCurrentLocale, 'ccode');
     $rfiles=explode(';',$book->rfiles);
 @endphp
 
+{{-- Also load PDF.js here to fall back to direct reading if the guest iframe is slow. --}}
+<script src="{{ config('app.url', '/mindbridger') }}/lib/pdf.js/build/pdf.js"></script>
 <script>
   // Base path to PDF.js viewer page
   var viewerBase = @json(config('app.url') . '/lib/pdf.js/web/');
@@ -915,7 +922,7 @@ $readerManagedLang = \vwmldbm\code\manage_lang($readerCurrentLocale, 'ccode');
                     <label for="e-Resources" class="col-md-3 col-form-label text-md-right font-weight-bold">
                         {{ __('e-Resources') }}                               
                     </label>
-                    @if(Auth::check() || $book->e_res_af_login_yn!='Y') 
+                    @if(Auth::check() || ($book->hide_yn !== 'Y' && $book->hide_from_guest_yn !== 'Y')) 
                     <div class="col-md-9">
                         <?PHP 
                             echo show_list_old_files($book,$perm,$book->rid);                                
@@ -1309,6 +1316,8 @@ $readerManagedLang = \vwmldbm\code\manage_lang($readerCurrentLocale, 'ccode');
   const config = {
     bookTitle: @json($book->title),
     translationUrl: @json($readerTranslationUrl),
+    pdfFileUrl: @json($readerPdfFileUrl),
+    pdfWorkerUrl: @json($readerPdfWorkerUrl),
     csrf: @json(csrf_token()),
     // The project's language helper returns the ccode. The `&& !session('refreshed')`
     // expression is a boolean and is therefore NOT a suitable language-code value.
@@ -1412,13 +1421,29 @@ $readerManagedLang = \vwmldbm\code\manage_lang($readerCurrentLocale, 'ccode');
 
   async function getPDFDocument() {
     const iframe = document.getElementById('pdfIframe');
-    // Works only if PDF.js viewer is served from the same origin as MindBridger.
-    for (let attempt = 0; attempt < 40; attempt++) {
-      const app = iframe.contentWindow && iframe.contentWindow.PDFViewerApplication;
-      if (app && app.pdfDocument) return app.pdfDocument;
-      await new Promise(resolve => setTimeout(resolve, 250));
+    // Prefer the existing PDF.js viewer when ready. The fallback below uses
+    // the same authorized Laravel file endpoint and works for public guests.
+    for (let attempt = 0; attempt < 30; attempt++) {
+      try {
+        const app = iframe && iframe.contentWindow && iframe.contentWindow.PDFViewerApplication;
+        if (app && app.pdfDocument) return app.pdfDocument;
+      } catch (error) {
+        console.warn('Could not access the PDF viewer frame; using file fallback.', error);
+        break;
+      }
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
-    throw new Error('PDF.js text is not ready. Open the PDF and wait for it to finish loading.');
+
+    const lib = window.pdfjsLib || window['pdfjs-dist/build/pdf'] || window.PDFJS;
+    if (!config.pdfFileUrl || !lib || typeof lib.getDocument !== 'function') {
+      throw new Error('PDF.js is not ready. Please reload the book and retry.');
+    }
+    lib.GlobalWorkerOptions.workerSrc = config.pdfWorkerUrl;
+    try {
+      return await lib.getDocument({url: config.pdfFileUrl, withCredentials: true}).promise;
+    } catch (error) {
+      throw new Error('Unable to load the e-book PDF (' + (error.message || 'file access error') + ').');
+    }
   }
 
   async function extractLines(pdf, pageNumber) {
@@ -1574,25 +1599,65 @@ $readerManagedLang = \vwmldbm\code\manage_lang($readerCurrentLocale, 'ccode');
     return batches;
   }
 
-  async function translateBatch(batch, target, start, end) {
-    const response = await fetch(config.translationUrl, {
-      method: 'POST',
-      credentials: 'same-origin',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'X-CSRF-TOKEN': config.csrf
-      },
-      body: JSON.stringify({
-        target_language: target, start_page: start, end_page: end, segments: batch
-      })
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.message || data.error || ('Translation request failed (' + response.status + ')'));
-    if (!Array.isArray(data.translations) || data.translations.length !== batch.length) {
-      throw new Error('The translation response did not match the requested sentences.');
+  async function translateBatch(batch, target, start, end, onRetry) {
+    // One guest may require many API batches to translate a full section.
+    // Wait after HTTP 429 (rate limiting), and retry brief server errors.
+    // No completed sentences are discarded when a batch is retried.
+    let throttledRetries = 0;
+    let transientRetries = 0;
+    for (;;) {
+      let response;
+      try {
+        response = await fetch(config.translationUrl, {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': config.csrf
+          },
+          body: JSON.stringify({
+            target_language: target, start_page: start, end_page: end, segments: batch
+          })
+        });
+      } catch (error) {
+        if (++transientRetries > 4) throw error;
+        const seconds = Math.min(30, 3 * Math.pow(2, transientRetries - 1));
+        if (onRetry) onRetry('Network issue · retrying in ' + seconds + ' seconds…');
+        await new Promise(resolve => setTimeout(resolve, seconds * 1000));
+        continue;
+      }
+
+      const data = await response.json().catch(() => ({}));
+      if (response.status === 429 && throttledRetries++ < 30) {
+        const headerSeconds = Number(response.headers.get('Retry-After'));
+        const delaySeconds = Math.max(1, Math.min(120, Number.isFinite(headerSeconds) && headerSeconds > 0
+          ? headerSeconds + 1 : Number(data.retry_after) || 60));
+        if (onRetry) onRetry('Guest translation limit reached · continuing in ' +
+          delaySeconds + ' seconds…');
+        await new Promise(resolve => setTimeout(resolve, delaySeconds * 1000));
+        continue;
+      }
+      if ([502, 503, 504].includes(response.status) && ++transientRetries <= 4) {
+        const seconds = Math.min(40, 4 * Math.pow(2, transientRetries - 1));
+        if (onRetry) onRetry('Translation service busy · retrying in ' + seconds + ' seconds…');
+        await new Promise(resolve => setTimeout(resolve, seconds * 1000));
+        continue;
+      }
+      if (response.status === 419) {
+        throw new Error('Session expired. Reload the page and try again.');
+      }
+      if (response.redirected && !Array.isArray(data.translations)) {
+        throw new Error('The translation route redirected. Ensure the route is outside auth middleware.');
+      }
+      if (!response.ok) {
+        throw new Error(data.message || data.error || ('Translation request failed (HTTP ' + response.status + ')'));
+      }
+      if (!Array.isArray(data.translations) || data.translations.length !== batch.length) {
+        throw new Error('The translation response did not match the requested sentences.');
+      }
+      return data.translations;
     }
-    return data.translations;
   }
 
   function appendRows(doc, container, sourceSegments, translations, target) {
@@ -1713,7 +1778,8 @@ $readerManagedLang = \vwmldbm\code\manage_lang($readerCurrentLocale, 'ccode');
           if (myRun !== activeRun || win.closed) return;
           readerStatus(doc, 'Translating page ' + bookPage + ' · ' + completedOnPage +
             ' of ' + segments.length + ' sentences translated…');
-          const translations = await translateBatch(batch, target, bookPage, bookPage);
+          const translations = await translateBatch(batch, target, bookPage, bookPage,
+            message => readerStatus(doc, message));
           if (myRun !== activeRun || win.closed) return;
           const shown = appendRows(doc, container, batch, translations, target);
           placeholder.hidden = true; // Original/translation sentence pairs now visible.
@@ -1729,8 +1795,9 @@ $readerManagedLang = \vwmldbm\code\manage_lang($readerCurrentLocale, 'ccode');
       }
     } catch (error) {
       if (myRun !== activeRun || win.closed) return;
-      readerStatus(doc, 'Could not complete the bilingual reading.', 'failed');
-      addNotice(doc, container, error.message || 'Unknown error', 'notice error');
+      // Show the actionable reason rather than an unexplained generic message.
+      readerStatus(doc, 'Translation stopped: ' + (error.message || 'Unknown error'), 'failed');
+      addNotice(doc, container, 'Completed pages remain available above. Retry this section after resolving the error.', 'notice muted');
       console.error('MindBridger bilingual reader:', error);
     }
   }

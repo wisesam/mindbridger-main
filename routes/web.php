@@ -16,6 +16,7 @@ use App\Http\Controllers\BookAIAdvisorController;
 use App\Http\Controllers\BookTextMetaController;
 use App\Http\Controllers\ReadingHistoryController;
 use App\Http\Controllers\BookEbookUploadController;
+use App\Http\Controllers\BookEbookReadController;
 
 /*
 |--------------------------------------------------------------------------
@@ -78,6 +79,12 @@ Route::post('/book/{book}/ebooks', [BookEbookUploadController::class, 'store'])
 ->middleware('auth')
 ->name('book.ebooks.upload');
 
+/**
+ * PDF / eBook file access for Guest and Members
+ */
+Route::get('/book/ebook-file',
+    [BookEbookReadController::class, 'show']
+)->name('book.ebooks.file');
 
 // Login + throttling prevent anonymous / unlimited translation requests. // [SJH] 2026.11.20
 Route::post('/book/{book}/bilingual-translate',

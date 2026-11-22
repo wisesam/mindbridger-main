@@ -46,8 +46,12 @@ class BookEbookReadController extends Controller
         if ($book->hide_yn === 'Y' && !$canManage) {
             abort(404);
         }
-        if (!$reader && ($book->hide_from_guest_yn === 'Y' || $book->e_res_af_login_yn === 'Y')) {
-            abort(403, 'Login required to access this e-book.');
+        // Guest bilingual reading requires access to the underlying PDF. A book
+        // visible to guests is readable without login, even if the old
+        // e_res_af_login_yn flag is Y. Private/hidden books remain restricted.
+        // NOTE: This makes the actual file accessible, not only its translation.
+        if (!$reader && $book->hide_from_guest_yn === 'Y') {
+            abort(403, 'This e-book is not available to guests.');
         }
 
         // Preserve positional alignment; don't treat a partially corrupt row as valid.

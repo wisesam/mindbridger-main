@@ -863,31 +863,18 @@ class BookAIAdvisorController extends Controller
         $isGuest = !Auth::check();
         $isAdmin = !$isGuest && Auth::user()->isAdmin();
 
-        // Match BookController::show() visibility rules: hidden books are
-        // accessible to administrators only; guests must also be allowed
-        // to see the book AND its PDF resource without signing in.
-        // if ($bookRecord->hide_yn === 'Y' && !$isAdmin) {
-        //     abort(403, 'This book is not publicly available.');
-        // }
-        // if ($isGuest && (
-        //     $bookRecord->hide_from_guest_yn === 'Y' ||
-        //     $bookRecord->e_res_af_login_yn === 'Y'
-        // )) {
-        //     abort(403, 'Sign in to access this book or its e-resource.');
-        // }
-
-        // No Auth::check() requirement: guests may translate public books.
-        // Apply a stricter per-IP quota to unauthenticated OpenAI requests.
-        // The route also enforces a 60/min limit for everyone.
-        if ($isGuest) {
-            $guestKey = 'book-bilingual:guest:' . hash('sha256', (string) $request->ip());
-            if (RateLimiter::tooManyAttempts($guestKey, 12)) {
-                return response()->json([
-                    'message' => 'Too many guest translation requests. Please try again shortly.'
-                ], 429);
-            }
-            RateLimiter::hit($guestKey, 60);
+        // Guest translations are allowed for books visible to guests, while
+        // hidden books and books hidden from guests remain protected.
+        $canManage = !$isGuest && Auth::user()->canManageBook($bookRecord);
+        if ($bookRecord->hide_yn === 'Y' && !$canManage) {
+            abort(404);
         }
+        if ($isGuest && $bookRecord->hide_from_guest_yn === 'Y') {
+            abort(403, 'This book is not available to guests.');
+        }
+
+        // Guest rate limiting is applied below *only to uncached translations*.
+        // The browser automatically retries 429 responses after Retry-After.
 
         $segments = array_values($validated['segments']);
         $characters = array_sum(array_map(
@@ -921,6 +908,21 @@ class BookAIAdvisorController extends Controller
         $cacheKey = 'mb_bilingual:' . hash('sha256', json_encode([
             'quality-v5', $inst, $bookRecord->id, $model, $targetCode, $segments
         ], JSON_UNESCAPED_UNICODE));
+
+        // Keep the existing per-IP guest budget, but do not count translations
+        // already present in the shared translation cache. The browser waits
+        // and resumes when an uncached request reaches the limit.
+        if ($isGuest && !\Illuminate\Support\Facades\Cache::has($cacheKey)) {
+            $guestKey = 'book-bilingual:guest:' . hash('sha256', (string) $request->ip());
+            if (RateLimiter::tooManyAttempts($guestKey, 12)) {
+                $retryAfter = max(1, RateLimiter::availableIn($guestKey));
+                return response()->json([
+                    'message' => 'Guest translation quota reached; retry automatically after a short pause.',
+                    'retry_after' => $retryAfter,
+                ], 429)->header('Retry-After', (string) $retryAfter);
+            }
+            RateLimiter::hit($guestKey, 60);
+        }
 
         try {
             $translations = \Illuminate\Support\Facades\Cache::remember(
