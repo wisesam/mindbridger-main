@@ -1348,14 +1348,26 @@ $readerManagedLang = \vwmldbm\code\manage_lang($readerCurrentLocale, 'ccode');
   let activeRun = 0;
 
   // Select is recreated each time the PDF fullscreen modal is shown.
-  $(document).on('change', '#bilingualTargetLanguage', function() {
+ $(document).on('change', '#bilingualTargetLanguage', function() {
     const target = this.value;
-    this.value = ''; // allow selecting the same language again later
-    if (!targetNames[target]) return;
+
+    if (!target) return;
+
+    // Automatically obtain the language name.
+    const label = this.options[this.selectedIndex].textContent;
+    targetNames[target] = label.split(' / ')[0].trim();
+
+    // Allow selecting the same language again.
+    this.value = '';
 
     const section = $('#fullscreenModal').data();
-    openBilingualReader(Number(section.start), Number(section.end), target);
-  });
+
+    openBilingualReader(
+        Number(section.start),
+        Number(section.end),
+        target
+    );
+});
 
   function popupElement(doc, tag, className, value) {
     const el = doc.createElement(tag);
