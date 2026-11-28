@@ -835,7 +835,7 @@ class BookAIAdvisorController extends Controller
     public function translateSection(Request $request, $book)
     {
         $validated = $request->validate([
-            'target_language' => 'required|string|in:id,ko,en,ar,fr,es,vi,ru',
+            'target_language' => 'required|in:id,ko,en,ar,bn,zh,fr,de,hi,it,ja,jv,ms,mn,pa,pt,ru,es,ta,te,tr,ur,vi',
             'start_page'     => 'required|integer|min:1',
             'end_page'       => 'required|integer|min:1|gte:start_page',
             'segments'       => 'required|array|min:1|max:24',
