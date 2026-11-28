@@ -139,7 +139,7 @@ $readerManagedLang = \vwmldbm\code\manage_lang($readerCurrentLocale, 'ccode');
             ['en', 'English'],
             ['ar', 'Arabic / العربية'],
             ['bn', 'Bengali / বাংলা'],
-            ['cn', 'Chinese / 中文'],
+            ['zh', 'Chinese / 中文'],
             ['fr', 'French / Français'],
             ['de', 'German / Deutsch'],
             ['hi', 'Hindi / हिन्दी'],
@@ -745,14 +745,43 @@ $readerManagedLang = \vwmldbm\code\manage_lang($readerCurrentLocale, 'ccode');
                         </div> <!-- end of accordion -->
                         
                         <!-- Fullscreen Modal: For the section of book -->
+                        <!-- Large Close button for the PARENT PDF viewer (not the bilingual reader). -->
+                        <style>
+                          #fullscreenModal .mb-pdf-close {
+                            display: inline-flex; align-items: center; justify-content: center;
+                            gap: 10px; flex-shrink: 0; min-height: 50px; min-width: 132px;
+                            padding: 9px 18px; border: 2px solid #334E68;
+                            border-radius: 9px; background: #334E68; color: #fff;
+                            font-size: 1.06rem; font-weight: 700; line-height: 1.2;
+                            cursor: pointer;
+                          }
+                          #fullscreenModal .mb-pdf-close .mb-pdf-close-x {
+                            font-size: 1.5rem; font-weight: 800; line-height: 1;
+                          }
+                          #fullscreenModal .mb-pdf-close:hover,
+                          #fullscreenModal .mb-pdf-close:focus {
+                            background: #334E68; border-color: #334E68; color: #fff;
+                          }
+                          #fullscreenModal .mb-pdf-close:focus-visible {
+                            outline: 3px solid #2563eb; outline-offset: 2px;
+                          }
+                          @media (max-width: 680px) {
+                            #fullscreenModal .mb-pdf-close {
+                              min-height: 44px; min-width: 100px; padding: 8px 12px;
+                              gap: 6px; font-size: .96rem;
+                            }
+                          }
+                        </style>
                         <div class="modal fade edge-to-edge" id="fullscreenModal" tabindex="-1" role="dialog"
                             aria-labelledby="fullscreenModalLabel" aria-hidden="true">
                             <div class="modal-dialog modal-fullscreen" role="document">
                                 <div class="modal-content">
                                     <div class="modal-header py-2">
                                         <h5 class="modal-title" id="fullscreenModalLabel">Document Viewer</h5>
-                                        <button type="button " class="close" data-dismiss="modal" aria-label="Close">
-                                            <span aria-hidden="true">&times; </span>
+                                        <button type="button" class="mb-pdf-close ml-2" data-dismiss="modal"
+                                                aria-label="Close PDF viewer">
+                                            <span>{{ __('Close') }}</span>
+                                            <span class="mb-pdf-close-x" aria-hidden="true">&times;</span>
                                         </button>
                                     </div>
 
@@ -1323,6 +1352,102 @@ $readerManagedLang = \vwmldbm\code\manage_lang($readerCurrentLocale, 'ccode');
 
 </script>
 
+<!-- Full-screen bilingual reader overlay (inside the SAME browser tab).
+     A custom overlay is used instead of stacking a second Bootstrap modal above the PDF modal. -->
+<style>
+  #bilingualReaderModal.mb-reader-overlay { display:none; position:fixed; inset:0; z-index:2000;
+    background:#f7f9fc; color:#1e293b; flex-direction:column; font-family:system-ui,-apple-system,'Segoe UI',Arial,sans-serif;
+    font-size:16px; line-height:1.65; }
+  #bilingualReaderModal.mb-reader-overlay.is-open { display:flex; }
+  #bilingualReaderModal .mb-reader-header { flex:none; padding:12px 22px 10px;
+    background:#fff; border-bottom:1px solid #dce4ee; box-shadow:0 1px 6px rgba(15,23,42,.04); }
+  #bilingualReaderModal .mb-reader-topline { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+  #bilingualReaderModal #bilingualBookTitle { font-size:1.25rem; font-weight:650; line-height:1.35; margin:0; }
+  #bilingualReaderModal #bilingualSubtitle { font-size:.9rem; color:#64748b; margin-top:2px; }
+  /* Large, high-contrast Close × button at the upper-right, like the PDF viewer. */
+  #bilingualReaderModal .mb-reader-close { flex:none; display:inline-flex; align-items:center; justify-content:center;
+    gap:10px; white-space:nowrap; min-width:138px; min-height:52px; padding:10px 22px;
+    border:2px solid #b91c1c; border-radius:10px; background:#dc2626;
+    color:white; font-size:1.08rem; line-height:1.2; font-weight:700; cursor:pointer;
+    box-shadow:0 2px 6px rgba(127,29,29,.18); }
+  #bilingualReaderModal .mb-reader-close .close-x { font-size:1.5rem; line-height:1; font-weight:800; }
+  #bilingualReaderModal .mb-reader-close:hover { background:#b91c1c; border-color:#991b1b; color:white; }
+  #bilingualReaderModal .mb-reader-close:active { background:#991b1b; }
+  #bilingualReaderModal .mb-reader-close:focus-visible { outline:3px solid #3b82f6; outline-offset:3px; }
+  #bilingualReaderModal .mb-reader-scroll { flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain; }
+  #bilingualReaderModal .mb-reader-main { max-width:980px; padding:8px 18px 45px; margin:0 auto; }
+  #bilingualReaderModal .page { margin:28px 0 10px; font-size:1.03rem; color:#334155;
+    border-bottom:2px solid #cbd5e1; padding-bottom:8px; }
+  #bilingualReaderModal .language-head { font-weight:700; color:#475569; padding:10px 2px; }
+  #bilingualReaderModal .pair { background:white; border:1px solid #e2e8f0; border-radius:9px;
+    padding:12px 16px; margin:14px 0; break-inside:avoid; }
+  #bilingualReaderModal .original { display:block; white-space:pre-wrap; font-weight:600; color:#1e293b; }
+  #bilingualReaderModal .translation { display:block; white-space:pre-wrap; margin-top:3px; color:#0f766e; }
+  #bilingualReaderModal .muted { color:#64748b; }
+  #bilingualReaderModal .error { color:#b91c1c; }
+  #bilingualReaderModal .notice { margin:14px 0; }
+  #bilingualReaderModal .signin-card { margin:26px auto; max-width:620px; padding:26px;
+    background:white; border:1px solid #cbd5e1; border-radius:12px; text-align:center;
+    box-shadow:0 3px 14px rgba(15,23,42,.05); }
+  #bilingualReaderModal .signin-card p { font-size:1.07rem; font-weight:600; color:#334155; }
+  #bilingualReaderModal .signin-link { display:inline-block; margin-top:8px; padding:10px 24px;
+    border-radius:8px; text-decoration:none; background:#2563eb; color:white; font-weight:600; }
+  #bilingualReaderModal .signin-link:hover { background:#1d4ed8; color:white; }
+  #bilingualReaderModal .loading-indicator { display:flex; align-items:center; gap:10px;
+    padding:7px 12px; margin-top:8px; border-radius:8px; background:#eff6ff;
+    color:#1d4ed8; font-size:.9rem; font-weight:600; }
+  #bilingualReaderModal .loading-indicator.done { background:#f0fdf4; color:#166534; }
+  #bilingualReaderModal .loading-indicator.failed { background:#fef2f2; color:#b91c1c; }
+  #bilingualReaderModal .loading-indicator.login-required { background:#eff6ff; color:#1d4ed8; }
+  #bilingualReaderModal .spinner { display:inline-block; flex:none; width:20px; height:20px;
+    border:3px solid #bfdbfe; border-top-color:#2563eb; border-radius:50%;
+    animation:mb-reader-spin .8s linear infinite; }
+  @keyframes mb-reader-spin { to { transform:rotate(360deg); } }
+  #bilingualReaderModal .loading-indicator.done .spinner,
+  #bilingualReaderModal .loading-indicator.failed .spinner { display:none; }
+  #bilingualReaderModal .loading-placeholder { padding:42px 15px; text-align:center; color:#475569;
+    background:white; border:1px dashed #cbd5e1; border-radius:10px; margin-top:18px; }
+  #bilingualReaderModal .loading-placeholder .spinner { width:34px; height:34px;
+    border-width:4px; vertical-align:middle; margin-right:10px; }
+  #bilingualReaderModal .loading-placeholder[hidden] { display:none; }
+  @media(max-width:680px) {
+    #bilingualReaderModal .mb-reader-header { padding:10px 12px; }
+    #bilingualReaderModal .mb-reader-close { min-width:108px; min-height:46px; padding:8px 12px; font-size:1rem; gap:6px; }
+    #bilingualReaderModal .mb-reader-close .close-x { font-size:1.3rem; }
+    #bilingualReaderModal .mb-reader-main { padding:4px 10px 28px; }
+    #bilingualReaderModal .pair { padding:10px 12px; }
+    #bilingualReaderModal #bilingualBookTitle { font-size:1.05rem; }
+  }
+  @media print {
+    #bilingualReaderModal .mb-reader-header { position:static; }
+    #bilingualReaderModal .mb-reader-close, #bilingualReaderModal .loading-indicator,
+    #bilingualReaderModal .loading-placeholder { display:none; }
+  }
+</style>
+<div id="bilingualReaderModal" class="mb-reader-overlay" role="dialog" aria-modal="true"
+     aria-hidden="true" aria-labelledby="bilingualBookTitle" aria-describedby="bilingualSubtitle">
+  <div class="mb-reader-header">
+    <div class="mb-reader-topline">
+      <div><h2 id="bilingualBookTitle"></h2><div id="bilingualSubtitle"></div></div>
+      <button type="button" id="bilingualCloseButton" class="mb-reader-close" aria-label="Close bilingual reader">
+        <span>Close</span><span class="close-x" aria-hidden="true">&times;</span>
+      </button>
+    </div>
+    <div id="bilingualLoadingIndicator" class="loading-indicator" role="status" aria-live="polite">
+      <span class="spinner" aria-hidden="true"></span><span id="bilingualProgress">Preparing PDF text…</span>
+    </div>
+  </div>
+  <div id="bilingualReaderScroll" class="mb-reader-scroll" tabindex="-1">
+    <main class="mb-reader-main">
+      <div class="language-head"><span>Original PDF text ↓ </span><span id="bilingualTargetHeading"></span></div>
+      <div id="bilingualLoadingPlaceholder" class="loading-placeholder" role="status">
+        <span class="spinner" aria-hidden="true"></span><span>Reading PDF and generating bilingual text…</span>
+      </div>
+      <div id="bilingualReaderContent"></div>
+    </main>
+  </div>
+</div>
+
 <!-- Bilingual Reader: uses PDF.js selectable text from the opened section. -->
 <script>
 (function() {
@@ -1334,6 +1459,10 @@ $readerManagedLang = \vwmldbm\code\manage_lang($readerCurrentLocale, 'ccode');
     pdfFileUrl: @json($readerPdfFileUrl),
     pdfWorkerUrl: @json($readerPdfWorkerUrl),
     csrf: @json(csrf_token()),
+    // Guest users may translate the first selected page only; members get the full section.
+    isAuthenticated: @json(Auth::check()),
+    signInUrl: @json(route('login')),
+    bookPageUrl: @json(route('book.show', ['book' => $book->id])),
     // The project's language helper returns the ccode. The `&& !session('refreshed')`
     // expression is a boolean and is therefore NOT a suitable language-code value.
     uiLanguage: @json($readerCurrentLocale),
@@ -1346,6 +1475,25 @@ $readerManagedLang = \vwmldbm\code\manage_lang($readerCurrentLocale, 'ccode');
   };
 
   let activeRun = 0;
+  let returnReaderState = null;
+
+  // Return to this exact book and section after authentication, for all
+  // supported target languages (no state stored in client localStorage).
+  function buildReaderSignInUrl() {
+    const login = new URL(config.signInUrl, window.location.href);
+    if (!returnReaderState) return login.toString();
+    const book = new URL(config.bookPageUrl, window.location.href);
+    book.searchParams.set('mb_reader', '1');
+    book.searchParams.set('mb_idx', returnReaderState.idx);
+    book.searchParams.set('mb_start', String(returnReaderState.start));
+    book.searchParams.set('mb_end', String(returnReaderState.end));
+    book.searchParams.set('mb_lang', returnReaderState.target);
+    book.searchParams.set('mb_resume', String(returnReaderState.resumePage));
+    // The target is a relative local URL. The server validates it before
+    // saving Laravel's `url.intended` in the session.
+    login.searchParams.set('return_to', book.pathname + book.search);
+    return login.toString();
+  }
 
   // Select is recreated each time the PDF fullscreen modal is shown.
  $(document).on('change', '#bilingualTargetLanguage', function() {
@@ -1376,74 +1524,104 @@ $readerManagedLang = \vwmldbm\code\manage_lang($readerCurrentLocale, 'ccode');
     return el;
   }
 
-  // Text is always rendered using textContent, never unescaped innerHTML.
-  function buildPopup(win, target, start, end) {
-    const doc = win.document;
-    doc.open();
-    doc.write(`<!doctype html><html lang="${target}"><head><meta charset="utf-8">
-      <meta name="viewport" content="width=device-width,initial-scale=1">
-      <title>MindBridger — Bilingual Reader</title>
-      <style>
-        body{font-family:system-ui,-apple-system,'Segoe UI',Arial,sans-serif;background:#f7f9fc;color:#1e293b;margin:0;line-height:1.65}
-        header{position:sticky;top:0;background:white;border-bottom:1px solid #dce4ee;padding:15px 22px;z-index:1}
-        h1{font-size:1.25rem;margin:0 0 4px}#subtitle{font-size:.9rem;color:#64748b;margin-bottom:10px}
-        #printButton{float:right;padding:7px 12px;border:1px solid #94a3b8;border-radius:7px;background:white;cursor:pointer}
-        #printButton:disabled{opacity:.5;cursor:not-allowed}
-        main{max-width:980px;margin:20px auto;padding:0 18px 45px}
-        .page{margin:28px 0 10px;font-size:1.03rem;color:#334155;border-bottom:2px solid #cbd5e1;padding-bottom:8px}
-        .language-head{font-weight:700;color:#475569;padding:10px 2px}
-        .pair{background:white;border:1px solid #e2e8f0;border-radius:9px;padding:12px 16px;margin:14px 0;break-inside:avoid}
-        /* Sentence-by-sentence: original sentence, followed by its translation. */
-        .original{display:block;white-space:pre-wrap;font-weight:600;color:#1e293b}
-        .translation{display:block;white-space:pre-wrap;margin-top:3px;color:#0f766e}
-        .muted{color:#64748b}.error{color:#b91c1c}.notice{margin:14px 0}
-        .loading-indicator{display:flex;align-items:center;gap:10px;padding:9px 12px;background:#eff6ff;
-          border-radius:8px;color:#1d4ed8;font-size:.9rem;font-weight:600;clear:both}
-        .loading-indicator.done{background:#f0fdf4;color:#166534}
-        .loading-indicator.failed{background:#fef2f2;color:#b91c1c}
-        .spinner{display:inline-block;flex:none;width:20px;height:20px;border:3px solid #bfdbfe;
-          border-top-color:#2563eb;border-radius:50%;animation:bilingual-spin .8s linear infinite}
-        @keyframes bilingual-spin{to{transform:rotate(360deg)}}
-        .loading-indicator.done .spinner,.loading-indicator.failed .spinner{display:none}
-        .loading-placeholder{padding:42px 15px;text-align:center;color:#475569;background:white;
-          border:1px dashed #cbd5e1;border-radius:10px;margin-top:18px}
-        .loading-placeholder .spinner{width:34px;height:34px;border-width:4px;vertical-align:middle;margin-right:10px}
-        .loading-placeholder[hidden]{display:none}
-        @media(max-width:680px){header{padding:12px}main{padding:0 10px 28px}.pair{padding:10px 12px}}
-        @media print{header{position:static}#printButton,.loading-indicator,.loading-placeholder{display:none}
-          body{background:white}.pair{break-inside:avoid}}
-      </style></head><body>
-      <!--header><button id="printButton" type="button" disabled>Print / Save PDF</button-->
-      <h1 id="bookTitle"></h1><div id="subtitle"></div>
-      <div id="loadingIndicator" class="loading-indicator" role="status" aria-live="polite">
-        <span class="spinner" aria-hidden="true"></span><span id="progress">Preparing PDF text…</span>
-      </div></header>
-      <main><div class="language-head"><span>Original PDF text ↓ </span><span id="targetHeading"></span></div>
-        <div id="loadingPlaceholder" class="loading-placeholder" role="status">
-          <span class="spinner" aria-hidden="true"></span><span>Reading PDF and generating bilingual text…</span>
-        </div><div id="readerContent"></div></main>
-      </body></html>`);
-    doc.close();
-    doc.getElementById('bookTitle').textContent = config.bookTitle;
-    doc.getElementById('subtitle').textContent = 'MindBridger · Pages ' + start + '–' + end;
-    doc.getElementById('targetHeading').textContent = targetNames[target] + ' · AI translation';
-    //doc.getElementById('printButton').addEventListener('click', () => win.print());
+  // Keep the reader above the existing Bootstrap PDF modal without opening a new window.
+  // Move it under <body> to avoid inherited stacking contexts in the book layout.
+  const readerModal = document.getElementById('bilingualReaderModal');
+  document.body.appendChild(readerModal);
+  let lastFocusedElement = null;
+  let currentAbortController = null;
+
+  function isReaderOpen() {
+    return readerModal.classList.contains('is-open');
+  }
+
+  function closeBilingualReader() {
+    if (!isReaderOpen()) return;
+    ++activeRun; // invalidate asynchronous work from the previous reading session
+    if (currentAbortController) {
+      currentAbortController.abort();
+      currentAbortController = null;
+    }
+    readerModal.classList.remove('is-open');
+    readerModal.setAttribute('aria-hidden', 'true');
+    if (lastFocusedElement && lastFocusedElement.isConnected) lastFocusedElement.focus();
+  }
+
+  function buildModal(target, start, end) {
+    const doc = document;
+    lastFocusedElement = doc.activeElement;
+    const container = doc.getElementById('bilingualReaderContent');
+    container.replaceChildren(); // no stale text or CTA from an earlier section
+    doc.getElementById('bilingualBookTitle').textContent = config.bookTitle;
+    doc.getElementById('bilingualSubtitle').textContent = 'MindBridger · Pages ' + start + '–' + end;
+    doc.getElementById('bilingualTargetHeading').textContent = targetNames[target] + ' · AI translation';
+    const loader = doc.getElementById('bilingualLoadingIndicator');
+    loader.classList.remove('done', 'failed', 'login-required');
+    doc.getElementById('bilingualProgress').textContent = 'Preparing PDF text…';
+    doc.getElementById('bilingualLoadingPlaceholder').hidden = false;
+    doc.getElementById('bilingualReaderScroll').scrollTop = 0;
+    readerModal.classList.add('is-open');
+    readerModal.setAttribute('aria-hidden', 'false');
+    doc.getElementById('bilingualCloseButton').focus();
     return doc;
   }
 
+  document.getElementById('bilingualCloseButton').addEventListener('click', closeBilingualReader);
+  // Capture Escape before Bootstrap closes the underlying PDF viewer.
+  document.addEventListener('keydown', function(event) {
+    if (!isReaderOpen()) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      closeBilingualReader();
+      return;
+    }
+    if (event.key === 'Tab') {
+      const focusable = Array.from(readerModal.querySelectorAll('button:not([disabled]), a[href]'))
+        .filter(element => element.getClientRects().length);
+      if (!focusable.length) return;
+      const first = focusable[0], last = focusable[focusable.length - 1];
+      if (event.shiftKey && (document.activeElement === first || !readerModal.contains(document.activeElement))) {
+        event.preventDefault(); last.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || !readerModal.contains(document.activeElement))) {
+        event.preventDefault(); first.focus();
+      }
+    }
+  }, true);
+  // If the PDF viewer closes, remove this overlay too.
+  $('#fullscreenModal').on('hidden.bs.modal', closeBilingualReader);
+
   function readerStatus(doc, message, state='loading') {
-    const status = doc.getElementById('loadingIndicator');
+    const status = doc.getElementById('bilingualLoadingIndicator');
     status.classList.toggle('done', state === 'done');
     status.classList.toggle('failed', state === 'failed');
-    doc.getElementById('progress').textContent = message;
+    doc.getElementById('bilingualProgress').textContent = message;
     if (state !== 'loading') {
-      doc.getElementById('loadingPlaceholder').hidden = true;
-      //doc.getElementById('printButton').disabled = state !== 'done';
+      doc.getElementById('bilingualLoadingPlaceholder').hidden = true;
     }
   }
 
   function addNotice(doc, container, text, className='notice muted') {
     container.appendChild(popupElement(doc, 'p', className, text));
+  }
+
+  function showSignInPrompt(doc, container, previewCompleted=false) {
+    readerStatus(doc, previewCompleted ? 'Free preview complete · Sign in for the full translation'
+                                       : 'Sign in required for the full translation', 'done');
+    doc.getElementById('bilingualLoadingIndicator').classList.add('login-required');
+    doc.getElementById('bilingualLoadingPlaceholder').hidden = true;
+    if (container.querySelector('.signin-card')) return;
+    const card = popupElement(doc, 'div', 'signin-card');
+    card.appendChild(popupElement(doc, 'p', '',
+      previewCompleted ? 'You have read your free bilingual preview page.'
+                       : 'Your free preview is already used for this book.'));
+    card.appendChild(popupElement(doc, 'p', '',
+      'To see the full translation, please'));
+    const link = popupElement(doc, 'a', 'signin-link', 'Sign in');
+    link.href = buildReaderSignInUrl();
+    // Navigate in this tab after the reader shows the preview.
+    card.appendChild(link);
+    container.appendChild(card);
   }
 
   async function getPDFDocument() {
@@ -1626,7 +1804,22 @@ $readerManagedLang = \vwmldbm\code\manage_lang($readerCurrentLocale, 'ccode');
     return batches;
   }
 
-  async function translateBatch(batch, target, start, end, onRetry) {
+  function delayWithAbort(ms, signal) {
+    return new Promise((resolve, reject) => {
+      if (signal.aborted) return reject(new DOMException('Reader closed', 'AbortError'));
+      const timer = setTimeout(() => {
+        signal.removeEventListener('abort', cancel);
+        resolve();
+      }, ms);
+      function cancel() {
+        clearTimeout(timer);
+        reject(new DOMException('Reader closed', 'AbortError'));
+      }
+      signal.addEventListener('abort', cancel, {once:true});
+    });
+  }
+
+  async function translateBatch(batch, target, start, end, onRetry, signal) {
     // One guest may require many API batches to translate a full section.
     // Wait after HTTP 429 (rate limiting), and retry brief server errors.
     // No completed sentences are discarded when a batch is retried.
@@ -1637,6 +1830,7 @@ $readerManagedLang = \vwmldbm\code\manage_lang($readerCurrentLocale, 'ccode');
       try {
         response = await fetch(config.translationUrl, {
           method: 'POST',
+          signal,
           credentials: 'same-origin',
           headers: {
             'Content-Type': 'application/json',
@@ -1648,27 +1842,44 @@ $readerManagedLang = \vwmldbm\code\manage_lang($readerCurrentLocale, 'ccode');
           })
         });
       } catch (error) {
+        if (signal.aborted) throw error;
         if (++transientRetries > 4) throw error;
         const seconds = Math.min(30, 3 * Math.pow(2, transientRetries - 1));
         if (onRetry) onRetry('Network issue · retrying in ' + seconds + ' seconds…');
-        await new Promise(resolve => setTimeout(resolve, seconds * 1000));
+        await delayWithAbort(seconds * 1000, signal);
         continue;
       }
 
       const data = await response.json().catch(() => ({}));
+      // If the session expires or a guest preview limit is reached, show CTA.
+      if (response.status === 401) {
+        // A guest 401 normally means an old, auth-protected route is still
+        // active, not that the free preview was successfully consumed.
+        if (!config.isAuthenticated) {
+          throw new Error('Guest preview blocked (HTTP 401). Verify that the bilingual translation route has no auth middleware and clear Laravel route cache.');
+        }
+        const error = new Error('Your login session has expired. Please sign in again.');
+        error.signInRequired = true;
+        throw error;
+      }
+      if (response.status === 403 && data.sign_in_required) {
+        const error = new Error(data.message || 'To see the full translation, please Sign in.');
+        error.signInRequired = true;
+        throw error;
+      }
       if (response.status === 429 && throttledRetries++ < 30) {
         const headerSeconds = Number(response.headers.get('Retry-After'));
         const delaySeconds = Math.max(1, Math.min(120, Number.isFinite(headerSeconds) && headerSeconds > 0
           ? headerSeconds + 1 : Number(data.retry_after) || 60));
         if (onRetry) onRetry('Guest translation limit reached · continuing in ' +
           delaySeconds + ' seconds…');
-        await new Promise(resolve => setTimeout(resolve, delaySeconds * 1000));
+        await delayWithAbort(delaySeconds * 1000, signal);
         continue;
       }
       if ([502, 503, 504].includes(response.status) && ++transientRetries <= 4) {
         const seconds = Math.min(40, 4 * Math.pow(2, transientRetries - 1));
         if (onRetry) onRetry('Translation service busy · retrying in ' + seconds + ' seconds…');
-        await new Promise(resolve => setTimeout(resolve, seconds * 1000));
+        await delayWithAbort(seconds * 1000, signal);
         continue;
       }
       if (response.status === 419) {
@@ -1773,41 +1984,63 @@ $readerManagedLang = \vwmldbm\code\manage_lang($readerCurrentLocale, 'ccode');
       'Check the PDF file and ToC numbering. The reader will not translate an uncertain page.');
   }
 
-  async function openBilingualReader(start, end, target) {
-    // Must be called immediately from the select change event to avoid popup blockers.
-    const win = window.open('', 'mindbridgerBilingualReader', 'width=1250,height=850,scrollbars=yes,resizable=yes');
-    if (!win) { alert('Please allow pop-ups for MindBridger to open the bilingual reader.'); return; }
-    win.focus();
-    const doc = buildPopup(win, target, start, end);
-    const container = doc.getElementById('readerContent');
-    const placeholder = doc.getElementById('loadingPlaceholder');
+  async function openBilingualReader(start, end, target, options={}) {
+    // Reusing the same full-screen modal keeps the reader on the current page.
+    const currentSection = $('#fullscreenModal').data();
+    returnReaderState = {
+      idx: currentSection.idx == null ? '' : String(currentSection.idx),
+      start, end, target,
+      resumePage: end > start ? start + 1 : start
+    };
+    if (currentAbortController) currentAbortController.abort();
     const myRun = ++activeRun;
+    currentAbortController = new AbortController();
+    const signal = currentAbortController.signal;
+    const doc = buildModal(target, start, end);
+    const container = doc.getElementById('bilingualReaderContent');
+    const placeholder = doc.getElementById('bilingualLoadingPlaceholder');
+    let translatedCount = 0;
 
+    // Guests get the FIRST page of the currently selected ToC section. The
+    // server independently verifies that this is a valid section-opening page.
     try {
       readerStatus(doc, 'Loading PDF text…');
       const pdf = await getPDFDocument();
+      if (myRun !== activeRun || !isReaderOpen()) return;
       const mapping = await resolveSectionPages(pdf, start, end);
+      if (myRun !== activeRun || !isReaderOpen()) return;
       if (mapping.note) addNotice(doc, container, mapping.note, 'notice muted');
-      let translatedCount = 0;
       let skippedCount = 0;
-      for (const {bookPage, pdfPage} of mapping.pages) {
-        if (myRun !== activeRun || win.closed) return;
+      const selectedPages = config.isAuthenticated ? mapping.pages : mapping.pages.slice(0, 1);
+      for (const {bookPage, pdfPage} of selectedPages) {
+        if (myRun !== activeRun || !isReaderOpen()) return;
         readerStatus(doc, 'Extracting text from book page ' + bookPage + '…');
         const lines = await extractLines(pdf, pdfPage);
+        if (myRun !== activeRun || !isReaderOpen()) return;
         const segments = sentencesFromLines(lines);
-        container.appendChild(popupElement(doc, 'h2', 'page', 'Page ' + bookPage));
+        const pageHeading = popupElement(doc, 'h2', 'page', 'Page ' + bookPage);
+        container.appendChild(pageHeading);
+        // After login, resume at the first unread page when it becomes available.
+        // Initial preview page content is still translated and available above.
+        if (config.isAuthenticated && options.resumePage === bookPage) {
+          requestAnimationFrame(() => {
+            if (myRun === activeRun && isReaderOpen()) {
+              pageHeading.scrollIntoView({block: 'start', behavior: 'auto'});
+            }
+          });
+        }
         if (!segments.length) {
           addNotice(doc, container, 'No selectable text found on this page (scanned PDFs require OCR).');
           continue;
         }
         let completedOnPage = 0;
         for (const batch of batchSegments(segments)) {
-          if (myRun !== activeRun || win.closed) return;
+          if (myRun !== activeRun || !isReaderOpen()) return;
           readerStatus(doc, 'Translating page ' + bookPage + ' · ' + completedOnPage +
             ' of ' + segments.length + ' sentences translated…');
           const translations = await translateBatch(batch, target, bookPage, bookPage,
-            message => readerStatus(doc, message));
-          if (myRun !== activeRun || win.closed) return;
+            message => { if (myRun === activeRun && isReaderOpen()) readerStatus(doc, message); }, signal);
+          if (myRun !== activeRun || !isReaderOpen()) return;
           const shown = appendRows(doc, container, batch, translations, target);
           placeholder.hidden = true; // Original/translation sentence pairs now visible.
           translatedCount += shown;
@@ -1817,17 +2050,85 @@ $readerManagedLang = \vwmldbm\code\manage_lang($readerCurrentLocale, 'ccode');
             ' of ' + segments.length + ' sentences translated…');
         }
       }
-      if (myRun === activeRun && !win.closed) {
-        readerStatus(doc, 'Completed · ' + translatedCount + ' bilingual sentences · ' + skippedCount + ' skipped OCR fragments · AI translation (review for accuracy)', 'done');
+      if (myRun === activeRun && isReaderOpen()) {
+        if (!config.isAuthenticated) {
+          // Show the invitation only AFTER a real bilingual preview appears.
+          if (translatedCount > 0) {
+            showSignInPrompt(doc, container, true);
+          } else {
+            readerStatus(doc, 'No bilingual sentences were available on this preview page.', 'done');
+          }
+        } else {
+          readerStatus(doc, 'Completed · ' + translatedCount + ' bilingual sentences · ' + skippedCount + ' skipped OCR fragments · AI translation (review for accuracy)', 'done');
+        }
       }
     } catch (error) {
-      if (myRun !== activeRun || win.closed) return;
+      if (myRun !== activeRun || !isReaderOpen()) return;
+      if (error.signInRequired) {
+        showSignInPrompt(doc, container, translatedCount > 0);
+        return;
+      }
       // Show the actionable reason rather than an unexplained generic message.
       readerStatus(doc, 'Translation stopped: ' + (error.message || 'Unknown error'), 'failed');
       addNotice(doc, container, 'Completed pages remain available above. Retry this section after resolving the error.', 'notice muted');
       console.error('MindBridger bilingual reader:', error);
+    } finally {
+      if (myRun === activeRun) currentAbortController = null;
     }
   }
+
+  // One-time restore after login. Uses ToC buttons to validate the section
+  // instead of trusting arbitrary page numbers from the URL.
+  function restoreBilingualReaderAfterLogin() {
+    if (!config.isAuthenticated) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('mb_reader') !== '1') return;
+    const idx = params.get('mb_idx');
+    const start = Number(params.get('mb_start'));
+    const end = Number(params.get('mb_end'));
+    const target = params.get('mb_lang');
+    const resume = Number(params.get('mb_resume'));
+    if (!idx || !target || !Number.isInteger(start) || !Number.isInteger(end)
+        || start < 1 || end < start || end - start >= 40) return;
+
+    // Exact section match matters when a book has several ToC entries.
+    const goButtons = Array.from(document.querySelectorAll('#tocAccordion button[data-idx]'))
+      .filter(button => (button.getAttribute('onclick') || '').includes('goToPage(this)'));
+    const button = goButtons.find(b => b.getAttribute('data-idx') === idx &&
+      Number(b.getAttribute('data-start')) === start &&
+      Number(b.getAttribute('data-end')) === end);
+    if (!button) return; // The ToC may have changed since the guest preview.
+
+    // Validate language against the currently supported selection list.
+    const languageLabels = {
+      id:'Indonesian', ko:'Korean', en:'English', ar:'Arabic', bn:'Bengali', zh:'Chinese',
+      fr:'French', de:'German', hi:'Hindi', it:'Italian', ja:'Japanese', jv:'Javanese',
+      ms:'Malay', mn:'Mongolian', pa:'Punjabi', pt:'Portuguese', ru:'Russian',
+      es:'Spanish', ta:'Tamil', te:'Telugu', tr:'Turkish', ur:'Urdu', vi:'Vietnamese'
+    };
+    if (!Object.prototype.hasOwnProperty.call(languageLabels, target)) return;
+    targetNames[target] = languageLabels[target];
+
+    // The PDF viewer initializes its iframe in its own 'shown' handler.
+    // Schedule the reader for the following tick, after that handler runs.
+    $('#fullscreenModal').one('shown.bs.modal.mbLoginResume', function() {
+      setTimeout(() => {
+        if ($('#fullscreenModal').hasClass('show')) {
+          openBilingualReader(start, end, target, {
+            resumePage: Number.isInteger(resume) && resume >= start && resume <= end
+              ? resume : start
+          });
+        }
+      }, 0);
+    });
+    // Clear only the one-time reader parameters, preserving other book queries.
+    const cleaned = new URL(window.location.href);
+    ['mb_reader','mb_idx','mb_start','mb_end','mb_lang','mb_resume']
+      .forEach(key => cleaned.searchParams.delete(key));
+    window.history.replaceState(window.history.state, '', cleaned.pathname + cleaned.search + cleaned.hash);
+    goToPage(button);
+  }
+  window.addEventListener('load', restoreBilingualReaderAfterLogin);
 })();
 </script>
 

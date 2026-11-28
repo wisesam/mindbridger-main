@@ -872,8 +872,7 @@ class BookAIAdvisorController extends Controller
             return response()->json(['message' => 'Please select at most 40 PDF pages.'], 422);
         }
 
-        // Public bilingual reading is supported for guests, but only within
-        // the institution selected by the current library session.
+        // Resolve institution for both guests and authenticated readers.
         $inst = session('lib_inst');
         if (empty($inst) && config('app.multi_inst')) {
             return response()->json([
@@ -887,20 +886,49 @@ class BookAIAdvisorController extends Controller
             ->firstOrFail();
 
         $isGuest = !Auth::check();
-        $isAdmin = !$isGuest && Auth::user()->isAdmin();
-
-        // Guest translations are allowed for books visible to guests, while
-        // hidden books and books hidden from guests remain protected.
         $canManage = !$isGuest && Auth::user()->canManageBook($bookRecord);
+
+        // Do not expose books or e-resources that guests cannot read.
         if ($bookRecord->hide_yn === 'Y' && !$canManage) {
             abort(404);
         }
-        if ($isGuest && $bookRecord->hide_from_guest_yn === 'Y') {
-            abort(403, 'This book is not available to guests.');
+        if ($isGuest && (
+            $bookRecord->hide_from_guest_yn === 'Y' ||
+            $bookRecord->e_res_af_login_yn === 'Y'
+        )) {
+            abort(403, 'Sign in to access this book or PDF.');
         }
 
-        // Guest rate limiting is applied below *only to uncached translations*.
-        // The browser automatically retries 429 responses after Retry-After.
+        // Guests preview only the FIRST page of a ToC section. Do NOT lock a
+        // visitor to their first selection: that caused legitimate previews of
+        // other sections/languages to fail with a premature sign-in prompt.
+        // This is a section preview, not a per-book lifetime allowance.
+        if ($isGuest) {
+            $previewPage = (int) $validated['start_page'];
+            if ($previewPage !== (int) $validated['end_page']) {
+                return response()->json([
+                    'message' => 'Only the opening page of a section is available as a free preview.',
+                    'sign_in_required' => true,
+                ], 403);
+            }
+
+            $rawToc = $bookRecord->auto_toc;
+            $toc = is_array($rawToc) ? $rawToc : json_decode((string) $rawToc, true);
+            $openingPages = [];
+            foreach (is_array($toc) ? $toc : [] as $section) {
+                if (!is_array($section)) continue;
+                $firstPage = $section['start'] ?? $section['page'] ?? null;
+                if (is_numeric($firstPage) && (int) $firstPage > 0) {
+                    $openingPages[] = (int) $firstPage;
+                }
+            }
+            if (!in_array($previewPage, $openingPages, true)) {
+                return response()->json([
+                    'message' => 'The free preview is available only on a Table of Contents section-opening page.',
+                    'sign_in_required' => true,
+                ], 403);
+            }
+        }
 
         $segments = array_values($validated['segments']);
         $characters = array_sum(array_map(
@@ -930,19 +958,32 @@ class BookAIAdvisorController extends Controller
             'quality-v5', $inst, $bookRecord->id, $model, $targetCode, $segments
         ], JSON_UNESCAPED_UNICODE));
 
-        // Keep the existing per-IP guest budget, but do not count translations
-        // already present in the shared translation cache. The browser waits
-        // and resumes when an uncached request reaches the limit.
         if ($isGuest && !\Illuminate\Support\Facades\Cache::has($cacheKey)) {
-            $guestKey = 'book-bilingual:guest:' . hash('sha256', (string) $request->ip());
-            if (RateLimiter::tooManyAttempts($guestKey, 12)) {
-                $retryAfter = max(1, RateLimiter::availableIn($guestKey));
+            // Allow all translation batches on the preview page. A per-page
+            // budget prevents unusually large/forged pages from unlimited
+            // OpenAI usage, without locking the user's later section choices.
+            $budgetKey = 'mb_bilingual_preview_v7.' . $inst . '.' . $bookRecord->id
+                . '.' . $previewPage . '.' . $targetCode;
+            $usedChars = (int) session($budgetKey, 0);
+            if ($usedChars + $characters > 32000) {
                 return response()->json([
-                    'message' => 'Guest translation quota reached; retry automatically after a short pause.',
-                    'retry_after' => $retryAfter,
-                ], 429)->header('Retry-After', (string) $retryAfter);
+                    'message' => 'This preview page exceeds the free translation limit. Please sign in to continue.',
+                    'sign_in_required' => true,
+                ], 403);
+            }
+
+            // Prevent excessive anonymous OpenAI requests, even across new
+            // browser sessions. Cached translations do not consume quota.
+            $guestKey = 'mb_bilingual:preview:minute:' . hash('sha256', (string) $request->ip());
+            if (RateLimiter::tooManyAttempts($guestKey, 12)) {
+                $retry = max(1, RateLimiter::availableIn($guestKey));
+                return response()->json([
+                    'message' => 'Preview translation is busy. Retrying shortly.',
+                    'retry_after' => $retry,
+                ], 429)->header('Retry-After', (string) $retry);
             }
             RateLimiter::hit($guestKey, 60);
+            session()->put($budgetKey, $usedChars + $characters);
         }
 
         try {

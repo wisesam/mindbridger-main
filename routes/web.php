@@ -86,16 +86,13 @@ Route::get('/book/ebook-file',
     [BookEbookReadController::class, 'show']
 )->name('book.ebooks.file');
 
-// Login + throttling prevent anonymous / unlimited translation requests. // [SJH] 2026.11.20
+// Guests: first page of each selected ToC section. Members: full translation.
+// Keep this route OUTSIDE the auth group; permissions and preview limits are
+// enforced inside BookAIAdvisorController::translateSection().
 Route::post('/book/{book}/bilingual-translate',
-    [\App\Http\Controllers\BookAIAdvisorController::class, 'translateSection'])
+    [BookAIAdvisorController::class, 'translateSection'])
     ->middleware('throttle:60,1')
     ->name('book.bilingual.translate');
-
-    // Route::post('/book/{book}/bilingual-translate',
-    // [\App\Http\Controllers\BookAIAdvisorController::class, 'translateSection'])
-    // ->middleware(['auth', 'throttle:60,1'])
-    // ->name('book.bilingual.translate');
 
 // Book Copy Specific Routes
 Route::get('/book_copy/create/{book}', [Book_copyController::class, 'create'])->name('book_copy.create'); // [SJH] 2024.12.19
