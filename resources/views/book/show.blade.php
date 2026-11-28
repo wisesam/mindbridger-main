@@ -139,7 +139,7 @@ $readerManagedLang = \vwmldbm\code\manage_lang($readerCurrentLocale, 'ccode');
             ['en', 'English'],
             ['ar', 'Arabic / العربية'],
             ['bn', 'Bengali / বাংলা'],
-            ['zh', 'Chinese / 中文'],
+            ['cn', 'Chinese / 中文'],
             ['fr', 'French / Français'],
             ['de', 'German / Deutsch'],
             ['hi', 'Hindi / हिन्दी'],
