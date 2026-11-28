@@ -834,8 +834,34 @@ class BookAIAdvisorController extends Controller
      */
     public function translateSection(Request $request, $book)
     {
+        $languageNames = [
+            'id' => 'Indonesian',
+            'ko' => 'Korean',
+            'en' => 'English',
+            'ar' => 'Arabic',
+            'bn' => 'Bengali',
+            'zh' => 'Chinese',
+            'fr' => 'French',
+            'de' => 'German',
+            'hi' => 'Hindi',
+            'it' => 'Italian',
+            'ja' => 'Japanese',
+            'jv' => 'Javanese',
+            'ms' => 'Malay',
+            'mn' => 'Mongolian',
+            'pa' => 'Punjabi',
+            'pt' => 'Portuguese',
+            'ru' => 'Russian',
+            'es' => 'Spanish',
+            'ta' => 'Tamil',
+            'te' => 'Telugu',
+            'tr' => 'Turkish',
+            'ur' => 'Urdu',
+            'vi' => 'Vietnamese',
+        ];
+
         $validated = $request->validate([
-            'target_language' => 'required|in:id,ko,en,ar,bn,cn,fr,de,hi,it,ja,jv,ms,mn,pa,pt,ru,es,ta,te,tr,ur,vi',
+            'target_language' => 'required|in:' . implode(',', array_keys($languageNames)),
             'start_page'     => 'required|integer|min:1',
             'end_page'       => 'required|integer|min:1|gte:start_page',
             'segments'       => 'required|array|min:1|max:24',
@@ -885,11 +911,6 @@ class BookAIAdvisorController extends Controller
             return response()->json(['message' => 'Translate smaller text batches (4200 characters maximum).'], 422);
         }
 
-        $languageNames = [
-            'id' => 'Indonesian', 'ko' => 'Korean', 'en' => 'English',
-            'ar' => 'Arabic', 'fr' => 'French', 'es' => 'Spanish',
-            'vi' => 'Vietnamese', 'ru' => 'Russian',
-        ];
         $targetCode = $validated['target_language'];
         $targetName = $languageNames[$targetCode];
         $sourceHint = match ((string) $bookRecord->c_lang) {
