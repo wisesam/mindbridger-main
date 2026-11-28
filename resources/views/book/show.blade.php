@@ -133,15 +133,30 @@ $readerManagedLang = \vwmldbm\code\manage_lang($readerCurrentLocale, 'ccode');
         langSelect.style.cssText = 'width:auto;max-width:220px;vertical-align:middle;font-size:0.85rem;';
         langSelect.setAttribute('aria-label', 'Choose bilingual translation language');
         const languageChoices = [
-          ['', '🌐 Bilingual read…'],
-          ['id', 'Indonesian / Bahasa Indonesia'],
-          ['ko', 'Korean / 한국어'],
-          ['en', 'English'],
-          ['ar', 'Arabic / العربية'],
-          ['fr', 'French / Français'],
-          ['es', 'Spanish / Español'],
-          ['vi', 'Vietnamese / Tiếng Việt'],
-          ['ru', 'Russian / Русский']
+            ['', '🌐 Bilingual read…'],
+            ['id', 'Indonesian / Bahasa Indonesia'],
+            ['ko', 'Korean / 한국어'],
+            ['en', 'English'],
+            ['ar', 'Arabic / العربية'],
+            ['bn', 'Bengali / বাংলা'],
+            ['zh', 'Chinese / 中文'],
+            ['fr', 'French / Français'],
+            ['de', 'German / Deutsch'],
+            ['hi', 'Hindi / हिन्दी'],
+            ['it', 'Italian / Italiano'],
+            ['ja', 'Japanese / 日本語'],
+            ['jv', 'Javanese / ꦧꦱꦗꦮ'],
+            ['ms', 'Malay / Bahasa Melayu'],
+            ['mn', 'Mongolian / Монгол'],
+            ['pt', 'Portuguese / Português'],
+            ['pa', 'Punjabi / ਪੰਜਾਬੀ'],
+            ['ru', 'Russian / Русский'],
+            ['es', 'Spanish / Español'],
+            ['ta', 'Tamil / தமிழ்'],
+            ['te', 'Telugu / తెలుగు'],
+            ['tr', 'Turkish / Türkçe'],
+            ['ur', 'Urdu / اردو'],
+            ['vi', 'Vietnamese / Tiếng Việt']
         ];
         languageChoices.forEach(([code, label]) => {
           const option = document.createElement('option');
